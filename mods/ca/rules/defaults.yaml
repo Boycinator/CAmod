@@ -1,6 +1,7 @@
 ^ExistsInWorld:
 	AppearsOnRadar:
 	CombatDebugOverlay:
+	TransferUnit:
 	GivesExperienceCA:
 		PlayerExperienceModifier: 1
 		ActorExperienceOnDamage: true

@@ -114,7 +114,7 @@ Container@PLAYER_WIDGETS:
 			Logic: CommandBarLogic
 			X: 27
 			Y: WINDOW_HEIGHT - HEIGHT - 4
-			Width: 275
+			Width: 309
 			Height: 26
 			Children:
 				LogicKeyListener@MODIFIER_OVERRIDES:
@@ -265,9 +265,28 @@ Container@PLAYER_WIDGETS:
 							Y: 1
 							ImageCollection: command-icons
 							ImageName: queue-orders
+				Button@TRANSFER_UNITS:
+					Logic: AddFactionSuffixLogic
+					X: 272
+					Width: 34
+					Height: 26
+					VisualHeight: 0
+					Background: command-button
+					Key: TransferUnits
+					DisableKeySound: true
+					TooltipText: button-command-bar-transfer-units.tooltip
+					TooltipDesc: button-command-bar-transfer-units.tooltipdesc
+					TooltipContainer: TOOLTIP_CONTAINER
+					TooltipTemplate: BUTTON_WITH_DESC_HIGHLIGHT_TOOLTIP
+					Children:
+						Image@ICON:
+							X: 5
+							Y: 1
+							ImageCollection: command-icons
+							ImageName: force-move
 		Container@STANCE_BAR:
 			Logic: StanceSelectorLogic
-			X: 315
+			X: 349
 			Y: WINDOW_HEIGHT - HEIGHT - 4
 			Width: 138
 			Height: 26

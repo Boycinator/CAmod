@@ -29,6 +29,12 @@ label-gamesave-loading-screen-loadtime-line1 = Sorry for the long load times, th
 label-gamesave-loading-screen-loadtime-line2 = It replays the game from the beginning as fast as possible (so a longer game = longer time to load).
 
 ## chrome/ingame-player.yaml
+
+button-command-bar-transfer-units =
+    .tooltip = Transfer Units
+    .tooltipdesc =
+    Selected units will be transferred to an ally.
+
 button-command-bar-attack-move =
     .tooltip = Attack Move
     .tooltipdesc =
