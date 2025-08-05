@@ -635,7 +635,7 @@ unit-upgrade-buttons:
 ^PlayerUIBits:
 	Regions:
 		background: 0, 0, 258, 597
-		background-command-bar: 0, 598, 467, 47
+		background-command-bar: 0, 598, 501, 47
 		radar: 28, 40, 222, 222
 		palette-borders-overlay: 260, 179, 194, 244
 		support-power-border-overlay: 260, 179, 64, 48

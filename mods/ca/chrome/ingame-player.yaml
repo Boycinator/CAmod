@@ -105,7 +105,7 @@ Container@PLAYER_WIDGETS:
 			Logic: AddFactionSuffixLogic
 			X: 5
 			Y: WINDOW_HEIGHT - HEIGHT
-			Width: 467
+			Width: 501
 			Height: 47
 			ImageCollection: player-ui-bits
 			ImageName: background-command-bar
