@@ -283,7 +283,7 @@ Container@PLAYER_WIDGETS:
 							X: 5
 							Y: 1
 							ImageCollection: command-icons
-							ImageName: force-move
+							ImageName: transfer-unit
 		Container@STANCE_BAR:
 			Logic: StanceSelectorLogic
 			X: 349

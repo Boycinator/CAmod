@@ -123,6 +123,9 @@ command-icons:
 		queue-orders: 175, 207, 24, 24
 		queue-orders-disabled: 175, 232, 24, 24
 
+		transfer-unit: 0, 273, 24, 24
+		transfer-unit-disabled: 0, 298, 24, 24
+
 command-icons-highlighted:
 	Inherits: command-icons
 
