@@ -111,7 +111,7 @@ namespace OpenRA.Mods.CA.Traits
 
 		readonly ChronoshiftableCAInfo info;
 		readonly string faction;
-		readonly IFacing facing;
+		IFacing facing;
 		Cargo cargo;
 		List<Actor> cachedPassengers;
 		int conditionToken = Actor.InvalidConditionToken;
@@ -137,10 +137,7 @@ namespace OpenRA.Mods.CA.Traits
 			this.info = info;
 
 			if (info.ReturnToAvoidDeath)
-			{
 				faction = init.GetValue<FactionInit, string>(init.Self.Owner.Faction.InternalName);
-				facing = self.TraitOrDefault<IFacing>();
-			}
 		}
 
 		protected override void Created(Actor self)
@@ -149,7 +146,10 @@ namespace OpenRA.Mods.CA.Traits
 			base.Created(self);
 
 			if (info.ReturnToAvoidDeath)
+			{
 				cargo = self.TraitOrDefault<Cargo>();
+				facing = self.TraitOrDefault<IFacing>();
+			}
 		}
 
 		public bool Teleport(Actor self, CPos targetLocation, int duration, bool killCargo, Actor chronosphere)
@@ -208,7 +208,10 @@ namespace OpenRA.Mods.CA.Traits
 			this.killCargo = killCargo;
 
 			// Set up the teleport
-			self.QueueActivity(false, new TeleportCA(chronosphere, targetLocation, null, killCargo, true, Info.ChronoshiftSound));
+			self.World.AddFrameEndTask(w =>
+			{
+				self.QueueActivity(false, new TeleportCA(chronosphere, targetLocation, null, killCargo, true, Info.ChronoshiftSound, false));
+			});
 
 			return true;
 		}

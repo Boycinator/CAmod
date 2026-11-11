@@ -29,7 +29,7 @@ namespace OpenRA.Mods.CA.Traits
 		[Desc("Production queues AI uses for producing units.")]
 		public readonly string[] UnitQueues = { "VehicleSQ", "InfantrySQ", "AircraftSQ", "ShipSQ", "VehicleMQ", "InfantryMQ", "AircraftMQ", "ShipMQ" };
 
-		[Desc("What units to the AI should build.", "What relative share of the total army must be this type of unit.")]
+		[Desc("Fallback unit shares used when CompositionsBotModule is missing or empty.")]
 		public readonly Dictionary<string, int> UnitsToBuild = null;
 
 		[Desc("What units should the AI have a maximum limit to train.")]
@@ -67,18 +67,40 @@ namespace OpenRA.Mods.CA.Traits
 		[Desc("List of actor types to measure against for air superiority.")]
 		public readonly HashSet<string> AirThreatUnits = new HashSet<string>();
 
+		[Desc("If true, the bot will use compositions defined in the UnitCompositionsBotModule to determine what units to build.",
+			"If false, the bot will ignore compositions and just use UnitsToBuild.")]
+		public readonly bool UseCompositions = true;
+
+		[Desc("Minimum ticks before selecting a new non-baseline composition.")]
+		public readonly int MinCompositionSelectInterval = 750;
+
+		[Desc("Maximum ticks before selecting a new non-baseline composition.")]
+		public readonly int MaxCompositionSelectInterval = 7500;
+
 		public override object Create(ActorInitializer init) { return new UnitBuilderBotModuleCA(init.Self, this); }
 	}
 
-	public class UnitBuilderBotModuleCA : ConditionalTrait<UnitBuilderBotModuleCAInfo>, IBotTick, IBotNotifyIdleBaseUnits, IBotRequestUnitProduction, IGameSaveTraitData, IBotAircraftBuilder
+	public class UnitBuilderBotModuleCA : ConditionalTrait<UnitBuilderBotModuleCAInfo>, IBotTick, IBotNotifyIdleBaseUnits,
+		IBotRequestUnitProduction, IGameSaveTraitData, IBotAircraftBuilder, INotifyActorDisposing
 	{
 		public const int FeedbackTime = 30; // ticks; = a bit over 1s. must be >= netlag.
 
 		readonly World world;
 		readonly Player player;
+		UnitComposition baselineComposition = null;
+		UnitComposition activeComposition = null;
+		int activeCompositionProducedValue = 0;
+		int activeCompositionSelectedTick;
+		int nextCompositionSelectTick;
+		readonly Dictionary<string, int> compositionLastUsedTickById = new();
 
-		readonly List<string> queuedBuildRequests = new List<string>();
-		readonly Dictionary<string, int> activeUnitIntervals = new Dictionary<string, int>();
+		readonly List<string> queuedBuildRequests = new();
+		readonly Dictionary<string, int> activeUnitIntervals = new();
+		ActorIndex.OwnerAndNames unitsToBuild;
+
+		UnitCompositionsBotModule compositionsModule;
+		List<UnitComposition> possibleActiveCompositions = null;
+		TechTree techTree;
 
 		IBotRequestPauseUnitProduction[] requestPause;
 		int idleUnitCount;
@@ -96,12 +118,31 @@ namespace OpenRA.Mods.CA.Traits
 
 		protected override void Created(Actor self)
 		{
-			// Special case handling is required for the Player actor.
-			// Created is called before Player.PlayerActor is assigned,
-			// so we must query player traits from self, which refers
-			// for bot modules always to the Player actor.
-			requestPause = self.TraitsImplementing<IBotRequestPauseUnitProduction>().ToArray();
+			requestPause = self.Owner.PlayerActor.TraitsImplementing<IBotRequestPauseUnitProduction>().ToArray();
 			playerResources = self.Owner.PlayerActor.Trait<PlayerResources>();
+			techTree = self.Owner.PlayerActor.TraitOrDefault<TechTree>();
+			compositionsModule = Info.UseCompositions ? self.World.WorldActor.TraitOrDefault<UnitCompositionsBotModule>() : null;
+
+			var referencedUnitTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			if (Info.UnitsToBuild != null)
+				referencedUnitTypes.UnionWith(Info.UnitsToBuild.Keys);
+
+			if (compositionsModule != null)
+			{
+				baselineComposition = compositionsModule != null ? compositionsModule.UnitCompositions.FirstOrDefault(c => c != null && c.IsBaseline) : null;
+
+				foreach (var c in compositionsModule.UnitCompositions)
+					if (c?.UnitsToBuild != null)
+						referencedUnitTypes.UnionWith(c.UnitsToBuild.Keys);
+
+				possibleActiveCompositions = compositionsModule.UnitCompositions.Where(c => c != null
+					&& !c.IsBaseline
+					&& (c.EnabledChance == 100 || self.World.LocalRandom.Next(100) < c.EnabledChance)).ToList();
+
+				nextCompositionSelectTick = GetNextCompositionSelectTick();
+			}
+
+			unitsToBuild = new ActorIndex.OwnerAndNames(world, referencedUnitTypes, player);
 		}
 
 		void IBotNotifyIdleBaseUnits.UpdatedIdleBaseUnits(List<Actor> idleUnits)
@@ -112,44 +153,52 @@ namespace OpenRA.Mods.CA.Traits
 		void IBotTick.BotTick(IBot bot)
 		{
 			// Decrement any active unit intervals, removing any that reach zero
-			foreach (KeyValuePair<string, int> i in activeUnitIntervals.ToList())
+			foreach (var i in activeUnitIntervals.ToList())
 			{
 				activeUnitIntervals[i.Key]--;
 				if (activeUnitIntervals[i.Key] <= 0)
 					activeUnitIntervals.Remove(i.Key);
 			}
 
-			if (requestPause.Any(rp => rp.PauseUnitProduction))
+			// PERF: We shouldn't be queueing new units when we're low on cash
+			if (playerResources.GetCashAndResources() < Info.ProductionMinCashRequirement || requestPause.Any(rp => rp.PauseUnitProduction))
 				return;
 
 			ticks++;
 
 			if (ticks % (FeedbackTime + Info.UnitBuilderInterval) == 0)
 			{
+				UpdateComposition();
+
+				ILookup<string, ProductionQueue> queuesByCategory = null;
+
 				var buildRequest = queuedBuildRequests.FirstOrDefault();
 				if (buildRequest != null)
 				{
-					BuildUnit(bot, buildRequest);
+					queuesByCategory ??= AIUtils.FindQueuesByCategory(player);
+					BuildUnit(bot, buildRequest, queuesByCategory);
 					queuedBuildRequests.Remove(buildRequest);
 				}
 
-				// Don't produce if we don't have enough cash
-				if (playerResources.Cash + playerResources.Resources < Info.ProductionMinCashRequirement)
-					return;
-
-				for (var i = 0; i < Info.UnitQueues.Length; i++)
+				if (idleUnitCount < Info.IdleBaseUnitsMaximum)
 				{
-					if (++currentQueueIndex >= Info.UnitQueues.Length)
-						currentQueueIndex = 0;
-
-					if (AIUtils.FindQueues(player, Info.UnitQueues[currentQueueIndex]).Any())
+					queuesByCategory ??= AIUtils.FindQueuesByCategory(player);
+					for (var i = 0; i < Info.UnitQueues.Length; i++)
 					{
-						// PERF: We tick only one type of valid queue at a time
-						// if AI gets enough cash, it can fill all of its queues with enough ticks
-						BuildUnit(bot, Info.UnitQueues[currentQueueIndex], idleUnitCount < Info.IdleBaseUnitsMaximum, false);
+						if (++currentQueueIndex >= Info.UnitQueues.Length)
+							currentQueueIndex = 0;
 
-						if (playerResources.Cash + playerResources.Resources < Info.MaximiseProductionCashRequirement)
-							break;
+						var category = Info.UnitQueues[currentQueueIndex];
+						var queues = queuesByCategory[category].ToArray();
+						if (queues.Length != 0)
+						{
+							// PERF: We tick only one type of valid queue at a time
+							// if AI gets enough cash, it can fill all of its queues with enough ticks
+							BuildRandomUnit(bot, queues);
+
+							if (playerResources.GetCashAndResources() < Info.MaximiseProductionCashRequirement)
+								break;
+						}
 					}
 				}
 			}
@@ -165,36 +214,31 @@ namespace OpenRA.Mods.CA.Traits
 			return queuedBuildRequests.Count(r => r == requestedActor);
 		}
 
-		void BuildUnit(IBot bot, string category, bool buildRandom, bool excludeLimited)
+		void BuildRandomUnit(IBot bot, ProductionQueue[] queues)
 		{
+			if (!HasAnyUnitCompositionOrFallback())
+				return;
+
 			// Pick a free queue
-			var queue = AIUtils.FindQueues(player, category).FirstOrDefault(q => !q.AllQueued().Any());
+			var queue = queues.FirstOrDefault(q => !q.AllQueued().Any());
 			if (queue == null)
 				return;
 
-			var unit = buildRandom ?
-				ChooseRandomUnitToBuild(queue, excludeLimited) :
-				ChooseUnitToBuild(queue, excludeLimited);
-
+			var unit = ChooseRandomUnitToBuild(queue, false);
 			if (unit == null)
-				return;
-
-			var name = unit.Name;
-
-			if (!ShouldBuild(name, false))
 			{
-				if (!excludeLimited)
-					BuildUnit(bot, category, buildRandom, true);
-
+				RevertToBaselineComposition();
 				return;
 			}
 
-			SetUnitInterval(name);
-			bot.QueueOrder(Order.StartProduction(queue.Actor, name, 1));
+			AddToActiveCompositionProducedValue(unit);
+
+			SetUnitInterval(unit.Name);
+			bot.QueueOrder(Order.StartProduction(queue.Actor, unit.Name, 1));
 		}
 
 		// In cases where we want to build a specific unit but don't know the queue name (because there's more than one possibility)
-		void BuildUnit(IBot bot, string name)
+		void BuildUnit(IBot bot, string name, ILookup<string, ProductionQueue> queuesByCategory)
 		{
 			var actorInfo = world.Map.Rules.Actors[name];
 			if (actorInfo == null)
@@ -210,7 +254,7 @@ namespace OpenRA.Mods.CA.Traits
 			ProductionQueue queue = null;
 			foreach (var pq in buildableInfo.Queue)
 			{
-				queue = AIUtils.FindQueues(player, pq).FirstOrDefault(q => !q.AllQueued().Any());
+				queue = queuesByCategory[pq].FirstOrDefault(q => !q.AllQueued().Any());
 				if (queue != null)
 					break;
 			}
@@ -256,33 +300,235 @@ namespace OpenRA.Mods.CA.Traits
 
 		ActorInfo ChooseRandomUnitToBuild(ProductionQueue queue, bool excludeLimited)
 		{
-			var buildableThings = queue.BuildableItems().Where(a => Info.UnitsToBuild.ContainsKey(a.Name) && (!excludeLimited || !Info.UnitLimits.ContainsKey(a.Name)));
-			if (!buildableThings.Any())
+			var unitsToBuildShares = GetUnitsToBuildForCategory(queue.Info.Type);
+			if (unitsToBuildShares == null || unitsToBuildShares.Count == 0)
 				return null;
 
-			var unit = buildableThings.Random(world.LocalRandom);
-			return CanBuildMoreOfAircraft(unit) ? unit : null;
+			var buildableThings = queue.BuildableItems().Shuffle(world.LocalRandom).ToArray();
+			if (buildableThings.Length == 0)
+				return null;
+
+			var allUnits = unitsToBuild != null ? unitsToBuild.Actors.Where(a => !a.IsDead).ToArray() : world.Actors.Where(a => !a.IsDead && a.Owner == player).ToArray();
+
+			ActorInfo desiredUnit = null;
+			var desiredError = int.MaxValue;
+			foreach (var unit in buildableThings)
+			{
+				if (!unitsToBuildShares.TryGetValue(unit.Name, out var share) ||
+					(Info.UnitDelays != null && Info.UnitDelays.TryGetValue(unit.Name, out var delay) && delay > world.WorldTick))
+					continue;
+
+				if (Info.UnitIntervals != null &&
+					Info.UnitIntervals.ContainsKey(unit.Name) &&
+					activeUnitIntervals.ContainsKey(unit.Name))
+					continue;
+
+				var unitCount = allUnits.Count(a => a.Info.Name == unit.Name);
+				if (!excludeLimited && Info.UnitLimits != null && Info.UnitLimits.TryGetValue(unit.Name, out var count) && unitCount >= count)
+					continue;
+
+				var error = allUnits.Length > 0 ? unitCount * 100 / allUnits.Length - share : -1;
+				if (error < 0)
+					return CanBuildMoreOfAircraft(unit) ? unit : null;
+
+				if (error < desiredError)
+				{
+					desiredError = error;
+					desiredUnit = unit;
+				}
+			}
+
+			return desiredUnit != null ? (CanBuildMoreOfAircraft(desiredUnit) ? desiredUnit : null) : null;
 		}
 
-		ActorInfo ChooseUnitToBuild(ProductionQueue queue, bool excludeLimited)
+		bool HasAnyUnitCompositionOrFallback()
 		{
-			var buildableThings = queue.BuildableItems();
-			if (!buildableThings.Any())
+			var hasCompositions = compositionsModule != null && compositionsModule.UnitCompositions.Count != 0;
+			var hasFallback = Info.UnitsToBuild != null && Info.UnitsToBuild.Count != 0;
+			return hasCompositions || hasFallback;
+		}
+
+		Dictionary<string, int> GetUnitsToBuildForCategory(string queueCategory)
+		{
+			if (compositionsModule == null || compositionsModule.UnitCompositions.Count == 0)
+				return Info.UnitsToBuild;
+
+			if (activeComposition != null && CompositionAppliesToCategory(activeComposition, queueCategory))
+				return activeComposition.UnitsToBuild;
+
+			if (baselineComposition != null && CompositionAppliesToCategory(baselineComposition, queueCategory))
+				return baselineComposition.UnitsToBuild;
+
+			return Info.UnitsToBuild;
+		}
+
+		void UpdateComposition()
+		{
+			if (compositionsModule == null || compositionsModule.UnitCompositions.Count == 0)
+				return;
+
+			// If a non-baseline composition is active, then keep it until it expires.
+			if (activeComposition != null)
+			{
+				var exceededDuration = activeComposition.MaxDuration > 0 && world.WorldTick - activeCompositionSelectedTick >= activeComposition.MaxDuration;
+				var exceededValue = activeComposition.MaxProducedValue > 0 && activeCompositionProducedValue >= activeComposition.MaxProducedValue;
+
+				if (exceededDuration || exceededValue)
+					RevertToBaselineComposition();
+			}
+			else if (world.WorldTick >= nextCompositionSelectTick)
+			{
+				var newActiveComposition = ChooseActiveComposition();
+				if (newActiveComposition != null)
+				{
+					activeComposition = newActiveComposition;
+					activeCompositionProducedValue = 0;
+					activeCompositionSelectedTick = world.WorldTick;
+					if (!string.IsNullOrEmpty(activeComposition.Id))
+						compositionLastUsedTickById[activeComposition.Id] = world.WorldTick;
+				}
+			}
+		}
+
+		void RevertToBaselineComposition()
+		{
+			activeComposition = null;
+			activeCompositionProducedValue = 0;
+			nextCompositionSelectTick = GetNextCompositionSelectTick();
+		}
+
+		UnitComposition ChooseActiveComposition()
+		{
+			if (compositionsModule == null || possibleActiveCompositions.Count == 0)
 				return null;
 
-			var myUnits = player.World
-				.ActorsHavingTrait<IPositionable>()
-				.Where(a => a.Owner == player)
-				.Select(a => a.Info.Name).ToList();
+			nextCompositionSelectTick = GetNextCompositionSelectTick();
 
-			foreach (var unit in Info.UnitsToBuild.Shuffle(world.LocalRandom))
-				if (buildableThings.Any(b => b.Name == unit.Key))
-					if (!excludeLimited || !Info.UnitLimits.ContainsKey(unit.Key))
-						if (myUnits.Count(a => a == unit.Key) * 100 < unit.Value * myUnits.Count)
-							if (CanBuildMoreOfAircraft(world.Map.Rules.Actors[unit.Key]))
-								return world.Map.Rules.Actors[unit.Key];
+			var playerQueues = AIUtils.FindQueuesByCategory(player);
 
-			return null;
+			var candidates = possibleActiveCompositions
+				.Where(c => c != null && !c.IsBaseline
+					&& IsCompositionTimeValid(c)
+					&& IsCompositionIntervalValid(c)
+					&& AreCompositionPrerequisitesMet(c)
+					&& CanProduceAnyUnitInCompositionForEachQueueCategory(c, playerQueues))
+				.ToArray();
+
+			return candidates.Length != 0 ? candidates.Random(world.LocalRandom) : null;
+		}
+
+		bool IsCompositionIntervalValid(UnitComposition composition)
+		{
+			if (composition == null)
+				return false;
+
+			if (composition.MinInterval <= 0)
+				return true;
+
+			if (string.IsNullOrEmpty(composition.Id))
+				return true;
+
+			if (!compositionLastUsedTickById.TryGetValue(composition.Id, out var lastTick))
+				return true;
+
+			return world.WorldTick - lastTick >= composition.MinInterval;
+		}
+
+		bool IsCompositionTimeValid(UnitComposition composition)
+		{
+			if (composition == null)
+				return false;
+
+			var tick = world.WorldTick;
+			if (composition.MinTime > 0 && tick < composition.MinTime)
+				return false;
+			if (composition.MaxTime > 0 && tick > composition.MaxTime)
+				return false;
+
+			return true;
+		}
+
+		bool CanProduceAnyUnitInCompositionForQueueCategory(UnitComposition composition, string queueCategory)
+		{
+			if (composition == null || string.IsNullOrEmpty(queueCategory))
+				return false;
+
+			if (techTree == null)
+				return true;
+
+			var byQueue = composition.UnitPrerequisitesByQueue;
+			if (byQueue == null || !byQueue.TryGetValue(queueCategory, out var unitPrereqs) || unitPrereqs == null || unitPrereqs.Count == 0)
+				return false;
+
+			foreach (var prereqs in unitPrereqs.Values)
+			{
+				if (prereqs == null || prereqs.Length == 0 || techTree.HasPrerequisites(prereqs))
+					return true;
+			}
+
+			return false;
+		}
+
+		bool CanProduceAnyUnitInCompositionForEachQueueCategory(UnitComposition composition, ILookup<string, ProductionQueue> playerQueues)
+		{
+			if (composition == null)
+				return false;
+
+			var byQueue = composition.UnitPrerequisitesByQueue;
+			if (byQueue == null || byQueue.Count == 0)
+				return false;
+
+			foreach (var queueCategory in byQueue.Keys)
+			{
+				if (!playerQueues.Contains(queueCategory))
+					continue;
+
+				if (!CanProduceAnyUnitInCompositionForQueueCategory(composition, queueCategory))
+					return false;
+			}
+
+			return true;
+		}
+
+		bool CompositionAppliesToCategory(UnitComposition composition, string queueCategory)
+		{
+			if (composition.UnitQueues == null || composition.UnitQueues.Length == 0)
+				return true;
+			return composition.UnitQueues.Any(q => q.Equals(queueCategory, StringComparison.OrdinalIgnoreCase));
+		}
+
+		bool AreCompositionPrerequisitesMet(UnitComposition composition)
+		{
+			if (composition.Prerequisites == null || composition.Prerequisites.Length == 0)
+				return true;
+			return techTree == null || techTree.HasPrerequisites(composition.Prerequisites);
+		}
+
+		int GetNextCompositionSelectTick()
+		{
+			var min = Math.Max(0, Info.MinCompositionSelectInterval);
+			var max = Math.Max(0, Info.MaxCompositionSelectInterval);
+
+			if (min == 0 && max == 0)
+				return int.MaxValue / 4;
+
+			if (max < min)
+				max = min;
+
+			var interval = min == max ? min : world.LocalRandom.Next(min, max + 1);
+			return world.WorldTick + interval;
+		}
+
+		void AddToActiveCompositionProducedValue(ActorInfo builtUnit)
+		{
+			if (activeComposition == null || compositionsModule == null || builtUnit == null)
+				return;
+
+			compositionsModule.UnitCosts.TryGetValue(builtUnit.Name, out var unitCost);
+			if (unitCost <= 0)
+				return;
+
+			activeCompositionProducedValue += unitCost;
 		}
 
 		bool IBotAircraftBuilder.CanBuildMoreOfAircraft(ActorInfo actorInfo)
@@ -296,28 +542,65 @@ namespace OpenRA.Mods.CA.Traits
 			if (attackAircraftInfo == null)
 				return true;
 
+			int currentCount;
 			var limit = Info.MaxAircraft;
-			var currentCount = 0;
+			var isAirToAir = Info.AirToAirUnits.Contains(actorInfo.Name);
 
-			if (Info.MaintainAirSuperiority)
+			if (Info.MaintainAirSuperiority && isAirToAir)
 			{
-				var numAirToAirUnits = AIUtils.GetActorsWithTrait<Aircraft>(player.World).Count(a => a.Owner == player && Info.AirToAirUnits.Contains(a.Info.Name));
+				// Get all production queues to count queued aircraft (for allies as well)
+				var queues = AIUtils.FindQueuesByCategory(player.World.Players.Where(p => p.IsAlliedWith(player)));
 
-				if (Info.AirToAirUnits.Contains(actorInfo.Name))
-				{
-					currentCount = numAirToAirUnits;
-					var numFriendlyAirToAirUnits = player.World.Actors.Count(a => a.Owner.RelationshipWith(player) == PlayerRelationship.Ally && Info.AirToAirUnits.Contains(a.Info.Name));
-					var numEnemyAirThreatUnits = player.World.Actors.Count(a => a.Owner.RelationshipWith(player) == PlayerRelationship.Enemy && Info.AirThreatUnits.Contains(a.Info.Name));
-					limit = Math.Max(numEnemyAirThreatUnits - numFriendlyAirToAirUnits + 1, limit);
+				// Count queued air-to-air units across all queues
+				var queuedAirToAirCount = queues.SelectMany(g => g).SelectMany(q => q.AllQueued())
+					.Count(item => Info.AirToAirUnits.Contains(item.Item));
 
-					if (Info.MaxAirSuperiority > 0)
-						limit = Math.Min(Info.MaxAirSuperiority, limit);
-				}
-				else
-					currentCount = AIUtils.GetActorsWithTrait<Aircraft>(player.World).Count(a => a.Owner == player && a.Info.HasTraitInfo<BuildableInfo>()) - numAirToAirUnits;
+				var friendlyAirToAirCount = player.World.Actors.Count(a => a.Owner.RelationshipWith(player) == PlayerRelationship.Ally
+					&& Info.AirToAirUnits.Contains(a.Info.Name));
+
+				var enemyAirThreatCount = player.World.Actors.Count(a => a.Owner.RelationshipWith(player) == PlayerRelationship.Enemy
+					&& Info.AirThreatUnits.Contains(a.Info.Name));
+
+				currentCount = friendlyAirToAirCount + queuedAirToAirCount;
+				limit = Math.Max(enemyAirThreatCount + 1, limit);
+
+				if (Info.MaxAirSuperiority > 0)
+					limit = Math.Min(Info.MaxAirSuperiority, limit);
 			}
 			else
-				currentCount = AIUtils.GetActorsWithTrait<Aircraft>(player.World).Count(a => a.Owner == player && a.Info.HasTraitInfo<BuildableInfo>());
+			{
+				// Get all production queues to count queued aircraft
+				var queues = AIUtils.FindQueuesByCategory(player);
+
+				// Non air-to-air aircraft uses the standard aircraft limit
+				if (Info.MaintainAirSuperiority)
+				{
+					var existingNonAirToAirCount = player.World.Actors.Count(a =>
+						a.Owner == player &&
+						a.Info.HasTraitInfo<AircraftInfo>() &&
+						a.Info.HasTraitInfo<BuildableInfo>() &&
+						!Info.AirToAirUnits.Contains(a.Info.Name));
+
+					var queuedNonAirToAirCount = queues.SelectMany(g => g).SelectMany(q => q.AllQueued())
+						.Count(item => !Info.AirToAirUnits.Contains(item.Item) &&
+							world.Map.Rules.Actors[item.Item].HasTraitInfo<AircraftInfo>());
+
+					currentCount = existingNonAirToAirCount + queuedNonAirToAirCount;
+				}
+				else
+				{
+					var existingAircraftCount = player.World.Actors.Count(a =>
+						a.Owner == player &&
+						a.Info.HasTraitInfo<AircraftInfo>() &&
+						a.Info.HasTraitInfo<BuildableInfo>());
+
+					// Count all queued aircraft
+					var queuedAircraft = queues.SelectMany(g => g).SelectMany(q => q.AllQueued())
+						.Count(item => world.Map.Rules.Actors[item.Item].HasTraitInfo<AircraftInfo>());
+
+					currentCount = existingAircraftCount + queuedAircraft;
+				}
+			}
 
 			return currentCount < limit;
 		}
@@ -330,7 +613,10 @@ namespace OpenRA.Mods.CA.Traits
 			return new List<MiniYamlNode>()
 			{
 				new MiniYamlNode("QueuedBuildRequests", FieldSaver.FormatValue(queuedBuildRequests.ToArray())),
-				new MiniYamlNode("IdleUnitCount", FieldSaver.FormatValue(idleUnitCount))
+				new MiniYamlNode("IdleUnitCount", FieldSaver.FormatValue(idleUnitCount)),
+				new("CompositionLastUsed", "", compositionLastUsedTickById
+					.Select(kvp => new MiniYamlNode(kvp.Key, FieldSaver.FormatValue(kvp.Value)))
+					.ToList())
 			};
 		}
 
@@ -349,6 +635,19 @@ namespace OpenRA.Mods.CA.Traits
 			var idleUnitCountNode = data.NodeWithKeyOrDefault("IdleUnitCount");
 			if (idleUnitCountNode != null)
 				idleUnitCount = FieldLoader.GetValue<int>("IdleUnitCount", idleUnitCountNode.Value.Value);
+
+			var compositionLastUsedNode = data.NodeWithKeyOrDefault("CompositionLastUsed");
+			if (compositionLastUsedNode != null)
+			{
+				compositionLastUsedTickById.Clear();
+				foreach (var n in compositionLastUsedNode.Value.Nodes)
+					compositionLastUsedTickById[n.Key] = FieldLoader.GetValue<int>("CompositionLastUsed", n.Value.Value);
+			}
+		}
+
+		void INotifyActorDisposing.Disposing(Actor self)
+		{
+			unitsToBuild?.Dispose();
 		}
 	}
 }

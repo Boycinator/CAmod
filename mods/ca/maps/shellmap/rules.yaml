@@ -64,7 +64,7 @@ SPLITBLUE:
 
 UPGC:
 	GrantCondition@RADAR:
-		Condition: tower.radar
+		Condition: tower-radar
 
 AIRS:
 	ProductionAirdropCA@SQVEH:
@@ -123,6 +123,8 @@ NUKC:
 ^GainsExperience:
 	GrantCondition@Shell:
 		Condition: shellmap
+	DummyConditionConsumer@Shell:
+		Condition: shellmap
 	WithDecoration@RANK-1:
 		RequiresCondition: rank-veteran == 1 && !shellmap
 	WithDecoration@RANK-2:
@@ -152,7 +154,7 @@ PROC.TD:
 	GivesBountyCA:
 		ShowBounty: false
 
-^Concussion:
+^ConditionIcons:
 	WithDecoration@Concussion:
 		RequiresSelection: True
 
@@ -167,9 +169,6 @@ PROC.TD:
 
 ^Veil:
 	-RenderShroudCircleCA:
-
-CVAT:
-	-LinkedProducerTarget:
 
 RMBO:
 	WithDecoration@COMMANDOSKULL:
@@ -198,6 +197,10 @@ MACS:
 	-PeriodicProducerCA@ARTIFICER:
 	-GrantConditionIfOwnerIsNeutral:
 	-GrantConditionOnPrerequisite@SCRIN:
+
+MACS.Rebuilt:
+	-PeriodicProducerCA@MECHANIC:
+	-PeriodicProducerCA@ARTIFICER:
 
 MINV:
 	-WithColoredSelectionBox@PlayerColorBox:
@@ -245,10 +248,6 @@ FTUR:
 		Modifier: 5
 
 # Hunt() requires only 1 AttackBase
-
-BATF.AI:
-	-AttackFrontal:
-
 DEVA:
 	-AttackFrontalCharged:
 	-Armament@PRIMARYUPG:

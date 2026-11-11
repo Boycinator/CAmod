@@ -10,6 +10,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using OpenRA.Mods.CA.Traits;
 using OpenRA.Mods.Common.Traits;
 using OpenRA.Scripting;
 
@@ -18,8 +19,13 @@ namespace OpenRA.Mods.Common.Scripting
 	[ScriptPropertyGroup("PlayerCA")]
 	public class PlayerCAProperties : ScriptPlayerProperties
 	{
+		private readonly PlayerStatistics playerStatistics;
+
 		public PlayerCAProperties(ScriptContext context, Player player)
-			: base(context, player) { }
+			: base(context, player)
+		{
+			playerStatistics = player.PlayerActor.TraitOrDefault<PlayerStatistics>();
+		}
 
 		[Desc("Returns all living actors of the specified target types of this player.")]
 		public Actor[] GetActorsByTargetTypes(string[] targetTypes)
@@ -44,5 +50,29 @@ namespace OpenRA.Mods.Common.Scripting
 
 			return result.ToArray();
 		}
+
+		[Desc("True if the player has not surrendered or disconnected.")]
+		public bool PlayerIsActive
+		{
+			get
+			{
+				if (Player == null)
+					return false;
+
+				if (Player.Spectating)
+					return false;
+
+				if (Player.WinState == WinState.Lost)
+					return false;
+
+				if (Player.PlayerActor.TraitOrDefault<PlayerConnectionStatus>()?.IsConnected != true)
+					return false;
+
+				return true;
+			}
+		}
+
+		[Desc("Returns the player's statistics.")]
+		public int ArmyValue => playerStatistics.ArmyValue;
 	}
 }

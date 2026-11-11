@@ -338,9 +338,6 @@ camera.infiltrator:
 	KillsSelf:
 		RemoveInstead: true
 		Delay: 3000
-	UpdatesCount@NodCovenant:
-		Type: NodCovenant
-		UpdateOn: Created
 
 camera.paradrop:
 	Inherits: ^CameraBase
@@ -349,6 +346,22 @@ camera.paradrop:
 
 camera.spyplane:
 	Inherits: ^CameraBase
+
+camera.psychic:
+	Inherits@1: ^CameraBase
+	-RevealsShroud:
+	RangedGpsRadarProvider:
+		Range: 10c0
+		TargetTypes: Infantry, Vehicle, Air, Structure
+	WithRangeCircle:
+		Type: PsychicDetection
+		Range: 10c0
+		Color: cc00ff77
+		BorderColor: 00000044
+		Visible: Always
+	KillsSelf:
+		RemoveInstead: true
+		Delay: 775
 
 camera.sathack:
 	Inherits: ^CameraBase
@@ -416,6 +429,16 @@ camera.decoy:
 	KillsSelf:
 		RemoveInstead: true
 		Delay: 100
+
+camera.interceptors:
+	Inherits: ^CameraBase
+	WithRangeCircleCA@Interceptors:
+		Type: Interceptors
+		Range: 12c0
+		Visible: Always
+		ValidRelationships: Ally, Enemy, Neutral
+		UsePlayerColor: true
+		PlayerColorAlpha: 192
 
 gps.satellite:
 	Inherits@DUMMY: ^InvisibleDummy
@@ -686,7 +709,8 @@ powerproxy.parabombs:
 		Name: Parabombs (Single Use)
 		Description: A Badger drops a load of parachuted bombs on your target.
 		OneShot: true
-		AllowMultiple: true
+		Stacks: 1
+		StackActivationInterval: 750
 		UnitType: badr.bomber
 		EndChargeSpeechNotification: Reinforce
 		SelectTargetSpeechNotification: SelectTarget
@@ -700,6 +724,8 @@ powerproxy.parabombs:
 		ClockSequence: clock
 		CircleSequence: circles
 		OrderName: crateparabombs
+		UseDirectionalTarget: True
+		DirectionArrowAnimation: paradirection
 		SupportPowerPaletteOrder: 70
 
 powerproxy.sonarpulse:
@@ -721,14 +747,15 @@ powerproxy.sonarpulse:
 
 powerproxy.paratroopers:
 	Inherits@DUMMY: ^InvisibleDummy
-	ParatroopersPower:
+	ParatroopersPowerCA:
 		Icon: paratroopers
 		SquadSize: 1
 		UnitType: halo.paradrop
 		Name: Paratroopers (Single Use)
 		Description: A Halo transport drops a squad of infantry\nanywhere on the map.
 		OneShot: true
-		AllowMultiple: true
+		Stacks: 1
+		StackActivationInterval: 750
 		DropItems: E1,E1,E1,E3,E3,E1,E1,E1,E2,E2
 		SelectTargetSpeechNotification: SelectTarget
 		EndChargeSpeechNotification: Reinforce
@@ -742,18 +769,21 @@ powerproxy.paratroopers:
 		ArrowSequence: arrow
 		ClockSequence: clock
 		CircleSequence: circles
+		UseDirectionalTarget: True
+		DirectionArrowAnimation: paradirection
 		SupportPowerPaletteOrder: 70
 
 powerproxy.paratroopers.allies:
 	Inherits@DUMMY: ^InvisibleDummy
-	ParatroopersPower:
+	ParatroopersPowerCA:
 		Icon: paratroopers
 		SquadSize: 1
 		UnitType: tran.paradrop
 		Name: Paratroopers (Single Use)
 		Description: A Chinook drops a squad of infantry\nanywhere on the map.
 		OneShot: true
-		AllowMultiple: true
+		Stacks: 1
+		StackActivationInterval: 750
 		DropItems: E1,E1,E1,E1,E3,E3,E3,MEDI
 		SelectTargetSpeechNotification: SelectTarget
 		EndChargeSpeechNotification: Reinforce
@@ -767,6 +797,8 @@ powerproxy.paratroopers.allies:
 		ArrowSequence: arrow
 		ClockSequence: clock
 		CircleSequence: circles
+		UseDirectionalTarget: True
+		DirectionArrowAnimation: paradirection
 		SupportPowerPaletteOrder: 70
 
 powerproxy.airborne:
@@ -776,10 +808,11 @@ powerproxy.airborne:
 		Icon: airborne
 		SquadSize: 1
 		UnitType: galx
-		Name: Airdrop: Guardian GIs (Single Use)
+		Name: Airdrop: Guardian GIs
 		Description: A Heavy Transport Plane drops a squad of Guardian GIs\nanywhere on the map.
 		OneShot: true
-		AllowMultiple: true
+		Stacks: 1
+		StackActivationInterval: 250
 		DropItems: U3,U3,U3,U3,U3
 		SelectTargetSpeechNotification: SelectTarget
 		EndChargeSpeechNotification: Reinforce
@@ -810,10 +843,11 @@ powerproxy.airborne.tank:
 		Icon: airdropicon
 		SquadSize: 1
 		UnitType: galx
-		Name: Airdrop: Grizzly Tanks (Single Use)
+		Name: Airdrop: Grizzly Tanks
 		Description: A Heavy Transport Plane drops a pair of Grizzly Tanks\nanywhere on the map.
 		OneShot: true
-		AllowMultiple: true
+		Stacks: 1
+		StackActivationInterval: 250
 		DropItems: GTNK,GTNK
 		SelectTargetSpeechNotification: SelectTarget
 		EndChargeSpeechNotification: Reinforce
@@ -855,7 +889,8 @@ powerproxy.airstrike:
 		Name: Air Strike (Single Use)
 		Description: A10 strike planes drop napalm\nbombs on your target.
 		OneShot: true
-		AllowMultiple: true
+		Stacks: 1
+		StackActivationInterval: 375
 		SelectTargetSpeechNotification: SelectTarget
 		EndChargeSpeechNotification: Reinforce
 		LaunchSpeechNotification: ReinforcementsArrived
@@ -1166,7 +1201,7 @@ SPLITBLUE:
 veilofwar1:
 	Inherits: ^Veil
 	CreatesShroud:
-		Range: 3c512
+		Range: 3c0
 	KillsSelf:
 		Delay: 60
 	WithMakeAnimation:
@@ -1174,7 +1209,7 @@ veilofwar1:
 		Actor: veilofwar2
 	WithRangeCircle@VeilMaxRange:
 		Type: VeilOfWar
-		Range: 7c512
+		Range: 6c0
 		Visible: Always
 		Color: 999999AA
 	ProximityExternalCondition@Veiled:
@@ -1183,7 +1218,7 @@ veilofwar1:
 veilofwar2:
 	Inherits: ^Veil
 	CreatesShroud:
-		Range: 5c512
+		Range: 4c512
 	PeriodicExplosion:
 		Weapon: VeilMedium
 	KillsSelf:
@@ -1192,7 +1227,7 @@ veilofwar2:
 		Actor: veilofwar3
 	WithRangeCircle@VeilMaxRange:
 		Type: VeilOfWar
-		Range: 7c512
+		Range: 6c0
 		Visible: Always
 		Color: 999999AA
 	ProximityExternalCondition@Veiled:
@@ -1201,29 +1236,22 @@ veilofwar2:
 veilofwar3:
 	Inherits: ^Veil
 	CreatesShroud:
-		Range: 7c512
+		Range: 6c0
 	PeriodicExplosion:
 		Weapon: VeilLarge
 	KillsSelf:
 		Delay: 300
 	ProximityExternalCondition@Veiled:
-		Range: 7c512
+		Range: 6c0
 
 jamming.field:
 	Interactable:
 		Bounds: 64, 64
 	ScriptTriggers:
-	BodyOrientation:
-		QuantizedFacings: 1
-	WithSpriteBody:
-	HitShape:
 	HiddenUnderFog:
 		Type: GroundPosition
 	Immobile:
 		OccupiesSpace: false
-	RenderSprites:
-		Image: jamfield
-		Palette: effect
 	KillsSelf:
 		Delay: 225
 	WithRangeCircleCA@JAMMER:
@@ -1232,7 +1260,7 @@ jamming.field:
 		Visible: Always
 		ValidRelationships: Ally, Enemy, Neutral
 		UsePlayerColor: true
-		PlayerColorAlpha: 160
+		PlayerColorAlpha: 224
 	ProximityExternalCondition@WEAPJAMMER:
 		Range: 6c0
 		ValidRelationships: Enemy, Neutral
@@ -1241,6 +1269,18 @@ jamming.field:
 		Range: 6c0
 		ValidRelationships: Enemy, Neutral
 		Condition: jammed
+	WithDistortionHalo:
+		LineCount: 6
+		Distortion: 280
+		DistortionAnimation: 150
+		Radius: 6c0
+		Width: 64
+		MaxDistortion: 320
+		SegmentsPerLine: 16
+		Colors: 77777722, 99999922, 88888833, 99aacc33, 8899cc55, 8899cc33
+		GlowColor: 44444444
+		Visible: Always
+		ValidRelationships: Ally, Enemy, Neutral
 
 cryostorm.init:
 	Interactable:
@@ -1389,12 +1429,7 @@ killzone:
 shadow.beacon.camera:
 	Inherits@1: ^CameraBase
 	-Immobile:
-	AttachedAircraft:
-		Speed: 0
-		CanHover: true
-		Repulsable: false
-		CruiseAltitude: 1
-		LandableTerrainTypes: Clear,Road,Rough,Ore,Gems,Tiberium,BlueTiberium,BlackTiberium,Water,Tree,River,Rock,Beach,Bridge,Tunnel,Wall,Ford
+	ImmobilePositionable:
 	Attachable:
 		Type: ShadowBeacon
 		TargetTypes: ShadowBeaconAttachable
@@ -1450,14 +1485,6 @@ optimized.production2:
 	Inherits@DUMMY: ^InvisibleDummy
 	ProvidesPrerequisite:
 	PopControlled:
-
-nod.covenants.available:
-	AlwaysVisible:
-	Interactable:
-	Tooltip:
-		Name: 3x enemy buildings destroyed/infiltrated or harvesters destroyed
-	Buildable:
-		Description: 3x enemy buildings destroyed/infiltrated or harvesters destroyed
 
 scrin.allegiances.available:
 	AlwaysVisible:
@@ -1521,4 +1548,28 @@ influence.level3:
 		Name: Influence Level 3
 	Buildable:
 		Description: Allied influence level 3.
+	RenderSprites:
+
+covenant.level1:
+	Inherits@DUMMY: ^InvisibleDummy
+	Tooltip:
+		Name: Covenant level 1 (1x enemy building destroyed/captured/infiltrated or harvester destroyed)
+	Buildable:
+		Description: Covenant level 1 (1x enemy building destroyed/captured/infiltrated or harvester destroyed)
+	RenderSprites:
+
+covenant.level2:
+	Inherits@DUMMY: ^InvisibleDummy
+	Tooltip:
+		Name: Covenant level 2
+	Buildable:
+		Description: Covenant level 2.
+	RenderSprites:
+
+covenant.level3:
+	Inherits@DUMMY: ^InvisibleDummy
+	Tooltip:
+		Name: Covenant level 3
+	Buildable:
+		Description: Covenant level 3.
 	RenderSprites:

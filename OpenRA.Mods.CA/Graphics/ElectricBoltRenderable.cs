@@ -10,6 +10,7 @@
 
 using System.Linq;
 using OpenRA.Graphics;
+using OpenRA.Mods.Common.Traits;
 using OpenRA.Primitives;
 
 namespace OpenRA.Mods.CA.Graphics
@@ -20,13 +21,19 @@ namespace OpenRA.Mods.CA.Graphics
 		readonly int zOffset;
 		readonly WDist width;
 		readonly Color color;
+		readonly Color glowColor;
+		readonly float glowScale;
+		readonly float glowIntensity;
 
-		public ElectricBoltRenderable(WPos[] offsets, int zOffset, WDist width, Color color)
+		public ElectricBoltRenderable(WPos[] offsets, int zOffset, WDist width, Color color, Color glowColor, float glowScale, float glowIntensity)
 		{
 			this.offsets = offsets;
 			this.zOffset = zOffset;
 			this.width = width;
 			this.color = color;
+			this.glowColor = glowColor;
+			this.glowScale = glowScale;
+			this.glowIntensity = glowIntensity;
 		}
 
 		public WPos Pos { get { return new WPos(offsets[0].X, offsets[0].Y, 0); } }
@@ -35,14 +42,23 @@ namespace OpenRA.Mods.CA.Graphics
 		public bool IsDecoration { get { return true; } }
 
 		public IRenderable WithPalette(PaletteReference newPalette) { return this; }
-		public IRenderable WithZOffset(int newOffset) { return new ElectricBoltRenderable(offsets, newOffset, width, color); }
-		public IRenderable OffsetBy(in WVec offset) { var offsetBy = offset; return new ElectricBoltRenderable(offsets.Select(o => o + offsetBy).ToArray(), zOffset, width, color); }
+		public IRenderable WithZOffset(int newOffset) { return new ElectricBoltRenderable(offsets, newOffset, width, color, glowColor, glowScale, glowIntensity); }
+		public IRenderable OffsetBy(in WVec offset)
+		{
+			var offsetBy = offset; return new ElectricBoltRenderable(offsets.Select(o => o + offsetBy).ToArray(), zOffset,
+			width, color, glowColor, glowScale, glowIntensity);
+		}
+
 		public IRenderable AsDecoration() { return this; }
 
 		public IFinalizedRenderable PrepareRender(WorldRenderer wr) { return this; }
 		public void Render(WorldRenderer wr)
 		{
 			var screenWidth = wr.ScreenVector(new WVec(width, WDist.Zero, WDist.Zero))[0];
+
+			if (Game.Settings.Graphics.WeaponPostfx && glowScale > 0f)
+				wr.World.WorldActor.TraitOrDefault<GlowRenderer>()
+					?.RegisterGlow(offsets.FirstOrDefault(), offsets.LastOrDefault(), glowColor, glowScale, intensity: glowIntensity);
 
 			Game.Renderer.WorldRgbaColorRenderer.DrawLine(offsets.Select(offset => wr.Screen3DPosition(offset)), screenWidth, color, false);
 		}

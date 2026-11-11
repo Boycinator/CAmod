@@ -71,6 +71,9 @@ namespace OpenRA.Mods.CA.Traits
 		[Desc("If true, target must not be under shroud/fog.")]
 		public readonly bool TargetMustBeVisible = false;
 
+		[Desc("If true, target must be within build range of a base provider.")]
+		public readonly bool TargetMustBeInBuildRadius = false;
+
 		public override object Create(ActorInitializer init) { return new DetonateWeaponPower(init.Self, this); }
 		public override void RulesetLoaded(Ruleset rules, ActorInfo ai)
 		{
@@ -83,16 +86,26 @@ namespace OpenRA.Mods.CA.Traits
 	public class DetonateWeaponPower : SupportPower, ITick
 	{
 		public new readonly DetonateWeaponPowerInfo Info;
+		WithSpriteBody wsb;
 
 		[Sync]
 		int ticks;
 
 		int activeToken = Actor.InvalidConditionToken;
+		public bool AllyBuildEnabled { get; }
 
 		public DetonateWeaponPower(Actor self, DetonateWeaponPowerInfo info)
 			: base(self, info)
 		{
 			Info = info;
+			var mapBuildRadius = self.World.WorldActor.TraitOrDefault<MapBuildRadius>();
+			AllyBuildEnabled = mapBuildRadius != null && mapBuildRadius.AllyBuildRadiusEnabled;
+		}
+
+		protected override void Created(Actor self)
+		{
+			base.Created(self);
+			wsb = self.TraitOrDefault<WithSpriteBody>();
 		}
 
 		public override SupportPowerInstance CreateInstance(string key, SupportPowerManager manager)
@@ -108,7 +121,6 @@ namespace OpenRA.Mods.CA.Traits
 			if (!string.IsNullOrEmpty(Info.ActiveCondition) && activeToken == Actor.InvalidConditionToken)
 				activeToken = self.GrantCondition(Info.ActiveCondition);
 
-			var wsb = self.TraitOrDefault<WithSpriteBody>();
 			if (wsb != null && wsb.DefaultAnimation.HasSequence(Info.Sequence))
 				wsb.PlayCustomAnimation(self, Info.Sequence);
 
@@ -216,6 +228,26 @@ namespace OpenRA.Mods.CA.Traits
 			if (power.Info.TargetMustBeVisible && !power.Self.Owner.Shroud.IsVisible(cell))
 				return false;
 
+			if (power.Info.TargetMustBeInBuildRadius)
+			{
+				var bases = world.ActorsWithTrait<BaseProvider>().Where(b => !b.Trait.IsTraitDisabled
+					&& (b.Actor.Owner == power.Self.Owner || (power.AllyBuildEnabled && b.Actor.Owner.IsAlliedWith(power.Self.Owner))));
+
+				bool inRange = false;
+				foreach (var b in bases)
+				{
+					var buildRadius = b.Trait.Info.Range;
+					var dist = (world.Map.CenterOfCell(cell) - b.Actor.CenterPosition).HorizontalLengthSquared;
+					if (dist <= buildRadius.LengthSquared)
+					{
+						inRange = true;
+						break;
+					}
+				}
+				if (!inRange)
+					return false;
+			}
+
 			return world.Map.Contains(cell);
 		}
 
@@ -253,6 +285,16 @@ namespace OpenRA.Mods.CA.Traits
 					0,
 					power.Info.TargetCircleUsePlayerColor ? power.Self.OwnerColor() : power.Info.TargetCircleColor, 1,
 					Color.FromArgb(96, Color.Black), 3);
+			}
+
+			if (power.Info.TargetMustBeInBuildRadius)
+			{
+				var bases = world.ActorsWithTrait<BaseProvider>().Where(b => !b.Trait.IsTraitDisabled
+					&& (b.Actor.Owner == power.Self.Owner || (power.AllyBuildEnabled && b.Actor.Owner.IsAlliedWith(power.Self.Owner))));
+
+				foreach (var b in bases)
+					foreach (var r in b.Trait.RangeCircleRenderables())
+						yield return r;
 			}
 		}
 

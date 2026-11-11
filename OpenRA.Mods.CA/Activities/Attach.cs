@@ -28,6 +28,7 @@ namespace OpenRA.Mods.CA.Activities
 		IMove move;
 		readonly Color targetLineColor;
 		AttachState state;
+		int storedExperienceToCopy;
 
 		bool TargetIsValid => target.Actor != null && target.Type == TargetType.Actor && target.Actor.IsInWorld && !target.Actor.IsDead && attachableTo.CanAttach(attachable);
 
@@ -96,6 +97,7 @@ namespace OpenRA.Mods.CA.Activities
 			}
 
 			attachableTo.Reserve();
+			CaptureExperienceToCopy(self);
 
 			if (attachable.Info.OnAttachTransformInto != null)
 			{
@@ -121,10 +123,47 @@ namespace OpenRA.Mods.CA.Activities
 			if (attachable == null)
 				return;
 
-			var attached = attachableTo.Attach(attachable, true);
+			var attached = attachableTo.Attach(a, attachable, true);
 
-			if (attached && attachable.Info.AttachSound != null)
+			if (!attached)
+			{
+				attachable.HostLost();
+				return;
+			}
+
+			CopyExperienceToMaster();
+
+			if (attachable.Info.AttachSound != null && !a.World.FogObscures(a.CenterPosition))
 				Game.Sound.Play(SoundType.World, attachable.Info.AttachSound, a.CenterPosition);
+		}
+
+		void CaptureExperienceToCopy(Actor self)
+		{
+			storedExperienceToCopy = 0;
+
+			if (!attachable.Info.OnAttachCopyExperience)
+				return;
+
+			var gainsExperience = self.TraitOrDefault<GainsExperience>();
+			if (gainsExperience == null || gainsExperience.Experience <= 0)
+				return;
+
+			storedExperienceToCopy = gainsExperience.Experience - attachable.CopiedExperience;
+		}
+
+		void CopyExperienceToMaster()
+		{
+			if (storedExperienceToCopy <= 0)
+				return;
+
+			var masterExperience = target.Actor.TraitOrDefault<GainsExperience>();
+			if (masterExperience == null)
+				return;
+
+			var copiedExperience = storedExperienceToCopy;
+			masterExperience.GiveExperience(copiedExperience);
+			storedExperienceToCopy = 0;
+			attachable.AddCopiedExperience(copiedExperience);
 		}
 
 		public override IEnumerable<TargetLineNode> TargetLineNodes(Actor self)

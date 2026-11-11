@@ -1361,7 +1361,7 @@ CYCP.Husk:
 		Image: cycp.destroyed
 
 BASI.Husk:
-	Inherits: ^Husk
+	Inherits: ^HuskTD
 	Tooltip:
 		Name: Husk (Basilisk)
 	RenderSprites:
@@ -1423,13 +1423,29 @@ MISS.Husk:
 		LocalCenterOffset: 0,-512,0
 	WithBuildingBib:
 	Tooltip:
-		Name: Ruin (Research Centre)
+		Name: Ruin (Communications Center)
 	TransformOnCapture:
 		IntoActor: miss
 	InfiltrateForTransform:
 		IntoActor: miss
 	RenderSprites:
 		Image: MISS.destroyed
+
+MISS.Capture.Husk:
+	Inherits: ^TechHusk
+	Building:
+		Footprint: xxx xxx ===
+		Dimensions: 3,3
+		LocalCenterOffset: 0,-512,0
+	WithBuildingBib:
+	Tooltip:
+		Name: Ruin (Communications Center)
+	TransformOnCapture:
+		IntoActor: miss.capture
+	InfiltrateForTransform:
+		IntoActor: miss.capture
+	RenderSprites:
+		Image: MISS.Capture.destroyed
 
 BIO.Husk:
 	Inherits: ^TechHusk
@@ -1453,9 +1469,9 @@ HOSP.Husk:
 	Tooltip:
 		Name: Ruin (Hospital)
 	TransformOnCapture:
-		IntoActor: hosp
+		IntoActor: hosp.rebuilt
 	InfiltrateForTransform:
-		IntoActor: hosp
+		IntoActor: hosp.rebuilt
 	RenderSprites:
 		Image: HOSP.destroyed
 
@@ -1467,9 +1483,9 @@ MACS.Husk:
 	Tooltip:
 		Name: Ruin (Machine Shop)
 	TransformOnCapture:
-		IntoActor: macs
+		IntoActor: macs.rebuilt
 	InfiltrateForTransform:
-		IntoActor: macs
+		IntoActor: macs.rebuilt
 	RenderSprites:
 		Image: MACS.destroyed
 

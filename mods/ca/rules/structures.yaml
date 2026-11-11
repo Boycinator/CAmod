@@ -14,9 +14,9 @@ MSLO:
 		BuildPaletteOrder: 140
 		Prerequisites: stek, ~structures.soviet, ~techlevel.unrestricted
 		BuildLimit: 1
-		Description: Provides an atomic bomb.
+		Description: Provides the A-Bomb superweapon power.
 	TooltipExtras:
-		Attributes: • Maximum 1 can be built\n• Requires power to operate\n• Special Ability: Atom Bomb
+		Attributes: • Maximum 1 can be built\n• Requires power to operate\n• Special Ability: A-Bomb
 	Building:
 		Footprint: xx
 		Dimensions: 2,1
@@ -51,9 +51,6 @@ MSLO:
 	Targetable@INFILTRATION:
 		RequiresCondition: !being-warped
 		TargetTypes: ResetSupportPowerInfiltrate
-	ProductionCostMultiplier@IRAQBONUS:
-		Multiplier: 60
-		Prerequisites: player.iraq
 	Encyclopedia:
 		Category: Soviets/Buildings
 
@@ -61,6 +58,7 @@ GAP:
 	Inherits: ^Defense
 	Inherits@IDISABLE: ^DisableOnLowPowerOrPowerDownOrForceDisable
 	Inherits@AUTOTARGET: ^AutoTargetAll
+	Inherits@DefensePolicyGapBonus: ^DefensePolicyGapBonus
 	Valued:
 		Cost: 1000
 	Tooltip:
@@ -375,6 +373,7 @@ IRON:
 		Amount: -200
 	MustBeDestroyed:
 		RequiredForShortGame: false
+	ProvidesPrerequisite@buildingname:
 	InfiltrateForSupportPowerReset:
 		Types: ResetSupportPowerInfiltrate
 		InfiltrationNotification: BuildingInfiltrated
@@ -467,7 +466,7 @@ TSLA:
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor, Infantry
 		Weaknesses: • Cannot attack Aircraft
-		Attributes: • Requires power to operate\n• Can detect cloaked units\n• Can be buffed or made work during low power by Shock Troopers
+		Attributes: • Requires power to operate\n• Detects cloaked units\n• Can be buffed or made work during low power by Shock Troopers
 	Valued:
 		Cost: 1200
 	Tooltip:
@@ -487,6 +486,8 @@ TSLA:
 	Targetable@TeslaBoost:
 		TargetTypes: TeslaBoost
 		RequiresCondition: !powerdown
+	WithLinkedRangeCirclePreview@TeslaBoost:
+		Type: TeslaBoost
 	WithBuildingBib:
 		HasMinibib: true
 	WithTeslaChargeAnimation:
@@ -518,9 +519,6 @@ TSLA:
 		Prerequisite: tslaorstek
 	DetectCloaked:
 		RequiresCondition: !(disabled || empdisable || being-warped)
-	ProductionCostMultiplier@RussiaBonus:
-		Multiplier: 90
-		Prerequisites: player.russia
 	GrantConditionOnPowerState@LOWPOWER:
 		RequiresCondition: !charged
 	ExternalCondition@CHARGED:
@@ -551,7 +549,7 @@ AGUN:
 	TooltipExtras:
 		Strengths: • Strong vs Aircraft
 		Weaknesses: • Cannot attack ground units
-		Attributes: • Requires power to operate\n• Can detect cloaked aircraft
+		Attributes: • Requires power to operate\n• Detects cloaked aircraft
 	Valued:
 		Cost: 800
 	Tooltip:
@@ -735,7 +733,7 @@ PBOX:
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
 		Weaknesses: • Weak vs Heavy Armor\n• Cannot attack Aircraft
-		Attributes: • Can detect cloaked units
+		Attributes: • Detects cloaked units
 	Valued:
 		Cost: 600
 	CustomSellValue:
@@ -787,9 +785,9 @@ HBOX:
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
 		Weaknesses: • Weak vs Heavy Armor\n• Cannot attack Aircraft
-		Attributes: • Can detect cloaked units\n• Camouflaged when idle
+		Attributes: • Detects cloaked units\n• Camouflaged when idle
 	Valued:
-		Cost: 650
+		Cost: 600
 	CustomSellValue:
 		Value: 220
 	Health:
@@ -807,9 +805,6 @@ HBOX:
 		CloakDelay: 60
 		IsPlayerPalette: true
 		PauseOnCondition: cloak-force-disabled || being-warped
-	GrantConditionOnDamageState@UNCLOAK:
-		Condition: cloak-force-disabled
-		ValidDamageStates: Critical
 	Turreted:
 		TurnSpeed: 512
 	-QuantizeFacingsFromSequence:
@@ -845,7 +840,7 @@ GUN:
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor
 		Weaknesses: • Weak vs Infantry\n• Cannot attack Aircraft
-		Attributes: • Can detect cloaked units
+		Attributes: • Detects cloaked units
 	Valued:
 		Cost: 800
 	CustomSellValue:
@@ -902,7 +897,7 @@ FTUR:
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
 		Weaknesses: • Weak vs Heavy Armor\n• Cannot attack Aircraft\n• Has difficulty hitting moving targets
-		Attributes: • Can detect cloaked units
+		Attributes: • Detects cloaked units
 	Valued:
 		Cost: 600
 	CustomSellValue:
@@ -967,7 +962,7 @@ SAM:
 	TooltipExtras:
 		Strengths: • Strong vs Aircraft
 		Weaknesses: • Cannot attack ground units
-		Attributes: • Requires power to operate\n• Can detect cloaked aircraft
+		Attributes: • Requires power to operate\n• Detects cloaked aircraft
 	Valued:
 		Cost: 750
 	Tooltip:
@@ -1056,8 +1051,10 @@ ATEK:
 	SupportPowerChargeBar:
 	Power:
 		Amount: -150
-	GrantConditionOnFogEnabled@FOGENABLED:
+	GrantConditionOnLobbyOption@FOGENABLED:
+		Name: fog
 		Condition: fogenabled
+		IsBoolean: true
 	ExternalCondition@DUMMY:
 		Condition: gps-launched
 	GrantConditionOnPrerequisite@PREVGPS:
@@ -1080,11 +1077,8 @@ ATEK:
 		Factions: allies, england, germany, france, usa
 	ProvidesPrerequisite@buildingname:
 		RequiresCondition: !tech-locked
-	ProvidesPrerequisite:
+	ProvidesPrerequisite@anytechcenter:
 		Prerequisite: techcenter.any
-		RequiresCondition: !tech-locked
-	ProvidesPrerequisite@AtekOrHq:
-		Prerequisite: atekoralhq
 		RequiresCondition: !tech-locked
 	ProvidesPrerequisiteValidatedFaction@germanyatek:
 		Factions: germany
@@ -1118,6 +1112,7 @@ ALHQ:
 	Inherits@HeliosBombPower: ^HeliosBombPower
 	Inherits@BlackSkyStrikePower: ^BlackSkyStrikePower
 	Inherits@ProductionOptimizer2: ^ProductionOptimizer2
+	Inherits@DevelopmentPolicyDiscount: ^DevelopmentPolicyDiscount
 	Selectable:
 		Bounds: 2048, 3072, 0, -512
 		DecorationBounds: 2133, 3157, 0, -512
@@ -1151,7 +1146,7 @@ ALHQ:
 	-CapturableProgressBlink:
 	-CaptureManager:
 	Valued:
-		Cost: 1800
+		Cost: 1200
 	Tooltip:
 		Name: Allied HQ
 	Power:
@@ -1167,9 +1162,6 @@ ALHQ:
 		RequiresCondition: !being-warped
 	ProvidesPrerequisite@buildingname:
 		RequiresCondition: !tech-locked
-	ProvidesPrerequisite@AtekOrHq:
-		Prerequisite: atekoralhq
-		RequiresCondition: !tech-locked
 	WithDecoration@TechLock:
 		RequiresCondition: tech-locked
 	Production@UPG:
@@ -1182,11 +1174,6 @@ ALHQ:
 	-WithDecoration@HACKED:
 	-WithDecoration@RESTORING:
 	-PowerMultiplier@HACKED:
-	FreeActor@ProductionOptimizer2:
-		RequiresCondition: optimized-production1
-	GrantConditionOnPrerequisite@ProductionOptimizer1:
-		Condition: optimized-production1
-		Prerequisites: optimized.production1
 	Encyclopedia:
 		Category: Allies/Buildings
 		Scale: 1.8
@@ -1275,6 +1262,9 @@ WEAP:
 	ProvidesPrerequisiteValidatedFaction@qtnk:
 		Factions: soviet, russia, ukraine, iraq
 		Prerequisite: vehicles.qtnk
+	ProvidesPrerequisiteValidatedFaction@v2:
+		Factions: soviet, russia, iraq, yuri
+		Prerequisite: vehicles.v2
 	Power:
 		Amount: -30
 	ProvidesPrerequisite@buildingname:
@@ -1418,14 +1408,14 @@ FACT:
 	BaseProvider:
 		Range: 16c0
 		PauseOnCondition: being-captured
-		RequiresCondition: !economy-policy2
-	BaseProvider@EconomyPolicy2:
+		RequiresCondition: !defense-policy
+	BaseProvider@DefensePolicy:
 		Range: 20c0
 		PauseOnCondition: being-captured
-		RequiresCondition: economy-policy2
-	GrantConditionOnPrerequisite@EconomyPolicy2:
-		Condition: economy-policy2
-		Prerequisites: economy.policy, influence.level2
+		RequiresCondition: defense-policy
+	GrantConditionOnPrerequisite@DefensePolicy:
+		Condition: defense-policy
+		Prerequisites: defense.policy
 	WithBuildingBib:
 	WithBuildingPlacedAnimation:
 		RequiresCondition: !build-incomplete && !chrono-vortex
@@ -1456,7 +1446,7 @@ FACT:
 
 PROC:
 	Inherits: ^Building
-	Inherits@BOTREF: ^BotRefinery
+	Inherits@Refinery: ^Refinery
 	Inherits@ResourceDrainable: ^ResourceDrainable
 	Inherits@EconomyPolicyDiscount: ^EconomyPolicyDiscount
 	Inherits@EconomyPolicyTimeReduction: ^EconomyPolicyTimeReduction
@@ -1474,6 +1464,8 @@ PROC:
 		Footprint: _X_ xxx X++ ===
 		Dimensions: 3,4
 		LocalCenterOffset: 0,-512,0
+	Sellable:
+		RequiresCondition: !build-incomplete && !c4 && !being-captured && !being-warped && !hacked && !resourcedrain
 	Selectable:
 		Bounds: 3072, 2512, 0, 256
 		DecorationBounds: 3072, 2986, 0, -85
@@ -1495,6 +1487,8 @@ PROC:
 		Type: Unload
 		DockAngle: 256
 		DockOffset: 0, 1c0, 0
+		MaxQueueLength: 12
+		RequiresCondition: !being-warped
 	StoresPlayerResourcesCA:
 		Capacity: 2000
 	WithResourceStoragePipsDecoration:
@@ -1577,7 +1571,7 @@ SILO:
 		Queue: DefenseSQ, DefenseMQ
 		BuildPaletteOrder: 35
 		Prerequisites: anyrefinery, ~structures.ra
-		Description: Stores excess refined\nTiberium, Ore and Gems.
+		Description: Stores processed Tiberium, Ore and Gems.
 	Valued:
 		Cost: 150
 	Tooltip:
@@ -1620,6 +1614,7 @@ HPAD:
 	Inherits@AIR: ^ProducesHelicopters
 	Inherits@SOVIETBOMBINGPOWERS: ^SovietBombingPowers
 	Inherits@STRAFINGRUNPOWER: ^StrafingRunPower
+	Inherits@InfiltrateForSupportPower: ^InfiltrateForSupportPower
 	HitShape:
 		UseTargetableCellsOffsets: false
 		TargetableOffsets: 0,0,0, 768,-512,0, 768,512,0, -281,-512,0, -630,512,0
@@ -1659,7 +1654,7 @@ HPAD:
 	Power:
 		Amount: -20
 	ValidFactions:
-		Factions: allies, england, france, germany, usa, russia, ukraine, iraq, yuri
+		Factions: allies, england, france, germany, usa, soviet, russia, ukraine, iraq, yuri
 	ProvidesPrerequisiteValidatedFaction@allies:
 		Factions: allies, england, france, germany, usa
 		Prerequisite: aircraft.allies
@@ -1685,10 +1680,10 @@ HPAD:
 		Factions: soviet, russia, ukraine, iraq
 		Prerequisite: aircraft.kiro
 	ProvidesPrerequisiteValidatedFaction@chinookvisible:
-		Factions: allies, england, france, germany, gdi, zocom, eagle, talon, arc, nod, blackh, legion, marked, shadow
+		Factions: allies, england, france, germany
 		Prerequisite: aircraft.chinookvisible
 	ProvidesPrerequisiteValidatedFaction@chinook:
-		Factions: allies, england, france, germany, gdi, zocom, eagle, talon, arc, nod, blackh, legion, marked, shadow
+		Factions: allies, england, france, germany
 		Prerequisite: aircraft.chinook
 	ProvidesPrerequisiteValidatedFaction@nhaw:
 		Factions: usa
@@ -1698,13 +1693,9 @@ HPAD:
 		Prerequisite: radaroraircraft
 	Targetable@INFILTRATION:
 		RequiresCondition: !being-warped
-		TargetTypes: GrantSupportPowerInfiltrate, StealTechInfiltrate
-	InfiltrateToCreateProxyActor:
-		Types: GrantSupportPowerInfiltrate
+		TargetTypes: StealTechInfiltrate
+	InfiltrateToCreateProxyActor@SpySupportPower:
 		Proxy: powerproxy.paratroopers.allies
-		InfiltrationNotification: BuildingInfiltrated
-		InfiltratedNotification: BaseAttack
-		PlayerExperience: 15
 	InfiltrateToCreateProxyActor@STOLENTECH:
 		Types: StealTechInfiltrate
 		Proxy: stolentech.hpad
@@ -1724,6 +1715,7 @@ AFLD:
 	Inherits@AIRCRAFTREPAIR: ^RepairsAircraftWithRepairBay
 	Inherits@AIR: ^ProducesAircraft
 	Inherits@SOVIETBOMBINGPOWERS: ^SovietBombingPowers
+	Inherits@InfiltrateForSupportPower: ^InfiltrateForSupportPower
 	HitShape:
 		UseTargetableCellsOffsets: false
 		TargetableOffsets: 0,0,0, 420,0,0, 420,-1024,0, 420,1024,0, -777,0,0, -777,-1024,0, -777,1024,0
@@ -1784,13 +1776,9 @@ AFLD:
 		Amount: -20
 	Targetable@INFILTRATION:
 		RequiresCondition: !being-warped
-		TargetTypes: GrantSupportPowerInfiltrate, StealTechInfiltrate
-	InfiltrateToCreateProxyActor:
+		TargetTypes: StealTechInfiltrate
+	InfiltrateToCreateProxyActor@SpySupportPower:
 		Proxy: powerproxy.airstrike
-		Types: GrantSupportPowerInfiltrate
-		InfiltrationNotification: BuildingInfiltrated
-		InfiltratedNotification: BaseAttack
-		PlayerExperience: 15
 	InfiltrateToCreateProxyActor@STOLENTECH:
 		Types: StealTechInfiltrate
 		Proxy: stolentech.afld
@@ -1825,7 +1813,7 @@ POWR:
 		Cost: 300
 	Tooltip:
 		Name: Power Plant
-	ProvidesPrerequisite:
+	ProvidesPrerequisite@anypower:
 		Prerequisite: anypower
 	Building:
 		Footprint: xx xx ==
@@ -1841,6 +1829,8 @@ POWR:
 	Power:
 		Amount: 100
 	ScalePowerWithHealth:
+	Sellable:
+		RequiresCondition: !build-incomplete && !c4 && !being-captured && !being-warped && !hacked && !discpowerdrain
 	WithDeathAnimation:
 		DeathSequence: dead
 		UseDeathTypeSuffix: false
@@ -1866,7 +1856,7 @@ APWR:
 		Cost: 500
 	Tooltip:
 		Name: Advanced Power Plant
-	ProvidesPrerequisite:
+	ProvidesPrerequisite@anypower:
 		Prerequisite: anypower
 	Building:
 		Footprint: xxx Xxx ===
@@ -1884,7 +1874,11 @@ APWR:
 	WithBuildingBib:
 	Power:
 		Amount: 200
+	Power@DiscPowerDrain:
+		Amount: -400
 	ScalePowerWithHealth:
+	Sellable:
+		RequiresCondition: !build-incomplete && !c4 && !being-captured && !being-warped && !hacked && !discpowerdrain
 	WithDeathAnimation:
 		DeathSequence: dead
 		UseDeathTypeSuffix: false
@@ -1914,10 +1908,10 @@ NPWR:
 	TooltipExtras:
 		Weaknesses: • Explodes when destroyed
 	Valued:
-		Cost: 1000
+		Cost: 1500
 	Tooltip:
 		Name: Atomic Reactor
-	ProvidesPrerequisite:
+	ProvidesPrerequisite@anypower:
 		Prerequisite: anypower
 	Building:
 		Footprint: xxxx Xxxx ====
@@ -1935,7 +1929,11 @@ NPWR:
 	WithBuildingBib:
 	Power:
 		Amount: 1000
+	Power@DiscPowerDrain:
+		Amount: -2000
 	ScalePowerWithHealth:
+	Sellable:
+		RequiresCondition: !build-incomplete && !c4 && !being-captured && !being-warped && !hacked && !discpowerdrain
 	WithDeathAnimation:
 		DeathSequence: dead
 		UseDeathTypeSuffix: false
@@ -1981,6 +1979,7 @@ TPWR:
 	TooltipExtras:
 		Strengths: • Power output unaffected by damage
 		Weaknesses: • Unstable when damaged
+		Attributes: • Boosts nearby Tesla Coils
 	Valued:
 		Cost: 600
 	Tooltip:
@@ -2002,6 +2001,13 @@ TPWR:
 	Power:
 		Amount: 300
 	-ScalePowerWithHealth:
+	ProximityExternalCondition@TeslaBoost:
+		Condition: charged
+		Range: 6c0
+	WithRangeCircleCA@TeslaBoost:
+		Type: TeslaBoost
+		Color: FFFF00AA
+		Range: 6c0
 	UpdatesBuildOrder:
 		Limit: 1
 	Encyclopedia:
@@ -2049,7 +2055,7 @@ STEK:
 		Amount: -150
 	ProvidesPrerequisite@buildingname:
 		RequiresCondition: !tech-locked
-	ProvidesPrerequisite:
+	ProvidesPrerequisite@anytechcenter:
 		Prerequisite: techcenter.any
 		RequiresCondition: !tech-locked
 	ProvidesPrerequisite@TeslaCoilOrSovietTechCenter:
@@ -2391,7 +2397,7 @@ FIX:
 	ProximityExternalCondition@AIRCRAFTREPAIR:
 		Condition: aircraft-repair
 		Range: 10c0
-	WithRangeCircle@AIRCRAFTREPAIR:
+	WithRangeCircleCA@AIRCRAFTREPAIR:
 		Type: AircraftRepair
 		Color: FFD000AA
 		Range: 10c0
@@ -2424,7 +2430,7 @@ SBAG:
 	WithWallSpriteBody:
 		Type: sandbag
 	Encyclopedia:
-		Category: Allies/Defenses
+		Category: Allies/Defenses; GDI/Defenses
 
 FENC:
 	Inherits: ^Wall
@@ -2702,14 +2708,6 @@ FTURORRADAR:
 		Name: Flame Tower or Radar
 	Buildable:
 		Description: Flame Tower or Radar
-
-ATEKORALHQ:
-	AlwaysVisible:
-	Interactable:
-	Tooltip:
-		Name: Allied Tech Center or Allied HQ
-	Buildable:
-		Description: Allied Tech Center or Allied HQ
 
 VEHICLES.MCV:
 	AlwaysVisible:
@@ -3188,9 +3186,12 @@ AIRS:
 		Multiplier: 125
 		Prerequisites: global.multiqueuescaled, vehicles.any, optimized.production1, !optimized.production2
 	ProductionCostMultiplier@MQS3:
+		Multiplier: 125
+		Prerequisites: global.multiqueuescaled, vehicles.any, !optimized.production1, optimized.production2
+	ProductionCostMultiplier@MQS4:
 		Multiplier: 90
 		Prerequisites: global.multiqueuescaled, vehicles.any, optimized.production1, optimized.production2
-	ProductionCostMultiplier@MQS4:
+	ProductionCostMultiplier@MQS5:
 		Multiplier: 90
 		Prerequisites: global.multiqueuescaled, !vehicles.any
 	Encyclopedia:
@@ -3238,8 +3239,10 @@ NUKE:
 	Power:
 		Amount: 100
 	ScalePowerWithHealth:
+	Sellable:
+		RequiresCondition: !build-incomplete && !c4 && !being-captured && !being-warped && !hacked && !discpowerdrain
 	ProvidesPrerequisite@buildingname:
-	ProvidesPrerequisite:
+	ProvidesPrerequisite@anypower:
 		Prerequisite: anypower
 	UpdatesBuildOrder:
 		Limit: 2
@@ -3273,7 +3276,7 @@ NUK2:
 		Cost: 500
 	Tooltip:
 		Name: Advanced Nuclear Power Plant
-	ProvidesPrerequisite:
+	ProvidesPrerequisite@anypower:
 		Prerequisite: anypower
 	Building:
 		Footprint: xX xx ==
@@ -3288,8 +3291,12 @@ NUK2:
 	WithBuildingBib:
 	Power:
 		Amount: 200
+	Power@DiscPowerDrain:
+		Amount: -400
 	ProvidesPrerequisite@buildingname:
 	ScalePowerWithHealth:
+	Sellable:
+		RequiresCondition: !build-incomplete && !c4 && !being-captured && !being-warped && !hacked && !discpowerdrain
 	UpdatesBuildOrder:
 		Limit: 1
 	Encyclopedia:
@@ -3412,14 +3419,14 @@ AFAC:
 	BaseProvider:
 		Range: 16c0
 		PauseOnCondition: being-captured
-		RequiresCondition: !economy-policy2
-	BaseProvider@EconomyPolicy2:
+		RequiresCondition: !defense-policy
+	BaseProvider@DefensePolicy:
 		Range: 20c0
 		PauseOnCondition: being-captured
-		RequiresCondition: economy-policy2
-	GrantConditionOnPrerequisite@EconomyPolicy2:
-		Condition: economy-policy2
-		Prerequisites: economy.policy, influence.level2
+		RequiresCondition: defense-policy
+	GrantConditionOnPrerequisite@DefensePolicy:
+		Condition: defense-policy
+		Prerequisites: defense.policy
 	WithBuildingPlacedAnimation:
 		RequiresCondition: !build-incomplete && !chrono-vortex
 	Power:
@@ -3460,7 +3467,7 @@ NSAM:
 	TooltipExtras:
 		Strengths: • Strong vs Aircraft
 		Weaknesses: • Cannot attack ground units
-		Attributes: • Requires power to operate\n• Can detect cloaked aircraft
+		Attributes: • Requires power to operate\n• Detects cloaked aircraft
 	Valued:
 		Cost: 750
 	Tooltip:
@@ -3521,7 +3528,7 @@ GTWR:
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
 		Weaknesses: • Weak vs Heavy Armor\n• Cannot attack Aircraft
-		Attributes: • Can detect cloaked units
+		Attributes: • Detects cloaked units
 	Valued:
 		Cost: 600
 	CustomSellValue:
@@ -3572,13 +3579,13 @@ ATWR:
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor, Infantry
 		Weaknesses: • Cannot attack Aircraft
-		Attributes: • Requires power to operate\n• Can detect cloaked units
+		Attributes: • Requires power to operate\n• Detects cloaked units
 	Valued:
-		Cost: 1100
+		Cost: 1250
 	Tooltip:
 		Name: Advanced Guard Tower
 	Health:
-		HP: 50000
+		HP: 52000
 	Armor:
 		Type: Concrete
 	Selectable:
@@ -3599,12 +3606,13 @@ ATWR:
 		Weapon: StingerGTWR
 		LocalOffset: 256,128,0, 256,-128,0
 		LocalYaw: -100,100
+	ArmamentBurstCounter:
 	AttackTurreted:
 		PauseOnCondition: build-incomplete || disabled || empdisable || being-warped
 	ClassicFacingBodyOrientation:
 		QuantizedFacings: 8
 	Power:
-		Amount: -70
+		Amount: -75
 	DetectCloaked:
 		RequiresCondition: !(disabled || empdisable || being-warped)
 	Encyclopedia:
@@ -3622,7 +3630,7 @@ STWR:
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor, Infantry
 		Weaknesses: • Cannot attack Aircraft
-		Attributes: • Requires power to operate\n• Can detect cloaked units
+		Attributes: • Requires power to operate\n• Detects cloaked units
 	Valued:
 		Cost: 1450
 	Tooltip:
@@ -3685,7 +3693,7 @@ OBLI:
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor, Infantry
 		Weaknesses: • Cannot attack Aircraft
-		Attributes: • Requires power to operate\n• Can detect cloaked units
+		Attributes: • Requires power to operate\n• Detects cloaked units
 	Valued:
 		Cost: 1500
 	Tooltip:
@@ -3793,7 +3801,7 @@ HQ:
 		Name: Drone Comm. Center
 		RequiresCondition: arc-built
 	Building:
-		Footprint: X_ xx ==
+		Footprint: XX xx ==
 		Dimensions: 2,3
 		LocalCenterOffset: 0,-512,0
 	WithSpriteBody:
@@ -3801,8 +3809,6 @@ HQ:
 	Targetable@INFILTRATION:
 		RequiresCondition: !being-warped
 		TargetTypes: ResetShroudInfiltrate
-	Targetable@HACKCAPTURABLE:
-		RequiresCondition: !being-warped
 	Health:
 		HP: 110000
 	Armor:
@@ -3912,17 +3918,20 @@ HQ:
 		InitialCharge: 0
 		MaxCharge: 3000
 		ChargeRate: 1
-		DischargeRate: 8
+		DischargeRate: 3
 		ChargingColor: aaaa00
 		DischargingColor: ffff00
 		ShowSelectionBarWhenFull: false
 		ShowSelectionBarWhenEmpty: false
+	ReplacedInQueue:
+		Actors: hq.upg
 	Encyclopedia:
 		Category: GDI/Buildings; Nod/Buildings
 
 HQ.UPG:
 	Inherits: HQ
 	RenderSprites:
+		PlayerPalette: playertd
 		Image: nodhq.upg
 		FactionImages:
 			nod: nodhq.upg
@@ -3940,10 +3949,8 @@ HQ.UPG:
 	Tooltip:
 		Name: Internet Center
 	TooltipExtras:
-		Attributes: • Requires power to operate\n• Detects nearby enemy vehicles, aircraft and structures in fog of war\n• $25 delivered every 60 seconds (normal speed)\n• Income increased by $75 per garrisoned Hacker
-	RenderSprites:
-		PlayerPalette: playertd
-	-Targetable@HACKCAPTURABLE:
+		Attributes: • Requires power to operate\n• Detects nearby enemy vehicles, aircraft and structures in fog of war (increases per garrisoned Hacker)\n• $25 delivered every 15 seconds (normal speed)\n• Income increased by $75 per garrisoned Hacker\n• Cannot be hacked
+	-Targetable@HACKABLE:
 	-TransformOnCondition@UPG:
 	-GrantConditionOnPrerequisite@UPG:
 	Cargo:
@@ -3978,6 +3985,64 @@ HQ.UPG:
 		Interval: 375
 		Amount: 400
 		RequiresCondition: cargo == 5
+	RevealsShroud:
+		Range: 7c0
+		-MinRange:
+		-RequiresCondition:
+		RevealGeneratedShroud: True
+	-RevealsShroud@Offline:
+	-RevealsShroud@GAPGEN:
+	GrantCondition@RadarActive:
+		Condition: radar-active
+		RequiresCondition: !jammed && (!disabled || backup-power) && !being-warped && !build-incomplete
+	RangedGpsRadarProvider:
+		Range: 12c0
+		TargetTypes: Vehicle, Air, Structure
+		RequiresCondition: radar-active && cargo == 0
+	RangedGpsRadarProvider@1:
+		Range: 13c0
+		TargetTypes: Vehicle, Air, Structure
+		RequiresCondition: radar-active && cargo == 1
+	RangedGpsRadarProvider@2:
+		Range: 14c0
+		TargetTypes: Vehicle, Air, Structure
+		RequiresCondition: radar-active && cargo == 2
+	RangedGpsRadarProvider@3:
+		Range: 15c0
+		TargetTypes: Vehicle, Air, Structure
+		RequiresCondition: radar-active && cargo == 3
+	RangedGpsRadarProvider@4:
+		Range: 16c0
+		TargetTypes: Vehicle, Air, Structure
+		RequiresCondition: radar-active && cargo == 3
+	RangedGpsRadarProvider@5:
+		Range: 17c0
+		TargetTypes: Vehicle, Air, Structure
+		RequiresCondition: radar-active && cargo == 3
+	WithRangeCircle:
+		Type: RadarDetection
+		Range: 12c0
+		RequiresCondition: radar-active && cargo == 0
+	WithRangeCircle@1:
+		Type: RadarDetection
+		Range: 13c0
+		RequiresCondition: radar-active && cargo == 1
+	WithRangeCircle@2:
+		Type: RadarDetection
+		Range: 14c0
+		RequiresCondition: radar-active && cargo == 2
+	WithRangeCircle@3:
+		Type: RadarDetection
+		Range: 15c0
+		RequiresCondition: radar-active && cargo == 3
+	WithRangeCircle@4:
+		Type: RadarDetection
+		Range: 16c0
+		RequiresCondition: radar-active && cargo == 4
+	WithRangeCircle@5:
+		Type: RadarDetection
+		Range: 17c0
+		RequiresCondition: radar-active && cargo == 5
 	Encyclopedia:
 		Category: Nod/Buildings
 
@@ -3999,7 +4064,7 @@ EYE:
 		Prerequisites: gtek, ~structures.gdi, ~techlevel.unrestricted
 		IconPalette: chrometd
 		BuildLimit: 1
-		Description: Provides radar and Orbital Ion Cannon support power.
+		Description: Provides radar and orbital Ion Cannon superweapon power.
 	TooltipExtras:
 		Attributes: • Maximum 1 can be built\n• Requires power to operate\n• Special Ability: Ion Cannon\n• Detects nearby enemy vehicles, aircraft and structures in fog of war
 	Valued:
@@ -4139,7 +4204,7 @@ REP:
 	ProximityExternalCondition@AIRCRAFTREPAIR:
 		Condition: aircraft-repair
 		Range: 10c0
-	WithRangeCircle@AIRCRAFTREPAIR:
+	WithRangeCircleCA@AIRCRAFTREPAIR:
 		Type: AircraftRepair
 		Color: FFD000AA
 		Range: 10c0
@@ -4152,6 +4217,7 @@ HPAD.TD:
 	Inherits@AIRCRAFTREPAIR: ^RepairsAircraftWithRepairBay
 	Inherits@INTERCEPTORS: ^InterceptorsPower
 	Inherits@AIR: ^ProducesHelicopters
+	Inherits@InfiltrateForSupportPower: ^InfiltrateForSupportPower
 	RenderSprites:
 		Image: hpad2
 	HitShape:
@@ -4224,15 +4290,11 @@ HPAD.TD:
 		Prerequisite: radaroraircraft
 	Targetable@INFILTRATION:
 		RequiresCondition: !being-warped
-		TargetTypes: GrantSupportPowerInfiltrate, StealTechInfiltrate
+		TargetTypes: StealTechInfiltrate
 	WithResupplyAnimation:
 		RequiresCondition: !build-incomplete
-	InfiltrateToCreateProxyActor:
-		Types: GrantSupportPowerInfiltrate
+	InfiltrateToCreateProxyActor@SpySupportPower:
 		Proxy: powerproxy.paratroopers.allies
-		InfiltrationNotification: BuildingInfiltrated
-		InfiltratedNotification: BaseAttack
-		PlayerExperience: 15
 	InfiltrateToCreateProxyActor@STOLENTECH:
 		Types: StealTechInfiltrate
 		Proxy: stolentech.hpad.td
@@ -4248,7 +4310,7 @@ HPAD.TD:
 
 PROC.TD:
 	Inherits: ^BuildingTD
-	Inherits@BOTREF: ^BotRefinery
+	Inherits@Refinery: ^Refinery
 	Inherits@ResourceDrainable: ^ResourceDrainable
 	Inherits@EconomyPolicyDiscount: ^EconomyPolicyDiscount
 	Inherits@EconomyPolicyTimeReduction: ^EconomyPolicyTimeReduction
@@ -4285,6 +4347,8 @@ PROC.TD:
 		Footprint: _x_ xxx +++ ===
 		Dimensions: 3,4
 		LocalCenterOffset: 0,-512,0
+	Sellable:
+		RequiresCondition: !build-incomplete && !c4 && !being-captured && !being-warped && !hacked && !resourcedrain
 	Health:
 		HP: 90000
 	Armor:
@@ -4308,6 +4372,8 @@ PROC.TD:
 		IsDragRequired: True
 		DragOffset: -554,512,0
 		DragLength: 12
+		MaxQueueLength: 12
+		RequiresCondition: !being-warped
 	StoresPlayerResourcesCA:
 		Capacity: 2000
 	WithResourceStoragePipsDecoration:
@@ -4374,7 +4440,7 @@ SILO.TD:
 		Prerequisites: anyrefinery, ~structures.td
 		Queue: DefenseSQ, DefenseMQ
 		IconPalette: chrometd
-		Description: Stores processed Tiberium, Ore and Gems
+		Description: Stores processed Tiberium, Ore and Gems.
 	Building:
 		Footprint: xx
 		Dimensions: 2,1
@@ -4418,6 +4484,7 @@ AFLD.GDI:
 	Inherits@AIRCRAFTREPAIR: ^RepairsAircraftWithRepairBay
 	Inherits@INTERCEPTORS: ^InterceptorsPower
 	Inherits@AIR: ^ProducesAircraft
+	Inherits@InfiltrateForSupportPower: ^InfiltrateForSupportPower
 	RenderSprites:
 		Image: afldgdi
 	HitShape:
@@ -4428,6 +4495,7 @@ AFLD.GDI:
 	Buildable:
 		Queue: BuildingSQ, BuildingMQ
 		BuildPaletteOrder: 130
+		IconPalette: chrometd
 		Prerequisites: radarorrepair, ~structures.gdi, ~techlevel.medium
 		Description: Produces and reloads aircraft.
 	Valued:
@@ -4475,15 +4543,11 @@ AFLD.GDI:
 		Amount: -20
 	Targetable@INFILTRATION:
 		RequiresCondition: !being-warped
-		TargetTypes: GrantSupportPowerInfiltrate, StealTechInfiltrate
+		TargetTypes: StealTechInfiltrate
 	WithResupplyAnimation:
 		RequiresCondition: !build-incomplete
-	InfiltrateToCreateProxyActor:
-		Types: GrantSupportPowerInfiltrate
+	InfiltrateToCreateProxyActor@SpySupportPower:
 		Proxy: powerproxy.airstrike
-		InfiltrationNotification: BuildingInfiltrated
-		InfiltratedNotification: BaseAttack
-		PlayerExperience: 15
 	InfiltrateToCreateProxyActor@STOLENTECH:
 		Types: StealTechInfiltrate
 		Proxy: stolentech.afld.gdi
@@ -4546,7 +4610,7 @@ GTEK:
 		Factions: gdi, talon, zocom, eagle, arc
 	ProvidesPrerequisite@buildingname:
 		RequiresCondition: !tech-locked
-	ProvidesPrerequisite:
+	ProvidesPrerequisite@anytechcenter:
 		Prerequisite: techcenter.any
 		RequiresCondition: !tech-locked
 	ProvidesPrerequisite@tdtek:
@@ -4634,7 +4698,7 @@ TMPL:
 		Factions: nod, blackh, marked, legion, shadow
 	ProvidesPrerequisite@buildingname:
 		RequiresCondition: !tech-locked
-	ProvidesPrerequisite:
+	ProvidesPrerequisite@anytechcenter:
 		Prerequisite: techcenter.any
 		RequiresCondition: !tech-locked
 	ProvidesPrerequisite@tdtek:
@@ -4676,7 +4740,7 @@ PRIS:
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor, Infantry
 		Weaknesses: • Cannot attack Aircraft
-		Attributes: • Requires power to operate\n• Can detect cloaked units\n• Beam can chain with nearby Prism Towers
+		Attributes: • Requires power to operate\n• Detects cloaked units\n• Beam can chain with nearby Prism Towers
 	Valued:
 		Cost: 1350
 	Tooltip:
@@ -4685,7 +4749,7 @@ PRIS:
 	Selectable:
 		DecorationBounds: 1024, 1962, 0, -560
 	Health:
-		HP: 40000
+		HP: 44000
 	Armor:
 		Type: Concrete
 	RevealsShroud:
@@ -4729,13 +4793,11 @@ PRIS:
 	Power:
 		Amount: -80
 	ProvidesPrerequisite@buildingname:
-	WithRangeCircle@SUPPORT:
-		Type: PrismSupport
-		Range: 5c0
-		Color: ffffff66
 	WithPrismLinkVisualization:
-		Range: 5c0
-		Color: 00ffffff
+		Range: 7c512
+		SelectedColor: 00FFFF77
+		PlacementColor: 00FFFFFF
+		RangeCircleColor: 00FFFF77
 	Encyclopedia:
 		Category: Allies/Defenses
 
@@ -4848,6 +4910,7 @@ SYRD.gdi:
 		BuildPaletteOrder: 230
 		Prerequisites: anypower, ~structures.gdi, ~techlevel.navy, ~techlevel.low
 		Description: Produces and repairs ships\nand transports.
+		IconPalette: chrometd
 	Valued:
 		Cost: 1000
 	Tooltip:
@@ -4939,7 +5002,7 @@ HTUR:
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor, Infantry
 		Weaknesses: • Cannot attack Aircraft\n• Cannot hit targets at point-blank range
-		Attributes: • Requires power to operate\n• Can detect cloaked units
+		Attributes: • Requires power to operate\n• Detects cloaked units
 	Valued:
 		Cost: 1750
 	Tooltip:
@@ -5033,7 +5096,7 @@ LTUR:
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
 		Weaknesses: • Weak vs Heavy Armor\n• Cannot attack Aircraft
-		Attributes: • Can detect cloaked units
+		Attributes: • Detects cloaked units
 	Turreted:
 		InitialFacing: 128
 	-WithTurretAttackAnimation:
@@ -5068,7 +5131,7 @@ TTUR:
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
 		Weaknesses: • Cannot attack Aircraft\n• Has difficulty hitting moving targets
-		Attributes: • Can detect cloaked units
+		Attributes: • Detects cloaked units
 	Valued:
 		Cost: 650
 	CustomSellValue:
@@ -5128,9 +5191,9 @@ SGEN:
 		Prerequisites: tmpl, ~structures.nod, ~!player.shadow, ~techlevel.high
 		BuildLimit: 1
 		IconPalette: chrometd
-		Description: Makes a group of units/structures invisible for a short time.
+		Description: Makes units/structures invisible.
 	TooltipExtras:
-		Attributes: • Maximum 1 can be built\n• Cloaks nearby units and structures when not active\n• Requires power to operate\n• Special Ability: Tiberium Stealth
+		Attributes: • Maximum 1 can be built\n• Cloaks nearby units and structures\n• Requires power to operate\n• Special Ability: Tiberium Stealth
 	Valued:
 		Cost: 1500
 	Tooltip:
@@ -5155,8 +5218,6 @@ SGEN:
 		Range: 5c0
 		RequiresCondition: !disabled
 	WithBuildingBib:
-	ExternalCondition@ACTIVE:
-		Condition: active
 	SupportPowerChargeBar:
 	Power:
 		Amount: -200
@@ -5167,6 +5228,7 @@ SGEN:
 		Type: Rectangle
 			TopLeft: -1536, -1024
 			BottomRight: 1536, 1024
+	ProvidesPrerequisite@buildingname:
 	InfiltrateForSupportPowerReset:
 		Types: ResetSupportPowerInfiltrate
 		InfiltrationNotification: BuildingInfiltrated
@@ -5175,19 +5237,21 @@ SGEN:
 	Targetable@INFILTRATION:
 		RequiresCondition: !being-warped
 		TargetTypes: ResetSupportPowerInfiltrate
-	WithRangeCircle@SGEN:
+	WithRangeCircleCA@SGEN:
 		Type: StealthGenerator
-		Range: 5c512
-		Color: 00aa00
+		Range: 7c512
+		Color: 7681a0
 	ProximityExternalCondition@SGEN:
-		Range: 5c512
+		Range: 7c512
 		Condition: sgencloak
 		MaximumVerticalOffset: 512
 		AffectsParent: true
-		RequiresCondition: !disabled && !empdisable && !being-warped && !active && !cloak-force-disabled
-	GrantConditionOnDamageState@UNCLOAK:
-		Condition: cloak-force-disabled
-		ValidDamageStates: Critical
+		RequiresCondition: !disabled && !empdisable && !being-warped && !cloak-force-disabled
+	ProximityExternalCondition@MSG2:
+		Range: 3c512
+		Condition: sgencloak
+		RequiresCondition: !disabled && !empdisable && !being-warped && !cloak-force-disabled
+		MaximumVerticalOffset: 3072
 	Encyclopedia:
 		Category: Nod/Buildings
 
@@ -5195,19 +5259,12 @@ SGEN.Shadow:
 	Inherits: SGEN
 	Buildable:
 		Prerequisites: tmpl, ~structures.nod, ~player.shadow, ~techlevel.high
-	TooltipExtras:
-		Attributes: • Maximum 1 can be built\n• Cloaks nearby units and structures\n• Requires power to operate\n• Special Ability: Tiberium Stealth
-	WithRangeCircle@SGEN:
-		Range: 9c512
+	WithRangeCircleCA@SGEN:
+		Range: 11c512
 	ProximityExternalCondition@SGEN:
-		Range: 9c512
-		RequiresCondition: !disabled && !empdisable && !being-warped
+		Range: 11c512
 	RenderSprites:
 		Image: sgen
-	GrantExternalConditionPowerCA@SGEN:
-		-ActiveCondition:
-	-ExternalCondition@ACTIVE:
-	-GrantConditionOnDamageState@UNCLOAK:
 	-Encyclopedia:
 
 CRAM:
@@ -5221,6 +5278,7 @@ CRAM:
 		Weapon: Gatt
 		LocalOffset: 520,0,450
 		MuzzleSequence: muzzle
+	WithEjectedCasings:
 		CasingWeapon: BrassDebris
 		CasingSpawnLocalOffset: 0,-225,200
 		CasingTargetOffset: 0, -600, 0
@@ -5462,6 +5520,7 @@ PATR:
 	RejectsOrders@LOADED:
 		Except: Sell, PowerDown
 		RequiresCondition: loaded-rocket
+	ProvidesPrerequisite@buildingname:
 	InfiltrateForSupportPowerReset:
 		Types: ResetSupportPowerInfiltrate
 		InfiltrationNotification: BuildingInfiltrated
@@ -5479,7 +5538,7 @@ PATR:
 
 CVAT:
 	Inherits: ^Building
-	Inherits@POWER_OUTAGE: ^DisableOnLowPowerOrForceDisabled
+	Inherits@IDISABLE: ^DisableOnLowPowerOrPowerDownOrForceDisable
 	Inherits@SHAPE: ^2x2Shape
 	Inherits@TECHLOCKABLE: ^TechLockable
 	HitShape:
@@ -5495,10 +5554,10 @@ CVAT:
 		Queue: BuildingSQ, BuildingMQ
 		BuildPaletteOrder: 200
 		Prerequisites: ~structures.soviet, stek, playerxp.level3, ~infantry.doctrine, ~techlevel.high
-		Description: Clones infantry trained at a linked barracks.
+		Description: Clones infantry periodically at no cost.
 		BuildLimit: 1
 	TooltipExtras:
-		Attributes: • Maximum 1 can be built\n• Cannot be captured or hacked
+		Attributes: • Maximum 1 can be built\n• Cannot be captured or hacked\n• Clones any infantry unit put inside
 	Valued:
 		Cost: 2000
 	Health:
@@ -5520,17 +5579,13 @@ CVAT:
 	Production:
 		Produces: Clone
 		PauseOnCondition: tech-locked || being-warped
-	LinkedProducerTarget:
-		Mode: Clone
-		Types: InfantrySQ, InfantryMQ
-		Produces: Clone
 	Exit@1:
 		SpawnOffset: -700,1000,0
 		ExitCell: -2,2
 		Facing: 90
 	Exit@2:
 		SpawnOffset: 190,-400,0
-		ExitCell: 1,-1
+		ExitCell: 2,-1
 	RallyPoint:
 	Power:
 		Amount: -150
@@ -5555,6 +5610,51 @@ CVAT:
 	-PowerMultiplier@HACKED:
 	Encyclopedia:
 		Category: Soviets/Buildings
+	GrantExternalConditionToProduced:
+		Condition: produced
+	CargoCloner@SQ:
+		Types: Clone
+		OverrideUnitBuildDurationModifier: true
+		BuildDurationModifier: 120
+		ReadyAudio: UnitReady
+		BlockedAudio: NoBuild
+		BlockedTextNotification: Unable to build more.
+		ShowSelectionBar: true
+		PauseOnCondition: tech-locked || being-warped || disabled
+		RequiresCondition: !global-multiqueue
+		EmptyFallbackActor: e1
+	CargoCloner@MQ:
+		Types: Clone
+		OverrideUnitBuildDurationModifier: true
+		BuildDurationModifier: 80
+		ReadyAudio: UnitReady
+		BlockedAudio: NoBuild
+		BlockedTextNotification: Unable to build more.
+		ShowSelectionBar: true
+		PauseOnCondition: tech-locked || being-warped || disabled
+		RequiresCondition: global-multiqueue
+		EmptyFallbackActor: e1
+	Cargo:
+		MaxWeight: 1
+		Types: Infantry, Brute, Hacker
+	WithCargoPipsDecoration:
+		Position: BottomLeft
+		Margin: 4, 3
+		RequiresSelection: true
+		CustomPipSequences:
+			gray: pip-gray
+			yellow: pip-yellow
+			red: pip-red
+			blue: pip-blue
+	WithCargoSounds:
+		EnterSounds: genter1a.aud
+		ExitSounds: gexit1a.aud
+	GrantConditionOnPrerequisite@MQF:
+		Condition: global-multiqueue
+		Prerequisites: global.multiqueuefull
+	GrantConditionOnPrerequisite@MQS:
+		Condition: global-multiqueue
+		Prerequisites: global.multiqueuescaled
 
 INDP:
 	Inherits: ^Building
@@ -5732,7 +5832,7 @@ OREP:
 	Buildable:
 		Queue: BuildingSQ, BuildingMQ
 		BuildPaletteOrder: 200
-		Prerequisites: ~structures.allies, atekoralhq, ~techlevel.high
+		Prerequisites: ~structures.allies, alhq, ~techlevel.high
 		Description: Refines ore, gems & Tiberium, increasing income by 10%.
 		BuildLimit: 1
 	TooltipExtras:
@@ -5884,7 +5984,7 @@ UPGC:
 		ChargeDuration: 1500
 		Actors: truk.drop
 		ShowSelectionBar: true
-		RequiresCondition: tower.drop
+		RequiresCondition: tower-drop
 		PauseOnCondition: empdisable || disabled || being-warped
 	Exit:
 		SpawnOffset: 511,511,0
@@ -5898,7 +5998,7 @@ UPGC:
 		PauseOnCondition: disabled || empdisable || being-warped
 	AttackTurretedCharged:
 		PauseOnCondition: build-incomplete || disabled || empdisable || being-warped
-		RequiresCondition: tower.rocket && loaded-rocket > 0
+		RequiresCondition: tower-rocket && loaded-rocket > 0
 		ChargeLevel: 45
 		DischargeRate: 45
 		ShotsPerCharge: 3
@@ -5906,7 +6006,7 @@ UPGC:
 		SelectionBarColor: FF4400
 		ChargeWhileTurning: true
 	Armament@ROCKET:
-		RequiresCondition: tower.rocket
+		RequiresCondition: tower-rocket
 		Weapon: FirestormBarrage
 		LocalOffset: 768,64,368, 768,-64,368, 768,64,255, 768,-64,255
 	SupportPowerChargeBar:
@@ -5924,29 +6024,29 @@ UPGC:
 		Delay: 100
 		Count: 3
 	WithSpriteTurret@ROCKET:
-		RequiresCondition: !build-incomplete && tower.rocket
+		RequiresCondition: !build-incomplete && tower-rocket
 		Recoils: false
 		Sequence: turret-rocket
 	WithIdleOverlay@RADAR:
-		RequiresCondition: !build-incomplete && tower.radar
+		RequiresCondition: !build-incomplete && tower-radar
 		Sequence: turret-radar
 		PauseOnCondition: !scan-active || disabled || being-warped
 	WithIdleOverlay@SHIELD:
-		RequiresCondition: !build-incomplete && tower.shield && !nshield-active
+		RequiresCondition: !build-incomplete && tower-shield && !nshield-active
 		Sequence: turret-shield
 		PauseOnCondition: disabled || being-warped
 	WithIdleOverlay@SHIELD-ACTIVE:
-		RequiresCondition: !build-incomplete && tower.shield && nshield-active
+		RequiresCondition: !build-incomplete && tower-shield && nshield-active
 		Sequence: turret-shield-active
 		PauseOnCondition: disabled || being-warped
 	WithIdleOverlay@SHIELD-ACTIVE-EFFECT:
-		RequiresCondition: !build-incomplete && tower.shield && nshield-active
+		RequiresCondition: !build-incomplete && tower-shield && nshield-active
 		Sequence: emp-overlay
 		Palette: tseffect
 		PauseOnCondition: disabled || being-warped
 		Offset: -1284,384,0
 	WithIdleOverlay@DZONE:
-		RequiresCondition: !build-incomplete && tower.drop
+		RequiresCondition: !build-incomplete && tower-drop
 		Sequence: turret-drop
 		PauseOnCondition: disabled || being-warped
 	DrainPrerequisitePowerOnDamage@RADAR:
@@ -5954,14 +6054,11 @@ UPGC:
 	GrantConditionOnPrerequisite@SCAN:
 		Prerequisites: scan-active
 		Condition: scan-active
-	GrantConditionOnBotOwner@RADAR:
-		Condition: scan-active
-		Bots: brutal, vhard, hard, normal, easy, naval
 	GrantConditionOnPrerequisite@RADAR:
 		Prerequisites: radar-active
 		Condition: radar-active
 	GpsRadarProvider:
-		RequiresCondition: tower.radar && scan-active && !(disabled || being-warped)
+		RequiresCondition: tower-radar && scan-active && !(disabled || being-warped)
 	ExternalCondition@NSACTIVE:
 		Condition: nshield-active
 	ExternalCondition@NSAUDIO:
@@ -5976,35 +6073,18 @@ UPGC:
 		Delay: 3
 		Interval: 0
 		RequiresCondition: nshield-audio || nshield-active
-	Pluggable:
-		Conditions:
-			tower.rocket: tower.rocket
-			tower.radar: tower.radar
-			tower.shield: tower.shield
-			tower.drop: tower.drop
-		Requirements:
-			tower.rocket: !build-incomplete && !tower.radar && !tower.rocket && !tower.shield && !tower.drop
-			tower.radar: !build-incomplete && !tower.radar && !tower.rocket && !tower.shield && !tower.drop
-			tower.shield: !build-incomplete && !tower.radar && !tower.rocket && !tower.shield && !tower.drop
-			tower.drop: !build-incomplete && !tower.radar && !tower.rocket && !tower.shield && !tower.drop
-	ProvidesPrerequisite@pluggable:
-		RequiresCondition: !build-incomplete && (tower.rocket || tower.radar || tower.shield || tower.drop)
-		Prerequisite: upgc.plugged
-	ProvidesPrerequisite@AMPSEEK:
-		RequiresCondition: !build-incomplete && tower.radar
-		Prerequisite: seek3.strat
-		RequiresPrerequisites: seek.strat
-	ProvidesPrerequisite@AMPBOMB:
-		RequiresCondition: !build-incomplete && tower.rocket
-		Prerequisite: bombard3.strat
-		RequiresPrerequisites: bombard.strat
-	ProvidesPrerequisite@AMPHOLD:
-		RequiresCondition: !build-incomplete && tower.shield
-		Prerequisite: hold3.strat
-		RequiresPrerequisites: hold.strat
-	ProvidesPrerequisite@AMPDROP:
-		RequiresCondition: !build-incomplete && tower.drop
-		Prerequisite: dropzone
+	GrantConditionOnPrerequisite@Bombard3:
+		Prerequisites: bombard3.strat
+		Condition: tower-rocket
+	GrantConditionOnPrerequisite@Seek3:
+		Prerequisites: seek3.strat
+		Condition: tower-radar
+	GrantConditionOnPrerequisite@Hold3:
+		Prerequisites: hold3.strat
+		Condition: tower-shield
+	GrantConditionOnPrerequisite@Dropzone:
+		Prerequisites: upgc.drop
+		Condition: tower-drop
 	GrantConditionOnPrerequisite:
 		Prerequisites: nshield
 		Condition: nshield-active
@@ -6019,199 +6099,23 @@ UPGC:
 	-WithDecoration@HACKED:
 	-WithDecoration@RESTORING:
 	-PowerMultiplier@HACKED:
-	UpdatesCount:
-		Type: StrategyLevel
-		RequiresCondition: tower.rocket || tower.radar || tower.shield || tower.drop
-	FreeActor@SubsequentDiscountBomb:
-		Actor: upgc.bomb.previous
-		RequiresCondition: tower.rocket
-	FreeActor@SubsequentDiscountSeek:
-		Actor: upgc.seek.previous
-		RequiresCondition: tower.radar
-	FreeActor@SubsequentDiscountHold:
-		Actor: upgc.hold.previous
-		RequiresCondition: tower.shield
-	FreeActor@SubsequentDiscountDrop:
-		Actor: upgc.drop.previous
-		RequiresCondition: tower.drop
 	UpdatesSupportPowerTimer@Firestorm:
 		OrderName: rocketbarrage
 		InitialOnly: true
-		RequiresCondition: tower.rocket
+		RequiresCondition: tower-rocket
 		Ticks: 3000
 	UpdatesSupportPowerTimer@AdvancedRadar:
 		OrderName: advradarorder
 		InitialOnly: true
-		RequiresCondition: tower.radar
+		RequiresCondition: tower-radar
 		Ticks: 75
 	UpdatesSupportPowerTimer@NaniteShield:
 		OrderName: nshieldorder
 		InitialOnly: true
-		RequiresCondition: tower.shield
+		RequiresCondition: tower-shield
 		Ticks: 1500
-	ProvidesUpgrade@Firestorm:
-		RequiresCondition: tower.rocket
-		Type: upgc.bomb
-	ProvidesUpgrade@AdvancedRadar:
-		RequiresCondition: tower.radar
-		Type: upgc.seek
-	ProvidesUpgrade@NaniteShield:
-		RequiresCondition: tower.shield
-		Type: upgc.hold
-	ProvidesUpgrade@SupplyDrop:
-		RequiresCondition: tower.drop
-		Type: upgc.drop
 	Encyclopedia:
 		Category: GDI/Buildings
-
-UPGC.SOCK:
-	AlwaysVisible:
-	Interactable:
-	Tooltip:
-		Name: Component Platform
-
-UPGC.BOMB:
-	Inherits: ^BuildingPlug
-	Valued:
-		Cost: 1000
-	Tooltip:
-		Name: Upgrade: Firestorm Missile System
-	Buildable:
-		Queue: Upgrade
-		BuildPaletteOrder: 8
-		Prerequisites: ~player.gdi, upgc, !upgc.plugged, ~bombard2.strat, ~bombard.strat, ~!seek.strat, ~!hold.strat, ~techlevel.high
-		Description: Provides an napalm rocket barrage.
-		IconPalette: chrometd
-	TooltipExtras:
-		Strengths: + Increases firepower and rate of fire of vehicles and aircraft by a further 3%\n+ Unlocks Firestorm Missile Barrage power
-		Attributes: \n• Place on Upgrade Center\n(!) Mutually exclusive with Supply Drop Zone
-	Plug:
-		Type: tower.rocket
-	Power:
-		Amount: -50
-	RenderSprites:
-		PlayerPalette: playertd
-	WithProductionIconOverlay:
-		Types: Upgrade
-		Prerequisites: bombard3.strat
-	ProductionCostMultiplier@SubsequentDiscount:
-		Multiplier: 20
-		Prerequisites: upgc.bomb.previous
-	Encyclopedia:
-		Category: GDI/Upgrades
-	EncyclopediaExtras:
-		AdditionalInfo: Requires Bombardment Strategy.
-
-UPGC.SEEK:
-	Inherits: ^BuildingPlug
-	Valued:
-		Cost: 1000
-	Tooltip:
-		Name: Upgrade: Advanced Radar System
-	Buildable:
-		Queue: Upgrade
-		BuildPaletteOrder: 10
-		Prerequisites: ~player.gdi, upgc, !upgc.plugged, ~seek2.strat, ~seek.strat, ~!bombard.strat, ~!hold.strat, ~techlevel.high
-		Description: Provides detailed information on enemy locations.
-		IconPalette: chrometd
-	TooltipExtras:
-		Strengths: + Increases speed and weapon range of vehicles and aircraft by a further 5%\n+ Unlocks Advanced Radar Scan power
-		Attributes: \n• Place on Upgrade Center\n(!) Mutually exclusive with Supply Drop Zone
-	Plug:
-		Type: tower.radar
-	Power:
-		Amount: -50
-	RenderSprites:
-		PlayerPalette: playertd
-	WithProductionIconOverlay:
-		Types: Upgrade
-		Prerequisites: seek3.strat
-	ProductionCostMultiplier@SubsequentDiscount:
-		Multiplier: 20
-		Prerequisites: upgc.seek.previous
-	Encyclopedia:
-		Category: GDI/Upgrades
-	EncyclopediaExtras:
-		AdditionalInfo: Requires Seek & Destroy Strategy.
-
-UPGC.HOLD:
-	Inherits: ^BuildingPlug
-	Valued:
-		Cost: 1000
-	Tooltip:
-		Name: Upgrade: Nanoshield Generator
-	Buildable:
-		Queue: Upgrade
-		BuildPaletteOrder: 12
-		Prerequisites: ~player.gdi, upgc, !upgc.plugged, ~hold2.strat, ~hold.strat, ~!bombard.strat, ~!seek.strat, ~techlevel.high
-		Description: Provides the ability to shield units in an area
-		IconPalette: chrometd
-	TooltipExtras:
-		Strengths: + Increases armor of vehicles and aircraft by a further 5%\n+ Unlocks Nanite Shield power
-		Attributes: \n• Place on Upgrade Center\n(!) Mutually exclusive with Supply Drop Zone
-	Plug:
-		Type: tower.shield
-	Power:
-		Amount: -50
-	RenderSprites:
-		PlayerPalette: playertd
-	WithProductionIconOverlay:
-		Types: Upgrade
-		Prerequisites: hold3.strat
-	ProductionCostMultiplier@SubsequentDiscount:
-		Multiplier: 20
-		Prerequisites: upgc.hold.previous
-	Encyclopedia:
-		Category: GDI/Upgrades
-	EncyclopediaExtras:
-		AdditionalInfo: Requires Hold the Line Strategy.
-
-UPGC.DROP:
-	Inherits: ^BuildingPlug
-	Valued:
-		Cost: 1000
-	Tooltip:
-		Name: Upgrade: Supply Drop Zone
-	Buildable:
-		Queue: Upgrade
-		BuildPaletteOrder: 90
-		Prerequisites: ~gdiorupgc, upgc, !upgc.plugged, ~techlevel.high
-		Description: Provides a dropzone for emergency supplies.
-		IconPalette: chrometd
-	TooltipExtras:
-		Strengths: + $1250 delivered every 60 seconds (normal speed)
-		Attributes: \n• Place on Upgrade Center\n(!) Mutually exclusive with Firestorm Missile System, Advanced Radar System and Nanoshield Generator
-	Plug:
-		Type: tower.drop
-	Power:
-		Amount: -25
-	RenderSprites:
-		PlayerPalette: playertd
-	WithProductionIconOverlay:
-		Types: Upgrade
-		Prerequisites: dropzone
-	ProductionCostMultiplier@SubsequentDiscount:
-		Multiplier: 20
-		Prerequisites: upgc.drop.previous
-	Encyclopedia:
-		Category: GDI/Upgrades
-
-^BuildingPlugPrevious:
-	Inherits@DUMMY: ^InvisibleDummy
-	ProvidesPrerequisite:
-	PopControlled:
-
-upgc.bomb.previous:
-	Inherits: ^BuildingPlugPrevious
-
-upgc.seek.previous:
-	Inherits: ^BuildingPlugPrevious
-
-upgc.hold.previous:
-	Inherits: ^BuildingPlugPrevious
-
-upgc.drop.previous:
-	Inherits: ^BuildingPlugPrevious
 
 TMPP:
 	Inherits: ^BuildingTD
@@ -6219,10 +6123,6 @@ TMPP:
 	Inherits@INF: ^ProducesCyborgs
 	Inherits@UPG: ^ProducesUpgrades
 	Inherits@TECHLOCKABLE: ^TechLockable
-	HitShape@TOP:
-		Type: Rectangle
-			TopLeft: -512, -1450
-			BottomRight: 896, -512
 	RenderSprites:
 		PlayerPalette: playertd
 	Selectable:
@@ -6231,10 +6131,10 @@ TMPP:
 		UseTargetableCellsOffsets: false
 		TargetableOffsets: 512,0,0, -256,0,0, -256,1024,0, -256,-1024,0, -1536,0,0, -1536,1024,0, -1536,-1024,0
 		Type: Rectangle
-			TopLeft: -1536, -1024
+			TopLeft: -1536, -512
 			BottomRight: 1536, 1536
 	Building:
-		Footprint: ___ xxx xxx ===
+		Footprint: ___ xxx xxx +++
 		Dimensions: 3,4
 		LocalCenterOffset: 0,-512,0
 	Health:
@@ -6344,7 +6244,7 @@ MSLO.Nod:
 		IconPalette: chrometd
 		Prerequisites: tmpl, ~techlevel.unrestricted, ~structures.nod
 		BuildLimit: 1
-		Description: Provides a chemical missile.
+		Description: Provides the Chemical Missile superweapon power.
 	TooltipExtras:
 		Attributes: • Maximum 1 can be built\n• Requires power to operate\n• Special Ability: Chemical Missile
 	Building:
@@ -6396,7 +6296,7 @@ WEAT:
 		BuildPaletteOrder: 140
 		Prerequisites: atek, ~structures.allies, ~techlevel.unrestricted
 		BuildLimit: 1
-		Description: Provides Lightning Storm support power.
+		Description: Provides the Lightning Storm superweapon power.
 	TooltipExtras:
 		Attributes: • Maximum 1 can be built\n• Requires power to operate\n• Special Ability: Lightning Storm
 	Valued:
@@ -6499,7 +6399,7 @@ IOK:
 		Condition: iokbuff
 		Range: 5c0
 		ValidRelationships: Ally
-		RequiresCondition: !rage-active && initialized
+		RequiresCondition: initialized
 	ProximityExternalCondition@IdolOfKaneDebuff:
 		Condition: iokdebuff
 		Range: 5c0

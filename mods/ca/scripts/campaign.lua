@@ -18,25 +18,32 @@ StructureBuildTimeMultipliers = {
 }
 
 McvRebuildDelay = {
+	easy = DateTime.Minutes(25), -- not used by default
+	normal = DateTime.Minutes(15), -- not used by default
 	hard = DateTime.Minutes(8),
 	vhard = DateTime.Minutes(5),
 	brutal = DateTime.Minutes(3),
 }
 
 UnitBuildTimeMultipliers = {
-	easy = 1.25, -- 2000 value/min per queue (33/s)
-	normal = 0.81, -- 3086 value/min per queue (51/s)
-	hard = 0.6, -- 4166 value/min per queue (69/s)
-	vhard = 0.45, -- 5555 value/min per queue (92/s)
-	brutal = 0.35 -- 7142 value/min per queue (119/s)
+	easy = 1.25, -- 2000 value/min per queue (~33/s)
+	normal = 0.81, -- 3086 value/min per queue (~51/s)
+	hard = 0.6, -- 4166 value/min per queue (~69/s)
+	vhard = 0.4, -- 6250 value/min per queue (~104/s)
+	brutal = 0.3 -- 8333 value/min per queue (~138/s)
+	-- 1.0 -- 2500 value/min per queue (~41.6/s)
+	-- 0.52 -- 4807 value/min per queue (~80/s)
+	-- 0.34 -- 7352 value/min per queue (~122/s)
+	-- 0.26 -- 9615 value/min per queue (~160/s)
+	-- 0.2 --- 12500 value/min per queue (~208/s)
 }
 
 AttackValueMultipliers = {
-	easy = 0.5,
+	easy = 0.5, -- standard min 20/s, max 40/s
 	normal = 1, -- standard min 40/s, max 80/s
-	hard = 1.5,
-	vhard = 2,
-	brutal = 2.5
+	hard = 1.5, -- standard min 60/s, max 120/s
+	vhard = 2, -- standard min 80/s, max 160/s
+	brutal = 2.5 -- standard min 100/s, max 200/s
 }
 
 NormalRampDuration = DateTime.Minutes(17)
@@ -65,7 +72,7 @@ AirAttackDelayMultipliers = {
 	brutal = 0.66
 }
 
-CompositionValueMultiplier = {
+CompositionValueMultipliers = {
 	easy = 0.5,
 	normal = 0.67,
 	hard = 0.83,
@@ -97,6 +104,14 @@ CashAdjustments = {
 	brutal = -1000
 }
 
+MaxSpecialistAir = {
+	easy = 1,
+	normal = 3,
+	hard = 6,
+	vhard = 12,
+	brutal = 18
+}
+
 CapturedCreditsAmount = 1250
 
 EnforceAiBuildRadius = false
@@ -120,6 +135,8 @@ NavalProductionTypes = { "syrd", "spen", "syrd.gdi", "spen.nod" }
 CashRewardOnCaptureTypes = { "proc", "proc.td", "proc.scrin", "silo", "silo.td", "silo.scrin" }
 
 WallTypes = { "sbag", "fenc", "brik", "cycl", "barb" }
+
+ProductionTypes = Utils.Concat(ConyardTypes, Utils.Concat(BarracksTypes, Utils.Concat(FactoryTypes, AirProductionTypes)))
 
 KeyStructures = { "fact", "afac", "sfac", "proc", "proc.td", "proc.scrin", "weap", "weap.td", "airs", "wsph", "dome", "hq", "nerv", "atek", "stek", "gtek", "tmpl", "scrt", "mcv", "amcv", "smcv" }
 
@@ -188,12 +205,25 @@ PlayerCharacteristics = { }
 -- stores original AI conyards for rebuilding purposes
 AiConyards = { }
 
+-- stores queue of conyards that need rebuilding
+AiConyardRebuildQueue = { }
+
 -- stores actors that have a trigger assigned for rebuilding AI conyards
 McvProductionTriggers = { }
+
+-- stores buildings that should be sold on capture attempts
+BuildingsToSellOnCaptureAttempt = { }
+
+-- stores buildings that should trigger defense to be built on capture attempts
+BuildingsToDefendOnCaptureAttempt = { }
 
 --
 -- end automatically populated vars
 --
+
+-- extra functions called at the end of WorldLoaded/Tick in each mission script which can be overridden
+AfterWorldLoaded = function() end
+AfterTick = function() end
 
 InitObjectives = function(player)
 	Trigger.OnObjectiveAdded(player, function(p, id)
@@ -271,11 +301,14 @@ IsVeryHardOrBelow = function()
 end
 
 AttackAircraftTargets = { }
-InitAttackAircraft = function(aircraft, targetPlayer, targetList, targetType)
+InitAttackAircraft = function(aircraft, targetPlayers, targetList, targetType)
 	if not aircraft.IsDead then
 		local typeKey = string.gsub(aircraft.Type, "%.", "_")
 		local fallbackTargetList = nil
 		local fallbackTargetType = nil
+		if targetList ~= nil and targetType == nil then
+			targetType = "ActorType"
+		end
 		if targetList == nil and AircraftTargets[typeKey] ~= nil then
 			fallbackTargetList = AircraftTargets[typeKey].TargetList
 		end
@@ -283,11 +316,25 @@ InitAttackAircraft = function(aircraft, targetPlayer, targetList, targetType)
 			fallbackTargetType = AircraftTargets[typeKey].TargetType
 		end
 		Trigger.OnIdle(aircraft, function(self)
-			if DateTime.GameTime > 1 and DateTime.GameTime % 25 == 0 then
+			if DateTime.GameTime > 1 and DateTime.GameTime % DateTime.Seconds(2) == 0 then
 				local actorId = tostring(aircraft)
 				local target = AttackAircraftTargets[actorId]
 
-				if not target or not target.IsInWorld then
+				if not target or not target.IsInWorld or target.IsDead then
+					target = nil
+
+					if targetPlayers == nil then
+						targetPlayers = MissionPlayers
+					elseif type(targetPlayers) ~= "table" then
+						targetPlayers = { targetPlayers }
+					end
+
+					if #targetPlayers == 0 then
+						return
+					end
+
+					local targetPlayer = Utils.Random(targetPlayers)
+
 					if targetList ~= nil and #targetList > 0 and targetType ~= nil then
 						target = ChooseRandomTargetOfTypes(self, targetPlayer, targetList, targetType)
 					end
@@ -377,7 +424,7 @@ end
 
 AssaultPlayerBaseOrHunt = function(actor, targetPlayers, waypoints, fromIdle)
 
-	if not actor.HasProperty("AttackMove") or IsMissionPlayer(actor.Owner) then
+	if actor.IsDead or not actor.HasProperty("AttackMove") or IsMissionPlayer(actor.Owner) then
 		return
 	end
 
@@ -387,6 +434,10 @@ AssaultPlayerBaseOrHunt = function(actor, targetPlayers, waypoints, fromIdle)
 
 	if type(targetPlayers) ~= "table" then
 		targetPlayers = { targetPlayers }
+	end
+
+	if #targetPlayers == 0 then
+		return
 	end
 
 	local targetPlayer = Utils.Random(targetPlayers)
@@ -434,15 +485,54 @@ IsMissionPlayer = function(player)
 	return false
 end
 
+MissionPlayersHaveBuildings = function()
+	for _, p in pairs(MissionPlayers) do
+		if PlayerHasBuildings(p) then
+			return true
+		end
+	end
+	return false
+end
+
 PlayerHasBuildings = function(player)
 	return PlayerBuildingsCount(player) > 0
 end
 
 PlayerBuildingsCount = function(player)
 	local buildings = Utils.Where(player.GetActors(), function(a)
-		return a.HasProperty("StartBuildingRepairs") and not a.HasProperty("Attack")
+		return a.HasProperty("StartBuildingRepairs") and not a.HasProperty("Attack") and a.Type ~= "silo" and a.Type ~= "silo.td" and a.Type ~= "silo.scrin"
 	end)
-	return #buildings
+	local mcvs = player.GetActorsByTypes(McvTypes)
+	return #buildings + #mcvs
+end
+
+MissionPlayersHaveNoRequiredUnits = function()
+	return Utils.All(MissionPlayers, function(p) return p.HasNoRequiredUnits() end)
+end
+
+MissionPlayersHaveNavalPresence = function()
+	local count = 0
+	for _, p in pairs(MissionPlayers) do
+		local navalUnits = p.GetActorsByTypes({ "isub", "msub", "ca", "cv", "dd", "pt", "ss", "seas", "ss2", "sb", "dd2", "pt2", "lst" })
+		count = count + #navalUnits
+	end
+	return count > 4
+end
+
+MissionPlayersHaveConyard = function()
+	for _, p in pairs(MissionPlayers) do
+		local conyards = p.GetActorsByTypes(ConyardTypes)
+		if #conyards > 0 then
+			return true
+		end
+	end
+	return false
+end
+
+PlaySpeechNotificationToMissionPlayers = function(notification)
+	Utils.Do(MissionPlayers, function(p)
+		Media.PlaySpeechNotification(p, notification)
+	end)
 end
 
 UpdatePlayerBaseLocations = function()
@@ -462,22 +552,39 @@ UpdatePlayerBaseLocations = function()
 end
 
 RemoveActorsBasedOnDifficultyTags = function()
-	local easyOnlyActors = Map.ActorsWithTag("EasyOnly")
-	local normalAndBelowActors = Map.ActorsWithTag("NormalAndBelow")
 	local normalAndAboveActors = Map.ActorsWithTag("NormalAndAbove")
 	local hardAndAboveActors = Map.ActorsWithTag("HardAndAbove")
 	local veryHardAndAboveActors = Map.ActorsWithTag("VeryHardAndAbove")
 	local brutalOnlyActors = Map.ActorsWithTag("BrutalOnly")
 
-	local actorsToRemove = {
+	local actorsToRemoveAbove = {
 		easy = Utils.Concat(normalAndAboveActors, Utils.Concat(hardAndAboveActors, Utils.Concat(veryHardAndAboveActors, brutalOnlyActors))),
-		normal = Utils.Concat(easyOnlyActors, Utils.Concat(hardAndAboveActors, Utils.Concat(veryHardAndAboveActors, brutalOnlyActors))),
-		hard = Utils.Concat(easyOnlyActors, Utils.Concat(normalAndBelowActors, Utils.Concat(veryHardAndAboveActors, brutalOnlyActors))),
-		vhard = Utils.Concat(easyOnlyActors, Utils.Concat(normalAndBelowActors, brutalOnlyActors)),
-		brutal = Utils.Concat(easyOnlyActors, normalAndBelowActors),
+		normal = Utils.Concat(hardAndAboveActors, Utils.Concat(veryHardAndAboveActors, brutalOnlyActors)),
+		hard = Utils.Concat(veryHardAndAboveActors, brutalOnlyActors),
+		vhard = brutalOnlyActors,
+		brutal = {}
 	}
 
-	Utils.Do(actorsToRemove[Difficulty], function(a)
+	Utils.Do(actorsToRemoveAbove[Difficulty], function(a)
+		if not a.IsDead then
+			a.Destroy()
+		end
+	end)
+
+	local easyOnlyActors = Map.ActorsWithTag("EasyOnly")
+	local normalAndBelowActors = Map.ActorsWithTag("NormalAndBelow")
+	local hardAndBelowActors = Map.ActorsWithTag("HardAndBelow")
+	local veryHardAndBelowActors = Map.ActorsWithTag("VeryHardAndBelow")
+
+	local actorsToRemoveBelow = {
+		brutal = Utils.Concat(veryHardAndBelowActors, Utils.Concat(hardAndBelowActors, Utils.Concat(normalAndBelowActors, easyOnlyActors))),
+		vhard = Utils.Concat(hardAndBelowActors, Utils.Concat(normalAndBelowActors, easyOnlyActors)),
+		hard = Utils.Concat(normalAndBelowActors, easyOnlyActors),
+		normal = easyOnlyActors,
+		easy = {}
+	}
+
+	Utils.Do(actorsToRemoveBelow[Difficulty], function(a)
 		if not a.IsDead then
 			a.Destroy()
 		end
@@ -550,17 +657,19 @@ AutoRebuildBuilding = function(building, player, maxAttempts)
 	if building.IsDead then
 		return
 	end
+	local actorId = tostring(building)
 	Trigger.OnKilled(building, function(self, killer)
-		AddToRebuildQueue(building, player, building.Location, building.CenterPosition, maxAttempts)
+		AddToRebuildQueue(building, actorId, player, building.Location, building.CenterPosition, maxAttempts)
 	end)
 	Trigger.OnSold(building, function(self)
-		AddToRebuildQueue(building, player, building.Location, building.CenterPosition, maxAttempts)
+		AddToRebuildQueue(building, actorId, player, building.Location, building.CenterPosition, maxAttempts)
 	end)
 end
 
-AddToRebuildQueue = function(building, player, loc, pos, maxAttempts)
+AddToRebuildQueue = function(building, actorId, player, loc, pos, maxAttempts)
 	local queueItem = {
 		Actor = building,
+		ActorId = actorId,
 		Player = player,
 		Location = loc,
 		CenterPosition = pos,
@@ -597,6 +706,14 @@ RebuildBuilding = function(queueItem)
 			AutoRepairBuilding(b, queueItem.Player)
 			AutoRebuildBuilding(b, queueItem.Player, queueItem.MaxAttempts)
 			RestoreSquadProduction(queueItem.Actor, b)
+
+			if BuildingsToSellOnCaptureAttempt[queueItem.ActorId] then
+				SellOnCaptureAttempt(b)
+			end
+
+			if BuildingsToDefendOnCaptureAttempt[queueItem.ActorId] then
+				BuildDefenseOnCaptureAttempt(b, BuildingsToDefendOnCaptureAttempt[queueItem.ActorId], true)
+			end
 
 			if RebuildFunctions ~= nil and RebuildFunctions[queueItem.Player.InternalName] ~= nil then
 				RebuildFunctions[queueItem.Player.InternalName](b)
@@ -671,14 +788,14 @@ HasOwnedBuildingsNearby = function(player, pos, noEnemyBuildings)
 end
 
 AutoRebuildConyards = function(player, allDifficulties)
-	if IsHardOrAbove() and not allDifficulties then
+	if not allDifficulties and IsNormalOrBelow() then
 		return
 	end
 	local conyards = player.GetActorsByTypes(ConyardTypes)
 	Utils.Do(conyards, function(a)
-		local conyard = ConyardEntry(player, a)
-		table.insert(AiConyards, conyard)
-		McvRequestTrigger(a, conyard)
+		local conyardEntry = ConyardEntry(player, a)
+		table.insert(AiConyards, conyardEntry)
+		McvRequestTrigger(a, conyardEntry)
 	end)
 end
 
@@ -686,7 +803,8 @@ ConyardEntry = function(player, a)
 	local conyard = {
 		Player = player,
 		Actor = a,
-		AssignedMcv = nil
+		AssignedMcv = nil,
+		PossibleProducers = {},
 	}
 
 	if a.Type == "fact" then
@@ -697,13 +815,13 @@ ConyardEntry = function(player, a)
 		conyard.DeployLocation = a.Location + CVec.New(1, 1)
 	elseif a.Type == "sfac" then
 		conyard.McvType = "smcv"
-		conyard.DeployLocation = a.Location + CVec.New(1, 1)
+		conyard.DeployLocation = a.Location + CVec.New(1, 0)
 	end
 
 	return conyard
 end
 
-McvRequestTrigger = function(a, conyard)
+McvRequestTrigger = function(a, conyardEntry)
 	local isMcv = IsMcv(a)
 
 	if not isMcv then
@@ -731,85 +849,108 @@ McvRequestTrigger = function(a, conyard)
 				end
 			end
 		else
-			mcvType = conyard.McvType
-			owner = conyard.Player
+			mcvType = conyardEntry.McvType
+			owner = conyardEntry.Player
+			for idx, c in pairs(AiConyards) do
+				if c.Actor == self then
+					local possibleProducers = Utils.Where(c.Player.GetActorsByTypes(FactoryTypes), function(p)
+						return UtilsCA.PathExistsForLocomotor("heavywheeled", p.Location, c.DeployLocation)
+					end)
+					c.PossibleProducers = possibleProducers
+					break
+				end
+			end
 		end
 
-		if isMcv or conyard.Player == self.Owner then
-			QueueMcv(owner, mcvType)
+		if isMcv or conyardEntry.Player == self.Owner then
+			QueueMcv(owner, conyardEntry)
 		end
 	end)
 end
 
-QueueMcv = function(player, mcvType)
+QueueMcv = function(player, conyardEntry)
+	if AiConyardRebuildQueue[player.InternalName] == nil then
+		AiConyardRebuildQueue[player.InternalName] = { }
+	end
+
 	Trigger.AfterDelay(McvRebuildDelay[Difficulty], function()
-		local producers = player.GetActorsByTypes(FactoryTypes)
 
-		if #producers > 0 then
-			local producer = Utils.Random(producers)
+		-- get a conyard without an assigned mcv that has friendly buildings nearby, where a producer can path to it
+		local possibleConyards = GetRebuildableConyardEntries(player)
 
-			-- get a conyard without an assigned mcv that has friendly buildings nearby
-			local possibleConyards = Utils.Where(AiConyards, function(c)
-				return c.Actor.IsDead and c.AssignedMcv == nil and c.Player == player and HasOwnedBuildingsNearby(player, Map.CenterOfCell(c.DeployLocation), true)
-			end)
+		if #possibleConyards == 0 then
+			return
+		end
 
-			if #possibleConyards == 0 then
-				return
-			end
+		local conyardEntry = Utils.Random(possibleConyards)
 
-			if not McvProductionTriggers[tostring(producer)] then
-				McvProductionTriggers[tostring(producer)] = player.InternalName
-				Trigger.OnProduction(producer, function(p, produced)
-					if IsMcv(produced) and produced.Owner == player then
+		if #conyardEntry.PossibleProducers == 0 then
+			return
+		end
 
-						-- get a conyard without an assigned mcv that has friendly buildings nearby (repeated inside the production trigger)
-						local possibleConyards = Utils.Where(AiConyards, function(c)
-							return c.Actor.IsDead and c.AssignedMcv == nil and c.Player == player and HasOwnedBuildingsNearby(player, Map.CenterOfCell(c.DeployLocation), true)
+		table.insert(AiConyardRebuildQueue[player.InternalName], conyardEntry)
+		local producer = Utils.Random(Utils.Where(conyardEntry.PossibleProducers, function(p)
+			return not p.IsDead
+		end))
+
+		if not McvProductionTriggers[tostring(producer)] then
+			McvProductionTriggers[tostring(producer)] = player.InternalName
+			Trigger.OnProduction(producer, function(p, produced)
+				if IsMcv(produced) and produced.Owner == player then
+					if #AiConyardRebuildQueue[player.InternalName] > 0 then
+						local targetConyardEntry = AiConyardRebuildQueue[player.InternalName][1]
+						table.remove(AiConyardRebuildQueue[player.InternalName], 1)
+						targetConyardEntry.AssignedMcv = produced
+						produced.Move(targetConyardEntry.DeployLocation)
+						produced.Deploy()
+
+						Trigger.OnIdle(produced, function(self)
+							-- if deploy failed, wait 10 seconds, move to a random location within 5 cells then return and try again
+							produced.Wait(DateTime.Seconds(10))
+							local randomCell = CPos.New(targetConyardEntry.DeployLocation.X + Utils.RandomInteger(-5, 5), targetConyardEntry.DeployLocation.Y + Utils.RandomInteger(-5, 5))
+							produced.Move(randomCell)
+							produced.Move(targetConyardEntry.DeployLocation)
+							produced.Deploy()
 						end)
 
-						local targetConyard
-						if #possibleConyards > 0 then
-							targetConyard = Utils.Random(possibleConyards)
-							targetConyard.AssignedMcv = produced
-
-							Trigger.OnIdle(produced, function(self)
-								produced.Move(targetConyard.DeployLocation)
-								produced.Deploy()
-
-								-- move to a random location within 5 cells to prevent excessive idle calls
-								local randomCell = CPos.New(targetConyard.DeployLocation.X + Utils.RandomInteger(-5, 5), targetConyard.DeployLocation.Y + Utils.RandomInteger(-5, 5))
-								produced.Move(randomCell)
-							end)
-
-							-- if deployed
-							Trigger.OnRemovedFromWorld(produced, function(self)
-								if not self.IsDead then
-									Trigger.AfterDelay(DateTime.Seconds(1), function()
-										local nearbyConyards = Map.ActorsInCircle(Map.CenterOfCell(targetConyard.DeployLocation), WDist.FromCells(2), function(a)
-											return a.Owner == player and IsConyard(a)
-										end)
-										if #nearbyConyards > 0 then
-											local deployedConyard = Utils.Random(nearbyConyards)
-											targetConyard.Actor = deployedConyard
-											targetConyard.AssignedMcv = nil
-											McvRequestTrigger(deployedConyard, targetConyard)
-											AutoRepairBuilding(deployedConyard, player)
-										end
+						-- if deployed
+						Trigger.OnRemovedFromWorld(produced, function(self)
+							if not self.IsDead then
+								Trigger.AfterDelay(DateTime.Seconds(1), function()
+									local nearbyConyards = Map.ActorsInCircle(Map.CenterOfCell(targetConyardEntry.DeployLocation), WDist.FromCells(2), function(a)
+										return a.Owner == player and IsConyard(a)
 									end)
-								end
-							end)
+									if #nearbyConyards > 0 then
+										local deployedConyard = Utils.Random(nearbyConyards)
+										targetConyardEntry.Actor = deployedConyard
+										targetConyardEntry.AssignedMcv = nil
+										McvRequestTrigger(deployedConyard, targetConyardEntry)
+										AutoRepairBuilding(deployedConyard, player)
+									end
+								end)
+							end
+						end)
 
-							-- if mcv is killed, re-request
-							McvRequestTrigger(produced)
-						else
-							produced.Destroy()
-						end
+						-- if mcv is killed, re-request
+						McvRequestTrigger(produced)
+					else
+						produced.Destroy()
 					end
-				end)
-			end
-
-			producer.Produce(mcvType)
+				end
+			end)
 		end
+
+		producer.Produce(conyardEntry.McvType)
+	end)
+end
+
+GetRebuildableConyardEntries = function(player)
+	return Utils.Where(AiConyards, function(c)
+		return c.Actor.IsDead
+			and c.AssignedMcv == nil
+			and c.Player == player
+			and HasOwnedBuildingsNearby(player, Map.CenterOfCell(c.DeployLocation), true)
+			and Utils.Any(c.PossibleProducers, function(p) return not p.IsDead end)
 	end)
 end
 
@@ -822,11 +963,11 @@ RestoreSquadProduction = function(oldBuilding, newBuilding)
 		if squad.ProducerActors ~= nil then
 			for queue,actors in pairs(squad.ProducerActors) do
 				if actors ~= nil then
-					Utils.Do(actors, function(a)
+					for idx, a in pairs(actors) do
 						if a == oldBuilding then
-							table.insert(actors, newBuilding)
+							actors[idx] = newBuilding
 						end
-					end)
+					end
 				end
 			end
 		end
@@ -844,11 +985,9 @@ TargetSwapChance = function(unit, chance, isMissionPlayerFunc)
 		end
 		local rand = Utils.RandomInteger(1,100)
 		if rand > 100 - chance then
-			if not unit.IsDead and not attacker.IsDead and unit.HasProperty("Attack") then
+			if not unit.IsDead and not attacker.IsDead and unit.HasProperty("Attack") and unit.CanTarget(attacker) then
 				unit.Stop()
-				if unit.CanTarget(attacker) then
-					unit.Attack(attacker)
-				end
+				unit.Attack(attacker)
 			end
 		end
 	end)
@@ -876,22 +1015,22 @@ CallForHelp = function(self, range, filter)
 	end
 
 	local selfId = tostring(self)
-	if AlertedUnits[selfId] == nil then
+	if not AlertedUnits[selfId] then
 		if not self.IsDead then
 			AlertedUnits[selfId] = true
-			if filter(self) then
+			if not filter or filter(self) then
 				self.Stop()
 				IdleHunt(self)
 			end
 		end
 
 		local nearbyUnits = Map.ActorsInCircle(self.CenterPosition, range, function(a)
-			return a.Owner.IsAlliedWith(self.Owner) and not IsMissionPlayer(a.Owner) and filter(a)
+			return a.Owner.IsAlliedWith(self.Owner) and not IsMissionPlayer(a.Owner) and (not filter or filter(a))
 		end)
 
 		Utils.Do(nearbyUnits, function(nearbyUnit)
 			local nearbyUnitId = tostring(nearbyUnit)
-			if not nearbyUnit.IsDead and AlertedUnits[nearbyUnitId] == nil then
+			if not nearbyUnit.IsDead and not AlertedUnits[nearbyUnitId] then
 				AlertedUnits[nearbyUnitId] = true
 				nearbyUnit.Stop()
 				IdleHunt(nearbyUnit)
@@ -925,10 +1064,11 @@ InitAttackSquad = function(squad, player, targetPlayers)
 	end
 
 	if targetPlayers ~= nil then
-		if type(targetPlayers) == "table" then
-			squad.TargetPlayers = targetPlayers
-		else
+		-- a single player will be a "userdata" type
+		if type(targetPlayers) ~= "table" then
 			squad.TargetPlayers = { targetPlayers }
+		else
+			squad.TargetPlayers = targetPlayers
 		end
 	elseif #MissionPlayers > 0 then
 		squad.TargetPlayers = MissionPlayers
@@ -952,26 +1092,26 @@ InitAttackSquad = function(squad, player, targetPlayers)
 			delay = squad.Delay
 		end
 		Trigger.AfterDelay(delay, function()
-			InitAttackWave(squad, player, targetPlayers)
+			InitAttackWave(squad)
 		end)
 	else
-		InitAttackWave(squad, player, targetPlayers)
+		InitAttackWave(squad)
 	end
 end
 
-InitAirAttackSquad = function(squad, player, targetPlayer, targetList, targetType)
+InitAirAttackSquad = function(squad, player, targetPlayers, targetList, targetType)
 	squad.IsAirSquad = true
 	squad.AirTargetList = targetList
 	squad.AirTargetType = targetType
-	InitAttackSquad(squad, player, targetPlayer)
+	InitAttackSquad(squad, player, targetPlayers)
 end
 
-InitNavalAttackSquad = function(squad, player, targetPlayer)
+InitNavalAttackSquad = function(squad, player, targetPlayers)
 	squad.IsNaval = true
-	InitAttackSquad(squad, player, targetPlayer)
+	InitAttackSquad(squad, player, targetPlayers)
 end
 
-InitAttackWave = function(squad, player, targetPlayers)
+InitAttackWave = function(squad)
 
 	if IsSquadInProduction(squad) then
 		return
@@ -980,11 +1120,20 @@ InitAttackWave = function(squad, player, targetPlayers)
 	squad.WaveTotalCost = 0
 	squad.WaveStartTime = DateTime.GameTime
 
+	if squad.TargetPlayers == nil or #squad.TargetPlayers == 0 then
+		return
+	end
+
 	-- randomly select target for the current wave
 	squad.TargetPlayer = Utils.Random(squad.TargetPlayers)
 
 	-- make sure ActiveCondition function returns true (if it exists)
 	local isActive = squad.ActiveCondition == nil or squad.ActiveCondition(squad)
+
+	-- on easy difficulty we don't send waves if player has less than 3000 army value
+	if Difficulty == "easy" and squad.TargetPlayer.ArmyValue < 3000 then
+		isActive = false
+	end
 
 	if isActive then
 		local allCompositions
@@ -1002,7 +1151,7 @@ InitAttackWave = function(squad, player, targetPlayers)
 			return (composition.MinTime == nil or DateTime.GameTime >= composition.MinTime + squad.InitTime) -- after min time
 				and (composition.MaxTime == nil or DateTime.GameTime < composition.MaxTime + squad.InitTime) -- before max time
 				and (composition.RequiredTargetCharacteristics == nil or Utils.All(composition.RequiredTargetCharacteristics, function(characteristic)
-					return PlayerHasCharacteristic(squad.TargetPlayer, characteristic)
+					return PlayerOrMissionPlayersHaveCharacteristic(squad.TargetPlayer, characteristic)
 				end)) -- target player has all required characteristics
 				and (composition.Prerequisites == nil or squad.Player.HasPrerequisites(composition.Prerequisites)) -- player has prerequisites
 				and (composition.EnabledFunc == nil or composition.EnabledFunc()) -- custom function for whether the composition is enabled
@@ -1037,9 +1186,10 @@ InitAttackWave = function(squad, player, targetPlayers)
 			-- randomly select a unit composition for next wave
 			local chosenComposition = Utils.Random(validCompositions)
 
-			-- if this is a special composition, another special composition can't be chosen for 10 minutes
+			-- if this is a special composition, another special composition can't be chosen for 8 minutes, and this composition can't be chosen again for 15 minutes
 			if chosenComposition.IsSpecial then
-				SpecialCompositionMinTimes[squad.Player.InternalName] = DateTime.GameTime + DateTime.Minutes(10)
+				SpecialCompositionMinTimes[squad.Player.InternalName] = DateTime.GameTime + DateTime.Minutes(8)
+				chosenComposition.MinTime = DateTime.GameTime + DateTime.Minutes(15)
 			end
 
 			squad.QueuedUnits = chosenComposition
@@ -1051,12 +1201,12 @@ InitAttackWave = function(squad, player, targetPlayers)
 			end)
 		else
 			Trigger.AfterDelay(DateTime.Seconds(15), function()
-				InitAttackWave(squad, squad.Player, squad.TargetPlayers)
+				InitAttackWave(squad)
 			end)
 		end
 	else
 		Trigger.AfterDelay(DateTime.Seconds(15), function()
-			InitAttackWave(squad, squad.Player, squad.TargetPlayers)
+			InitAttackWave(squad)
 		end)
 	end
 end
@@ -1098,6 +1248,14 @@ end
 
 PlayerHasCharacteristic = function(player, characteristic)
 	return PlayerCharacteristics[player.InternalName] ~= nil and PlayerCharacteristics[player.InternalName][characteristic] ~= nil and PlayerCharacteristics[player.InternalName][characteristic]
+end
+
+MissionPlayersHaveCharacteristic = function(characteristic)
+	return PlayerCharacteristics["MissionPlayers"] ~= nil and PlayerCharacteristics["MissionPlayers"][characteristic] ~= nil and PlayerCharacteristics["MissionPlayers"][characteristic]
+end
+
+PlayerOrMissionPlayersHaveCharacteristic = function(player, characteristic)
+	return PlayerHasCharacteristic(player, characteristic) or MissionPlayersHaveCharacteristic(characteristic)
 end
 
 ProduceNextAttackSquadUnit = function(squad, queue, unitIndex)
@@ -1195,19 +1353,6 @@ ProduceNextAttackSquadUnit = function(squad, queue, unitIndex)
 			if producer ~= nil then
 				local producerId = tostring(producer)
 
-				-- set that the next unit produced from this producer should be assigned to the specified squad
-				AddToSquadAssignmentQueue(producerId, squad)
-
-				-- add production trigger once for the producer (once for every owner, as the producer may be captured)
-				if OnProductionTriggers[producerId] == nil or OnProductionTriggers[producerId] ~= producer.Owner.InternalName then
-					OnProductionTriggers[producerId] = tostring(producer.Owner.InternalName)
-
-					-- add produced unit to list of idle units for the squad
-					Trigger.OnProduction(producer, function(p, produced)
-						HandleProducedSquadUnit(produced, producerId, squad)
-					end)
-				end
-
 				local engineersNearby = Map.ActorsInCircle(producer.CenterPosition, WDist.New(2730), function(a)
 					return not a.IsDead and (a.Type == "e6" or a.Type == "n6" or a.Type == "s6" or a.Type == "mast") and a.Owner ~= producer.Owner
 				end)
@@ -1215,6 +1360,20 @@ ProduceNextAttackSquadUnit = function(squad, queue, unitIndex)
 				-- prevents capturing player getting a free unit
 				-- the capture blocks the production until the capture completes
 				if #engineersNearby == 0 then
+
+					-- set that the next unit produced from this producer should be assigned to the specified squad
+					AddToSquadAssignmentQueue(producerId, squad)
+
+					-- add production trigger once for the producer (once for every owner, as the producer may be captured)
+					if OnProductionTriggers[producerId] == nil or OnProductionTriggers[producerId] ~= producer.Owner.InternalName then
+						OnProductionTriggers[producerId] = tostring(producer.Owner.InternalName)
+
+						-- add produced unit to list of idle units for the squad
+						Trigger.OnProduction(producer, function(p, produced)
+							HandleProducedSquadUnit(produced, producerId, squad)
+						end)
+					end
+
 					producer.Produce(nextUnit)
 
 					if UnitCosts[nextUnit] == nil then
@@ -1239,10 +1398,8 @@ HandleProducedSquadUnit = function(produced, producerId, squad)
 	end
 
 	-- we don't want to add harvesters or mcvs to squads, which are produced when replacements are needed
-	for _, t in pairs(Utils.Concat(HarvesterTypes, McvTypes)) do
-		if produced.Type == t then
-			return
-		end
+	if IsHarvester(produced) or IsMcv(produced) then
+		return
 	end
 
 	InitSquadAssignmentQueueForProducer(producerId, squad.Player)
@@ -1292,10 +1449,18 @@ CalculateIntervalForSquad = function(squad)
 	local attackValues
 
 	if squad.AttackValuePerSecond ~= nil then
-		if squad.AttackValuePerSecond[Difficulty] ~= nil then
-			attackValues = squad.AttackValuePerSecond[Difficulty]
+		local allAttackValues
+
+		if type(squad.AttackValuePerSecond) == "function" then
+			allAttackValues = squad.AttackValuePerSecond(squad)
 		else
-			attackValues = squad.AttackValuePerSecond
+			allAttackValues = squad.AttackValuePerSecond
+		end
+
+		if allAttackValues[Difficulty] ~= nil then
+			attackValues = allAttackValues[Difficulty]
+		else
+			attackValues = allAttackValues
 		end
 	end
 
@@ -1353,68 +1518,75 @@ SendAttackSquad = function(squad)
 	if squad.IsAirSquad ~= nil and squad.IsAirSquad then
 		Utils.Do(squad.IdleUnits, function(a)
 			if not a.IsDead then
-				InitAttackAircraft(a, squad.TargetPlayer, squad.AirTargetList, squad.AirTargetType)
+				InitAttackAircraft(a, squad.TargetPlayers, squad.AirTargetList, squad.AirTargetType)
 			end
 		end)
 	else
 		local squadLeader = nil
 		local attackPath = nil
 
-		if squad.AttackPaths ~= nil and #squad.AttackPaths > 0 then
-			attackPath = Utils.Random(squad.AttackPaths)
+		if squad.AttackPaths ~= nil then
+			local attackPaths = {}
+
+			if type(squad.AttackPaths) == "function" then
+				attackPaths = squad.AttackPaths(squad)
+			else
+				attackPaths = squad.AttackPaths
+			end
+
+			if #attackPaths > 0 then
+				attackPath = Utils.Random(attackPaths)
+			end
 		end
 
 		Utils.Do(squad.IdleUnits, function(a)
 			local actorId = tostring(a)
 
-			if attackPath ~= nil then
-				if not a.IsDead and a.IsInWorld then
-					if squad.FollowLeader ~= nil and squad.FollowLeader == true and squadLeader == nil then
-						squadLeader = a
-					end
+			if not a.IsDead and a.IsInWorld then
+				if squad.FollowLeader ~= nil and squad.FollowLeader == true and squadLeader == nil then
+					squadLeader = a
+				end
 
-					-- if squad leader, queue attack move to each attack path waypoint
-					if squadLeader == nil or a == squadLeader then
+				-- if squad leader, queue attack move to each attack path waypoint
+				if squadLeader == nil or a == squadLeader then
+					if attackPath ~= nil then
 						Utils.Do(attackPath, function(w)
 							a.AttackMove(w, 3)
 						end)
-
-						if squad.IsNaval ~= nil and squad.IsNaval then
-							IdleHunt(a)
-						else
-							AssaultPlayerBaseOrHunt(a, squad.TargetPlayer)
-						end
-
-						-- on damaged or killed
-						Trigger.OnDamaged(a, function(self, attacker, damage)
-							ClearSquadLeader(squadLeader)
-						end)
-
-						Trigger.OnKilled(a, function(self, attacker, damage)
-							ClearSquadLeader(squadLeader)
-						end)
-
-					-- if not squad leader, follow the leader
-					else
-						SquadLeaders[actorId] = squadLeader
-						FollowSquadLeader(a, squad)
-
-						-- if damaged (stop guarding, attack move to enemy base)
-						Trigger.OnDamaged(a, function(self, attacker, damage)
-							ClearSquadLeader(SquadLeaders[actorId])
-						end)
 					end
-				end
-			else
-				if squad.IsNaval ~= nil and squad.IsNaval then
-					IdleHunt(a)
+
+					if squad.IsNaval ~= nil and squad.IsNaval then
+						IdleHunt(a)
+					else
+						AssaultPlayerBaseOrHunt(a, squad.TargetPlayer)
+					end
+
+					-- on damaged or killed
+					Trigger.OnDamaged(a, function(self, attacker, damage)
+						ClearSquadLeader(squadLeader)
+					end)
+
+					Trigger.OnKilled(a, function(self, attacker, damage)
+						ClearSquadLeader(squadLeader)
+					end)
+
+				-- if not squad leader, follow the leader
 				else
-					AssaultPlayerBaseOrHunt(a, squad.TargetPlayer)
+					SquadLeaders[actorId] = squadLeader
+					FollowSquadLeader(a, squad)
+
+					-- if damaged (stop guarding, attack move to enemy base)
+					Trigger.OnDamaged(a, function(self, attacker, damage)
+						ClearSquadLeader(SquadLeaders[actorId])
+					end)
 				end
 			end
 		end)
 	end
 	squad.IdleUnits = { }
+	if squad.AfterSendSquad ~= nil then
+		squad.AfterSendSquad(squad)
+	end
 end
 
 ClearSquadLeader = function(squadLeader)
@@ -1457,12 +1629,46 @@ FollowSquadLeader = function(actor, squad)
 	end
 end
 
+FollowActor = function(actor, actorToFollow)
+	if not actor.IsDead and actor.IsInWorld then
+		if not actorToFollow.IsDead and actorToFollow.IsInWorld then
+			local possibleCells = Utils.ExpandFootprint(Utils.ExpandFootprint({ actorToFollow.Location }, true), false)
+			local cell = Utils.Random(possibleCells)
+			actor.Stop()
+			actor.AttackMove(cell, 1)
+
+			Trigger.AfterDelay(Utils.RandomInteger(35,65), function()
+				FollowActor(actor, actorToFollow)
+			end)
+		else
+			actor.Stop()
+			Trigger.ClearAll(actor)
+		end
+	end
+end
+
 SetupRefAndSilosCaptureCredits = function(player)
 	local silosAndRefineries = player.GetActorsByTypes(CashRewardOnCaptureTypes)
 	Utils.Do(silosAndRefineries, function(a)
 		Trigger.OnCapture(a, function(self, captor, oldOwner, newOwner)
 			newOwner.Cash = newOwner.Cash + CapturedCreditsAmount
 			Media.FloatingText("+$" .. CapturedCreditsAmount, self.CenterPosition, 30, newOwner.Color)
+		end)
+	end)
+end
+
+SetupChurchMoneyCrates = function(churchOwner)
+	if churchOwner == nil then
+		if Neutral ~= nil then
+			churchOwner = Neutral
+		else
+			return
+		end
+	end
+	local churches = churchOwner.GetActorsByTypes({ "v01", "v25" })
+	Utils.Do(churches, function(a)
+		Trigger.OnKilled(a, function(self, killer)
+			Actor.Create("moneycrate", true, { Owner = churchOwner, Location = a.Location })
 		end)
 	end)
 end
@@ -1520,6 +1726,87 @@ AutoReplaceHarvester = function(player, harvester)
 	end)
 end
 
+SellOnCaptureAttempt = function(buildings, sellAsGroup)
+	if type(buildings) ~= "table" then
+		buildings = { buildings }
+	end
+	Utils.Do(buildings, function(b)
+		BuildingsToSellOnCaptureAttempt[tostring(b)] = true
+		local footprint = b.FootprintCells
+		local captureCells = Utils.ExpandFootprint(footprint, true)
+
+		local id = Trigger.OnEnteredFootprint(captureCells, function(a, id)
+			if IsMissionPlayer(a.Owner) and IsCapturer(a) then
+				Trigger.RemoveFootprintTrigger(id)
+				if sellAsGroup then
+					Utils.Do(buildings, function(b2)
+						if not b2.IsDead and not IsMissionPlayer(b2.Owner) then
+							b2.Sell()
+						end
+					end)
+				else
+					if not b.IsDead and not IsMissionPlayer(b.Owner) then
+						b.Sell()
+					end
+				end
+			end
+		end)
+
+		Trigger.OnKilledOrCaptured(b, function()
+			Trigger.RemoveFootprintTrigger(id)
+		end)
+	end)
+end
+
+BuildDefenseOnCaptureAttempt = function(buildings, defenseType, fallbackSell)
+	if type(buildings) ~= "table" then
+		buildings = { buildings }
+	end
+
+	Utils.Do(buildings, function(b)
+		BuildingsToDefendOnCaptureAttempt[tostring(b)] = defenseType
+		local footprint = b.FootprintCells
+		local triggerCells = Utils.ExpandFootprint(footprint, true)
+		local originalOwner = b.Owner
+
+		local id = Trigger.OnEnteredFootprint(triggerCells, function(a, id)
+			if IsMissionPlayer(a.Owner) and IsCapturer(a) then
+				Trigger.RemoveFootprintTrigger(id)
+
+				if not b.IsDead and b.Owner == originalOwner then
+					triggerCells = Utils.Shuffle(triggerCells)
+					local defense
+
+					if HasConyard(b.Owner) then
+						for _, cell in pairs(triggerCells) do
+							if UtilsCA.CanPlaceBuilding(defenseType, cell) then
+								defense = Actor.Create(defenseType, true, { Owner = b.Owner, Location = cell })
+								break
+							end
+						end
+					end
+
+					if defense then
+						Trigger.OnKilled(defense, function(self, killer)
+							Trigger.AfterDelay(DateTime.Seconds(10), function()
+								if not b.IsDead and b.Owner == originalOwner then
+									BuildDefenseOnCaptureAttempt(b, defenseType, fallbackSell)
+								end
+							end)
+						end)
+					elseif fallbackSell then
+						b.Sell()
+					end
+				end
+			end
+		end)
+
+		Trigger.OnKilledOrCaptured(b, function()
+			Trigger.RemoveFootprintTrigger(id)
+		end)
+	end)
+end
+
 AddHarvesterDeathStack = function(player)
 	if HarvesterDeathStacks[player.InternalName] == nil then
 		HarvesterDeathStacks[player.InternalName] = 0
@@ -1528,7 +1815,7 @@ AddHarvesterDeathStack = function(player)
 end
 
 DoHelicopterDrop = function(player, entryPath, transportType, units, unitFunc, transportExitFunc)
-	Reinforcements.ReinforceWithTransport(player, transportType, units, entryPath, nil, function(transport, cargo)
+	return Reinforcements.ReinforceWithTransport(player, transportType, units, entryPath, nil, function(transport, cargo)
 		if not transport.IsDead then
 			transport.UnloadPassengers()
 			if unitFunc ~= nil then
@@ -1546,7 +1833,8 @@ DoHelicopterDrop = function(player, entryPath, transportType, units, unitFunc, t
 end
 
 DoNavalTransportDrop = function(player, entryPath, exitPath, transportType, units, unitFunc)
-	local cargo = Reinforcements.ReinforceWithTransport(player, transportType, units, entryPath, exitPath)[2]
+	local reinforcements = Reinforcements.ReinforceWithTransport(player, transportType, units, entryPath, exitPath)
+	local cargo = reinforcements[2]
 	if unitFunc ~= nil then
 		Utils.Do(cargo, function(a)
 			Trigger.OnAddedToWorld(a, function(self)
@@ -1554,6 +1842,7 @@ DoNavalTransportDrop = function(player, entryPath, exitPath, transportType, unit
 			end)
 		end)
 	end
+	return reinforcements
 end
 
 PlayerHasNavalProduction = function(player)
@@ -1575,6 +1864,67 @@ SetupReveals = function(revealPoints, cameraType)
 				end)
 			end
 		end)
+	end)
+end
+
+SetupUnitDefenders = function(player, customRange, customFilter, validAttackingPlayerFunc)
+	local range = customRange or WDist.New(5120)
+	local groundAttackers = player.GetGroundAttackers()
+
+	local filtersByFaction = {
+		allies = IsGreeceGroundHunterUnit,
+		soviet = IsUSSRGroundHunterUnit,
+		gdi = IsGDIGroundHunterUnit,
+		nod = IsNodGroundHunterUnit,
+		scrin = IsScrinGroundHunterUnit,
+		yuri = IsUSSRGroundHunterUnit,
+		arc = IsGDIGroundHunterUnit
+	}
+
+	local filter
+
+	if customFilter ~= nil then
+		filter = customFilter
+	elseif filtersByFaction[player.Faction] ~= nil then
+		filter = filtersByFaction[player.Faction]
+	else
+		filter = IsGroundHunterUnit
+	end
+
+	Utils.Do(groundAttackers, function(a)
+		if not filter or filter(a) then
+			TargetSwapChance(a, 10)
+			CallForHelpOnDamagedOrKilled(a, range, filter, validAttackingPlayerFunc)
+		end
+	end)
+end
+
+SetupBuildingDefenders = function(player, customFilter, customRange, validAttackingPlayerFunc)
+	local range = customRange or WDist.New(8192)
+	local productionStructures = player.GetActorsByTypes(ProductionTypes)
+
+	local filtersByFaction = {
+		allies = IsGreeceGroundHunterUnit,
+		soviet = IsUSSRGroundHunterUnit,
+		gdi = IsGDIGroundHunterUnit,
+		nod = IsNodGroundHunterUnit,
+		scrin = IsScrinGroundHunterUnit,
+		yuri = IsUSSRGroundHunterUnit,
+		arc = IsGDIGroundHunterUnit
+	}
+
+	local filter
+
+	if customFilter ~= nil then
+		filter = customFilter
+	elseif filtersByFaction[player.Faction] ~= nil then
+		filter = filtersByFaction[player.Faction]
+	else
+		filter = IsGroundHunterUnit
+	end
+
+	Utils.Do(productionStructures, function(a)
+		CallForHelpOnDamagedOrKilled(a, range, filter, validAttackingPlayerFunc)
 	end)
 end
 
@@ -1654,6 +2004,14 @@ end
 
 -- Filters
 
+IsHarvester = function(actor)
+	for _, t in pairs(HarvesterTypes) do
+		if actor.Type == t then
+			return true
+		end
+	end
+end
+
 IsMcv = function(actor)
 	for _, t in pairs(McvTypes) do
 		if actor.Type == t then
@@ -1668,6 +2026,14 @@ IsConyard = function(actor)
 			return true
 		end
 	end
+end
+
+IsDefense = function(actor)
+	return actor.HasProperty("StartBuildingRepairs") and not actor.HasProperty("Attack")
+end
+
+IsCapturer = function(actor)
+	return (actor.Type == "e6" or actor.Type == "n6" or actor.Type == "s6" or actor.Type == "mast" or (actor.Type == "ifv" and actor.HasPassengers and Utils.Any(actor.Passengers, function(p) return p.Type == "e6" or p.Type == "n6" or p.Type == "s6" end)))
 end
 
 IsGroundHunterUnit = function(actor)
@@ -1816,14 +2182,6 @@ AdjustAttackValuesForDifficulty = function(attackValues, difficulty)
 end
 
 AdjustCompositionsForDifficulty = function(compositions, difficulty)
-	if difficulty == nil then
-		difficulty = Difficulty
-	end
-
-	if IsHardOrAbove() then
-		return compositions
-	end
-
 	local updatedCompositions = { }
 
 	Utils.Do(compositions, function(comp)
@@ -1878,7 +2236,7 @@ AdjustCompositionForDifficulty = function(composition, difficulty)
 				queueTotalUnitCost[queueName] = queueTotalUnitCost[queueName] + UnitCosts[chosenUnit]
 			end
 
-			local adjustedDesiredTotalUnitCostForQueue = queueTotalUnitCost[queueName] * CompositionValueMultiplier[difficulty]
+			local adjustedDesiredTotalUnitCostForQueue = queueTotalUnitCost[queueName] * CompositionValueMultipliers[difficulty]
 
 			-- allocate units until the adjusted cost is reached
 			while queueAllocatedTotalUnitCost[queueName] < adjustedDesiredTotalUnitCostForQueue do
@@ -1910,15 +2268,15 @@ AdjustCompositionForDifficulty = function(composition, difficulty)
 			end
 		else
 			if k == "MinTime" or k == "MaxTime" then
-
 				if difficulty == "easy" then
 					updatedComposition[k] = v * 1.4
 				elseif difficulty == "normal" then
 					updatedComposition[k] = v * 1.2
 				elseif difficulty == "brutal" then
 					updatedComposition[k] = v * 0.9
+				else
+					updatedComposition[k] = v
 				end
-
 			else
 				updatedComposition[k] = v
 			end
@@ -1931,7 +2289,7 @@ end
 GetHighestCostUnit = function(units)
 	local chosenUnit
 	for _, u in pairs(units) do
-		if type(u) == "table" then
+		if type(u) == "userdata" then
 			u = u.Type
 		end
 		if UnitCosts[u] == nil then
@@ -1947,7 +2305,7 @@ end
 GetTotalCostOfUnits = function(units)
 	local totalCost = 0
 	for _, u in pairs(units) do
-		if type(u) == "table" then
+		if type(u) == "userdata" then
 			u = u.Type
 		end
 		if UnitCosts[u] == nil then
@@ -1958,7 +2316,47 @@ GetTotalCostOfUnits = function(units)
 	return totalCost
 end
 
+GetMissionPlayersArmyValue = function()
+	local value = 0
+	Utils.Do(MissionPlayers, function(p)
+		local units = Utils.Where(p.GetActors(), function(a) return a.HasProperty("Attack") end)
+		value = value + GetTotalCostOfUnits(units)
+	end)
+	return value
+end
+
+GetMissionPlayersActorsByType = function(type)
+	local actors = {}
+	Utils.Do(MissionPlayers, function(p)
+		local pActors = p.GetActorsByType(type)
+		Utils.Do(pActors, function(a)
+			actors[#actors + 1] = a
+		end)
+	end)
+	return actors
+end
+
+GetMissionPlayersActorsByTypes = function(types)
+	local actors = {}
+	Utils.Do(MissionPlayers, function(p)
+		local pActors = p.GetActorsByTypes(types)
+		Utils.Do(pActors, function(a)
+			actors[#actors + 1] = a
+		end)
+	end)
+	return actors
+end
+
 CalculatePlayerCharacteristics = function()
+	PlayerCharacteristics["MissionPlayers"] = {
+		MassInfantry = false,
+		MassHeavy = false,
+		MassAir = false,
+		InfantryValue = 0,
+		HeavyValue = 0,
+		AirValue = 0,
+	}
+
 	Utils.Do(MissionPlayers, function(p)
 		PlayerCharacteristics[p.InternalName] = {
 			MassInfantry = false,
@@ -1969,12 +2367,11 @@ CalculatePlayerCharacteristics = function()
 			AirValue = 0,
 		}
 
-		local infantryUnits = p.GetActorsByArmorTypes({ "None" })
-		local heavyUnits = p.GetActorsByArmorTypes({ "Heavy" })
-		local aircraft = p.GetActorsByArmorTypes({ "Aircraft" })
 		local infantryValue = 0
 		local heavyValue = 0
 		local airValue = 0
+
+		local infantryUnits = p.GetActorsByArmorTypes({ "None" })
 
 		Utils.Do(infantryUnits, function(u)
 			if UnitCosts[u.Type] == nil then
@@ -1983,12 +2380,16 @@ CalculatePlayerCharacteristics = function()
 			infantryValue = infantryValue + UnitCosts[u.Type]
 		end)
 
+		local heavyUnits = p.GetActorsByArmorTypes({ "Heavy" })
+
 		Utils.Do(heavyUnits, function(u)
 			if UnitCosts[u.Type] == nil then
 				UnitCosts[u.Type] = ActorCA.CostOrDefault(u.Type)
 			end
 			heavyValue = heavyValue + UnitCosts[u.Type]
 		end)
+
+		local aircraft = p.GetActorsByArmorTypes({ "Aircraft" })
 
 		Utils.Do(aircraft, function(u)
 			if UnitCosts[u.Type] == nil then
@@ -1997,21 +2398,21 @@ CalculatePlayerCharacteristics = function()
 			airValue = airValue + UnitCosts[u.Type]
 		end)
 
-		if infantryValue > heavyValue * 3 then
+		if infantryValue > 12000 and infantryValue > heavyValue * 3 then
 			PlayerCharacteristics[p.InternalName].MassInfantry = true
-		elseif heavyValue > infantryValue * 3 then
+		elseif heavyValue > 12000 and heavyValue > infantryValue * 3 then
 			PlayerCharacteristics[p.InternalName].MassHeavy = true
 		end
 
-		if infantryValue > 15000 then
+		if infantryValue > 18000 then
 			PlayerCharacteristics[p.InternalName].MassInfantry = true
 		end
 
-		if heavyValue > 15000 then
+		if heavyValue > 18000 then
 			PlayerCharacteristics[p.InternalName].MassHeavy = true
 		end
 
-		if airValue > 15000 then
+		if airValue > 16000 then
 			PlayerCharacteristics[p.InternalName].MassAir = true
 		end
 
@@ -2019,6 +2420,24 @@ CalculatePlayerCharacteristics = function()
 		PlayerCharacteristics[p.InternalName].HeavyValue = heavyValue
 		PlayerCharacteristics[p.InternalName].AirValue = airValue
 	end)
+
+	Utils.Do(MissionPlayers, function(p)
+		PlayerCharacteristics["MissionPlayers"].InfantryValue = PlayerCharacteristics["MissionPlayers"].InfantryValue + PlayerCharacteristics[p.InternalName].InfantryValue
+		PlayerCharacteristics["MissionPlayers"].HeavyValue = PlayerCharacteristics["MissionPlayers"].HeavyValue + PlayerCharacteristics[p.InternalName].HeavyValue
+		PlayerCharacteristics["MissionPlayers"].AirValue = PlayerCharacteristics["MissionPlayers"].AirValue + PlayerCharacteristics[p.InternalName].AirValue
+	end)
+
+	if PlayerCharacteristics["MissionPlayers"].InfantryValue > 20000 then
+		PlayerCharacteristics["MissionPlayers"].MassInfantry = true
+	end
+
+	if PlayerCharacteristics["MissionPlayers"].HeavyValue > 20000 then
+		PlayerCharacteristics["MissionPlayers"].MassHeavy = true
+	end
+
+	if PlayerCharacteristics["MissionPlayers"].AirValue > 18000 then
+		PlayerCharacteristics["MissionPlayers"].MassAir = true
+	end
 end
 
 AircraftTargets = {
@@ -2096,11 +2515,11 @@ UnitCompositions = {
 		{ Infantry = { "e3", "e1", "e1", "e1", "e3", "e1", "e1", "e1", "e1", "e1" }, Vehicles = { "2tnk", "ifv.ai", "2tnk", "ifv.ai" }, MaxTime = DateTime.Minutes(10) },
 
 		-- 10 minutes onwards
-		{ Infantry = { "e3", "e1", "e1", "e1", "e3", "e1", "e1", "e1", AlliedAdvancedInfantry, "e1", "e3", "e1", "e1" }, Vehicles = { "2tnk", "ifv.ai", "rapc.ai", "rapc.ai", "arty" }, MinTime = DateTime.Minutes(10) },
+		{ Infantry = { "e3", "e1", "e1", "e1", "e3", "e1", "e1", "e1", AlliedAdvancedInfantry, "e1", "e3", "e1", "e1" }, Vehicles = { "2tnk", "ifv.ai", "delp.ai", "apc.ai", "arty" }, MinTime = DateTime.Minutes(10) },
 		{ Infantry = { "e3", "e1", "e1", "e1", "e3", "e1", "e1", "e1", AlliedAdvancedInfantry, "e1", "e3", "e1", "e1" }, Vehicles = { "2tnk", "2tnk", "2tnk", "ifv.ai", "ptnk", "ptnk" }, MinTime = DateTime.Minutes(10) },
 		{ Infantry = { "e3", "e1", "e1", "e1", "e3", "e1", "e1", "e1", AlliedAdvancedInfantry, "e1", "e3", "e1", "e1" }, Vehicles = { "2tnk", "ifv.ai", "ptnk", "2tnk", "2tnk", AlliedT3SupportVehicle }, MinTime = DateTime.Minutes(10) },
 		{ Infantry = { "e3", "e1", "e1", "e1", "e3", "e1", "e1", "e1", "e3", "e1", "e1", "e1", "e3", "e1", "e1" }, Vehicles = { "batf.ai", "ifv.ai", "batf.ai", "ifv.ai" }, MinTime = DateTime.Minutes(10) },
-		{ Infantry = {}, Vehicles = { "rapc.ai", "jeep", "ifv.ai", "rapc.ai", "ifv.ai", "rapc.ai" }, MinTime = DateTime.Minutes(10) },
+		{ Infantry = {}, Vehicles = { "apc.ai", "jeep", "ifv.ai", "delp.ai", "ifv.ai", "apc.ai" }, MinTime = DateTime.Minutes(10) },
 
 		-- 16 minutes onwards
 		{ Infantry = { "e3", "e1", "e1", "e1", "e3", "e1", "e1", "e1", AlliedAdvancedInfantry, "e1", "e3", "e1", "e1", "e3", "e1", "e1" }, Vehicles = { "2tnk", "2tnk", "ifv.ai", AlliedT3SupportVehicle, "2tnk", PrismCannonOrZeus }, MinTime = DateTime.Minutes(16) },
@@ -2158,8 +2577,8 @@ UnitCompositions = {
 		{ Infantry = { "n1", "n1", "n3", "n1", "n1", "n1", "n1", "n1", "n3", "n1", "n1" }, Vehicles = { "htnk", WolverineOrXO, WolverineOrXO, "hsam", "vulc", GDIMammothVariant, WolverineOrXO }, MinTime = DateTime.Minutes(10), MaxTime = DateTime.Minutes(16) },
 
 		-- 16 minutes onwards
-		{ Infantry = { "n3", "n1", "n1", "n1", "n3", "n1", "n1", ZoneTrooperVariant, ZoneTrooperVariant, ZoneTrooperVariant }, Vehicles = { "mtnk", GDIMammothVariant, "vulc", "mtnk", "msam" }, MinTime = DateTime.Minutes(16) },
-		{ Infantry = { "n3", "n1", "n1", "n1", "n3", "n1", "n1", "n1", "n1", "n1", "n3", "n1", "n1" }, Vehicles = { "vulc.ai", "disr", "disr", "disr" }, MinTime = DateTime.Minutes(16) },
+		{ Infantry = { "n3", "n1", "n1", "n1", "n3", "n1", "n1", ZoneTrooperVariant, "n1", "n1", ZoneTrooperVariant, ZoneTrooperVariant }, Vehicles = { "mtnk", GDIMammothVariant, "vulc", "mtnk", "msam", GDIMammothVariant }, MinTime = DateTime.Minutes(16) },
+		{ Infantry = { "n3", "n1", "n1", "n1", "n3", "n1", "n1", "n1", "n1", "n1", "n3", "n1", "n1", "n1", "n1", "n3" }, Vehicles = { "vulc.ai", "disr", "vulc", "disr", "disr" }, MinTime = DateTime.Minutes(16) },
 		{ Infantry = { "n3", "rmbo", "n3", "n1", "n1", "n1", "n1", "n1", "n3", "n1", "n1", "n3", "n1", "n1" }, Vehicles = { GDIMammothVariant, "msam", "vulc", "msam", GDIMammothVariant }, MinTime = DateTime.Minutes(16) },
 		{ Infantry = { "n3", "n1", "n1", ZoneTrooperVariant, ZoneTrooperVariant, ZoneTrooperVariant, ZoneTrooperVariant, "n1", "n1" }, Vehicles = { GDIMammothVariant, "mtnk", WolverineOrXO, WolverineOrXO, GDIMammothVariant, GDIMammothVariant }, MinTime = DateTime.Minutes(16) },
 
@@ -2190,14 +2609,14 @@ UnitCompositions = {
 		{ Infantry = {}, Vehicles = { "stnk.nod", "sapc.ai", "stnk.nod", "stnk.nod", "sapc.ai" }, MinTime = DateTime.Minutes(10), MaxTime = DateTime.Minutes(16) },
 
 		-- 16 minutes onwards
-		{ Infantry = {}, Vehicles = { "stnk.nod", "stnk.nod", "sapc.ai", "stnk.nod", "stnk.nod", "sapc.ai", "stnk.nod" }, MinTime = DateTime.Minutes(16) },
+		{ Infantry = {}, Vehicles = { "stnk.nod", "stnk.nod", "sapc.ai", "stnk.nod", "stnk.nod", "sapc.ai", "stnk.nod", "stnk.nod" }, MinTime = DateTime.Minutes(16) },
 		{ Infantry = { BasicCyborg, BasicCyborg, BasicCyborg, BasicCyborg, BasicCyborg, AdvancedCyborg, "n1c", "n1c", BasicCyborg, BasicCyborg, "rmbc", AdvancedCyborg, AdvancedCyborg }, Vehicles = { "ltnk", "ltnk", FlameTankHeavyFlameTankOrHowitzer, "mlrs" }, MinTime = DateTime.Minutes(16) },
 
 		------ Anti-tank
-		{ Infantry = { "n3", "n3", "n1", "n1", "n4", "n1", "n3", "n1", "n1", "n1", "n1", "n1" }, Vehicles = { "ltnk", "ltnk" }, MinTime = DateTime.Minutes(16), RequiredTargetCharacteristics = { "MassHeavy" } },
+		{ Infantry = { "n3c", "n3c", "n1", "enli", "n4", "n1", "n3c", "enli", "n3c", "n3c", "enli", "n1" }, Vehicles = { "ltnk", "ltnk", "wtnk", "wtnk", "stnk.nod", "ltnk" }, MinTime = DateTime.Minutes(16), RequiredTargetCharacteristics = { "MassHeavy" } },
 
 		------ Anti-infantry
-		{ Infantry = { "n4", "n4", "n1", "n1", "n1", "n1", "n1", "n1", "n4", "n4", "n4", "n4", "n1", "n1", "n1", "n1", "n4", "n4" }, Vehicles = { FlameTankHeavyFlameTankOrHowitzer, FlameTankHeavyFlameTankOrHowitzer, "mlrs", FlameTankHeavyFlameTankOrHowitzer, FlameTankHeavyFlameTankOrHowitzer, "mlrs" }, MinTime = DateTime.Minutes(16), RequiredTargetCharacteristics = { "MassInfantry" } },
+		{ Infantry = { "n4", "n4", "n1", "n1", "n1", "n1", "n1", "n1", "n4", "n4", "n4", "n4", "n1", "n1", "n1", "n1", "n4", "n4" }, Vehicles = { "ltnk.laser", "ltnk.laser", "mlrs", FlameTankHeavyFlameTankOrHowitzer, FlameTankHeavyFlameTankOrHowitzer, "mlrs" }, MinTime = DateTime.Minutes(16), RequiredTargetCharacteristics = { "MassInfantry" } },
 
 		-- Specials
 		{ Infantry = { "bh", "bh", "bh", "bh", "bh", "bh", "bh", "bh", "bh" }, Vehicles = { "hftk", "hftk", "hftk", "hftk", "hftk", "hftk" }, MinTime = DateTime.Minutes(18), IsSpecial = true },
@@ -2287,8 +2706,8 @@ AirCompositions = {
 			{ Aircraft = { "pmak", "pmak" } }
 		},
 		brutal = {
-			{ Aircraft = { "heli", "heli", "heli", "heli" } },
-			{ Aircraft = { "harr", "harr", "harr" } },
+			{ Aircraft = { "heli", "heli", "heli", "heli", "heli" } },
+			{ Aircraft = { "harr", "harr", "harr", "harr" } },
 			{ Aircraft = { "pmak", "pmak", "pmak" } }
 		}
 	},
@@ -2314,9 +2733,9 @@ AirCompositions = {
 		},
 		brutal = {
 			{ Aircraft = { MigOrHindOrYak, MigOrHindOrYak, MigOrHindOrYak, MigOrHindOrYak } },
-			{ Aircraft = { "mig", "mig", "mig", "mig" } },
-			{ Aircraft = { SukhoiVariant, SukhoiVariant, SukhoiVariant } },
-			{ Aircraft = { "kiro", "kiro", "kiro" } },
+			{ Aircraft = { "mig", "mig", "mig", "mig", "mig" } },
+			{ Aircraft = { SukhoiVariant, SukhoiVariant, SukhoiVariant, SukhoiVariant } },
+			{ Aircraft = { "kiro", "kiro", "kiro", "kiro" } },
 		}
 	},
 	GDI = {
@@ -2346,7 +2765,7 @@ AirCompositions = {
 			{ Aircraft = { "auro", "auro" } },
 		},
 		brutal = {
-			{ Aircraft = { "orca", "orca", "orca", "orca" } },
+			{ Aircraft = { "orca", "orca", "orca", "orca", "orca" } },
 			{ Aircraft = { "a10", "a10", "a10", "a10" } },
 			{ Aircraft = { "a10.gau", "a10.gau", "a10.gau" } },
 			{ Aircraft = { "orcb", "orcb", "orcb" } },
@@ -2375,7 +2794,7 @@ AirCompositions = {
 		brutal = {
 			{ Aircraft = { "apch", "apch", ApacheOrVenom, ApacheOrVenom } },
 			{ Aircraft = { "scrn", "scrn", "scrn", "scrn" } },
-			{ Aircraft = { "rah", "rah", "rah" } },
+			{ Aircraft = { "rah", "rah", "rah", "rah" } },
 			{ Aircraft = { "vert", "vert", "vert" } }
 		}
 	},
@@ -2401,8 +2820,44 @@ AirCompositions = {
 		},
 		brutal = {
 			{ Aircraft = { "stmr", "stmr", "stmr", "stmr" } },
-			{ Aircraft = { "torm", "torm", "torm", "torm" } },
+			{ Aircraft = { "torm", "torm", "torm", "torm", "torm" } },
 			{ Aircraft = { "enrv", "enrv", "enrv" } },
 		}
 	}
 }
+
+SpecialistAirSquad = function(unitTypes, characteristic, characteristicValue, delay, onProducedAction)
+	local squad = {
+		ActiveCondition = function(squad)
+			return PlayerOrMissionPlayersHaveCharacteristic(squad.TargetPlayer, characteristic)
+		end,
+		AttackValuePerSecond = AdjustAttackValuesForDifficulty({ Min = 24, Max = 24 }),
+		Compositions = function(squad)
+			local units = { unitTypes }
+			local desiredCount = PlayerCharacteristics[squad.TargetPlayer.InternalName][characteristicValue] / 2000
+			for i = 1, math.min(desiredCount, MaxSpecialistAir[Difficulty]) do
+				table.insert(units, unitTypes)
+			end
+			return { { Aircraft = units } }
+		end
+	}
+	if delay ~= nil then
+		squad.Delay = delay
+	end
+	if onProducedAction ~= nil then
+		squad.OnProducedAction = onProducedAction
+	end
+	return squad
+end
+
+AirToAirSquad = function(unitTypes, delay, onProducedAction)
+	return SpecialistAirSquad(unitTypes, "MassAir", "AirValue", delay, onProducedAction)
+end
+
+AntiHeavyAirSquad = function(unitTypes, delay, onProducedAction)
+	return SpecialistAirSquad(unitTypes, "MassHeavy", "HeavyValue", delay, onProducedAction)
+end
+
+AntiInfAirSquad = function(unitTypes, delay, onProducedAction)
+	return SpecialistAirSquad(unitTypes, "MassInfantry", "InfantryValue", delay, onProducedAction)
+end

@@ -27,6 +27,11 @@ DisintegratorBeam:
 			Light: 34
 			Concrete: 75
 
+DisintegratorBeamTargeter:
+	ReloadDelay: 30
+	Range: 5c0
+	Projectile: InstantHit
+
 DisintegratorBeamBATF:
 	Inherits: DisintegratorBeam
 	Range: 5c768
@@ -35,7 +40,7 @@ DisintegratorBeamBATF:
 
 DisintegratorBeamAA:
 	Inherits: DisintegratorBeam
-	Range: 7c0
+	Range: 6c0
 	ValidTargets: Air, AirSmall
 	Projectile: LaserZapCA
 		Blockable: false
@@ -50,7 +55,7 @@ DisintegratorBeamAA:
 		ValidRelationships: Enemy, Neutral
 		Spread: 128
 		Falloff: 100, 50, 14, 0
-		Damage: 3750
+		Damage: 4375
 
 DisintegratorIFVBeam:
 	Inherits: DisintegratorBeam
@@ -68,7 +73,7 @@ DisintegratorIFVBeamAA:
 
 EnslaveInfantry:
 	Range: 7c0
-	ReloadDelay: 35
+	ReloadDelay: 50
 	Projectile: InstantHit
 	ValidTargets: MindControllable
 	InvalidTargets: Vehicle, Ship, MindControlImmune
@@ -82,6 +87,7 @@ EnslaveInfantry:
 	Warhead@Flash: FlashTarget
 		Spread: 341
 		Color: ff00ff
+		Duration: 6
 		ValidTargets: Infantry
 		ValidRelationships: Neutral, Enemy
 
@@ -192,17 +198,18 @@ PlasmaDiscs:
 	Burst: 5
 	BurstDelays: 4
 	ValidTargets: Ground, Water, Underwater
-	Projectile: Missile
+	Projectile: MissileCA
 		Image: plasdiscsm
 		TrailImage: smokey
 		TrailPalette: scrinplasma
-		Speed: 450
+		Speed: 550
 		Inaccuracy: 0c256
+		LockOnInaccuracy: 0
 		Blockable: false
 		Jammable: true
 		HorizontalRateOfTurn: 30
 		RangeLimit: 6c512
-		LockOnProbability: 50
+		LockOnBurstCounts: 1,3,5
 		MinimumLaunchAngle: 80
 		MaximumLaunchAngle: 112
 		VerticalRateOfTurn: 60
@@ -229,8 +236,8 @@ PlasmaDiscs.Hypercharged:
 	Report: seeker-hyperfire1.aud, seeker-hyperfire2.aud
 	Burst: 1
 	ReloadDelay: 4
-	Range: 6c0
-	Projectile: Missile
+	Range: 7c0
+	Projectile: MissileCA
 		RangeLimit: 7c0
 	Warhead@1Dam: SpreadDamage
 		Damage: 1600
@@ -244,12 +251,12 @@ IntruderDiscs:
 	Range: 6c0
 	ReloadDelay: 70
 	Burst: 3
-	Projectile: Missile
+	Projectile: MissileCA
 		Inaccuracy: 0c128
-		LockOnProbability: 33
+		LockOnBurstCounts: 1,3
 	Warhead@1Dam: SpreadDamage
 		Damage: 2850
-		Spread: 256
+		Spread: 288
 		Versus:
 			None: 15
 			Wood: 100
@@ -262,10 +269,10 @@ MarauderDiscs:
 	Burst: 2
 	BurstDelays: 5
 	Report: mrdr-fire1.aud, mrdr-fire2.aud
-	Projectile: Missile
+	Projectile: MissileCA
 		Image: mrdrdisc
-		Speed: 550
-		LockOnProbability: 100
+		Speed: 600
+		-LockOnBurstCounts:
 		RangeLimit: 7c0
 		Palette: scrin
 		MinimumLaunchAngle: 40
@@ -314,7 +321,7 @@ DevastatorDiscs:
 		Blockable: false
 		Image: plasdisclg
 		Inaccuracy: 1c768
-		Speed: 220
+		Speed: 260
 		LaunchAngle: 50
 	Warhead@1Dam: SpreadDamage
 		Spread: 416
@@ -335,7 +342,7 @@ DevastatorTorpedo:
 	Burst: 3
 	Report: plasmatorp.aud
 	BurstDelays: 8
-	ReloadDelay: 70
+	ReloadDelay: 100
 	Projectile: Bullet
 		Image: plasmatorp3
 		Palette: scrin
@@ -343,6 +350,7 @@ DevastatorTorpedo:
 		Inaccuracy: 1c0
 		Shadow: true
 		ShadowColor: 00000033
+		Speed: 400
 	Warhead@1Dam: SpreadDamage
 		Damage: 14000
 		Spread: 512
@@ -397,6 +405,21 @@ InterloperLaser:
 			Heavy: 100
 			Concrete: 40
 
+InterloperWave:
+	Inherits: InterloperLaser
+	Report: mrdr-fire1.aud, mrdr-fire2.aud
+	-Projectile:
+	Projectile: BulletCA
+		Image: mrdrdisc
+		Speed: 750
+		Palette: scrin
+	Warhead@1Dam: SpreadDamage
+		Damage: 1800
+		Spread: 426
+	Warhead@3Eff: CreateEffect
+		Explosions: large_explosion
+		ImpactSounds: seeker-hit1.aud, seeker-hit2.aud
+
 ^ScrinPlasmaBeam:
 	Inherits: ^ScrinLaser
 	-Projectile:
@@ -421,6 +444,7 @@ DevourerLaser:
 		StartOffset: 0,360,0
 		FollowingOffset: 0,-36,0
 		ImpactTicks: 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20
+		GlowColor: ee00ff
 	Warhead@1Dam: SpreadDamage
 		Spread: 341
 		Damage: 1300
@@ -466,7 +490,7 @@ RiftCannon:
 		SecondaryBeamColor: 00000099
 		SecondaryBeamWidth: 90
 	Warhead@1Dam: SpreadDamage
-		Spread: 341
+		Spread: 426
 		Falloff: 100, 37, 23, 10, 0
 		Damage: 2500
 		Versus:
@@ -476,7 +500,7 @@ RiftCannon:
 			Brick: 75
 		DamageTypes: BulletDeath
 	Warhead@2Dam: HealthPercentageSpreadDamage
-		Spread: 341
+		Spread: 426
 		Falloff: 100, 37, 23, 10, 0
 		Damage: 100
 		Versus:
@@ -543,6 +567,10 @@ MiniRift:
 		Condition: slowed
 		ValidTargets: Vehicle, Ship
 		ValidRelationships: Enemy, Neutral
+	Warhead@Distort: HeatDistortion
+		Scale: 0.3
+		FadeFrames: 180
+		FadeInFrames: 15
 
 CyberscrinLaser:
 	Inherits: DevourerLaser
@@ -559,6 +587,7 @@ CyberscrinLaser:
 		StartOffset: 0,288,0
 		FollowingOffset: 0,-36,0
 		ImpactTicks: 0, 2, 4, 6, 8, 10, 12, 14, 16
+		GlowColor: ff0000
 	Warhead@1Dam: SpreadDamage
 		Spread: 256
 		Damage: 1000
@@ -603,8 +632,37 @@ CorrupterSpew:
 		ExplosionPalette: caneon
 		Image: tibexplodesm
 
+CorrupterSpewCharged:
+	Inherits: CorrupterSpew
+	StartBurstReport: corrupter-cfire1.aud
+	Projectile: Bullet
+		Speed: 200
+		TrailImage: tibspew1lg
+		Image: tibspew2lg
+		LaunchAngle: 40
+	Warhead@1Dam: SpreadDamage
+		Versus:
+			None: 225
+		DamageTypes: Prone50Percent, TriggerProne, RadiationDeath, FlakVestMitigatedMinor
+	Warhead@2Dam: HealthPercentageSpreadDamage
+		Damage: 100
+		Spread: 288
+		Falloff: 100, 45, 20, 7, 0
+		Versus:
+			None: 15
+			Wood: 0
+			Concrete: 0
+			Light: 0
+			Heavy: 0
+	Warhead@1Dam: SpreadDamage
+		DamageTypes: Prone50Percent, TriggerProne, RadiationDeath
+
 CorrupterExplode:
 	Inherits: UnitExplodeIraqTank
+	Warhead@1Dam_impact: SpreadDamage
+		Damage: 1000
+	Warhead@4Dam_areanuke1: SpreadDamage
+		Damage: 500
 	Warhead@3Eff_impact: CreateEffect
 		Explosions: med_chem
 		ExplosionPalette: tdeffect
@@ -681,7 +739,7 @@ RuinerCannonCharged:
 
 TripodLaser:
 	Inherits: ^ScrinPlasmaBeam
-	Range: 5c768
+	Range: 5c256
 	Report: tripod-fire1.aud, tripod-fire2.aud, tripod-fire3.aud
 	ReloadDelay: 65
 	Projectile: PlasmaBeam
@@ -692,6 +750,7 @@ TripodLaser:
 		FollowingOffset: 50,-100,0
 		ImpactTicks: 0, 1, 2, 3, 4, 5, 6
 		MaxFacingDeviation: 128
+		GlowColor: ee00ff
 	Warhead@1Dam: SpreadDamage
 		Spread: 341
 		Damage: 925
@@ -713,6 +772,7 @@ ReaperLaser:
 		CenterBeam: true
 		CenterBeamWidth: 45
 		CenterBeamColor: eeffeeff
+		GlowColor: 00ff00
 
 ReaperLaserCharged:
 	Inherits: ReaperLaser
@@ -747,42 +807,10 @@ ReaperLaserChargedReversed:
 		StartOffset: -150,-300,0
 		FollowingOffset: 50,100,0
 
-ExterminatorLaser:
-	Inherits: TripodLaser
-	ReloadDelay: 55
-	Report: etpd-fire1.aud, etpd-fire2.aud
-	Projectile: PlasmaBeam
-		InnerLightness: 170
-		OuterLightness: 130
-		Colors: 880000EE, AA0000EE
-		CenterBeam: true
-		CenterBeamWidth: 40
-		CenterBeamColor: ffeeeeff
-		Radius: 3
-		Distortion: 64
-		DistortionAnimation: 64
-		SegmentLength: 196
-		RecalculateDistortionInterval: 2
-		MaxFacingDeviation: 256
-	Warhead@1Dam: SpreadDamage
-		Damage: 2250
-		Spread: 512
-		Versus:
-			Wood: 45
-			Concrete: 50
-	Warhead@3Eff: CreateEffect
-		Explosions: large_explosion, small_explosion_alt1, small_explosion_alt2, small_explosion_alt3
-
-ExterminatorLaserReversed:
-	Inherits: ExterminatorLaser
-	Projectile: PlasmaBeam
-		StartOffset: -150,-300,0
-		FollowingOffset: 50,100,0
-
 StormriderZap:
-	Range: 5c768
+	Range: 6c0
 	Report: stormrider-fire1.aud, stormrider-fire2.aud, stormrider-fire3.aud
-	ReloadDelay: 70
+	ReloadDelay: 50
 	Burst: 5
 	BurstDelays: 4
 	Projectile: Bullet
@@ -843,33 +871,33 @@ StormRiderZapAA:
 		ImpactSounds: irocataa.aud, irocatab.aud, irocatac.aud, irocatad.aud
 
 TormentorZap:
-	ReloadDelay: 70
-	Burst: 6
-	BurstDelays: 0, 4, 0, 4, 0
+	ReloadDelay: 50
 	ValidTargets: Ground, Water
 	Range: 7c0
 	Report: torm-fire1.aud, torm-fire2.aud
 	Projectile: LaserZapCA
-		Width: 56
+		Width: 70
 		HitAnim: laserfire
 		Color: 954fffAA
 		ZOffset: 512
 		SecondaryBeam: true
-		SecondaryBeamWidth: 90
+		SecondaryBeamWidth: 120
 		SecondaryBeamZOffset: 511
 		SecondaryBeamColor: 7d00fe30
-		Duration: 3
+		Duration: 10
 	Warhead@1Dam: SpreadDamage
 		Spread: 42
-		Damage: 2100
+		Damage: 13800
 		DamageTypes: Prone50Percent, TriggerProne, FireDeath, TankBuster, AirToGround
 		Versus:
 			None: 20
 			Light: 65
 			Wood: 30
 			Heavy: 100
-			Concrete: 95
+			Concrete: 105
 			Brick: 50
+	Warhead@1Flash: FlashTarget
+		Color: ac89e7
 	Warhead@2Smu: LeaveSmudge
 		SmudgeType: Scorch-NoFlame
 		InvalidTargets: Vehicle, Structure, Wall, Husk, Trees, Creep
@@ -879,7 +907,7 @@ TormentorZapAA:
 	Range: 6c0
 	ValidTargets: Air, AirSmall
 	Warhead@1Dam: SpreadDamage
-		Damage: 1100
+		Damage: 7200
 		ValidTargets: Air, AirSmall
 	-Warhead@2Smu:
 
@@ -932,6 +960,7 @@ EnervatorBoltsAA:
 	Projectile: MissileCA
 		CloseEnough: 341
 		RangeLimit: 13c0
+		AllowSnapping: true
 	Warhead@1Dam: SpreadDamage
 		ValidTargets: Air
 		Range: 0, 0c64, 0c256, 3c0
@@ -950,7 +979,7 @@ EnervatorBoltsAA:
 
 InvaderLauncher:
 	ReloadDelay: 5
-	Range: 10c0
+	Range: 7c0
 	ValidTargets: Air, AirSmall, Ground, Water
 	Projectile: InstantHit
 	Warhead@1Dam: TargetDamage
@@ -967,7 +996,7 @@ InvaderLauncher:
 InvaderZap:
 	Range: 5c0
 	Report: gunwalker-fire1.aud, gunwalker-fire2.aud
-	ReloadDelay: 50
+	ReloadDelay: 60
 	Burst: 3
 	BurstDelays: 5
 	Projectile: Bullet
@@ -976,21 +1005,15 @@ InvaderZap:
 		Palette: scrin
 		Blockable: false
 	Warhead@1Dam: SpreadDamage
-		Spread: 448
+		Spread: 128
 		Damage: 1000
-		InvalidTargets: Infantry
 		Versus:
-			None: 65
+			None: 80
 			Wood: 30
 			Concrete: 15
 			Light: 80
 			Heavy: 100
 			Brick: 20
-		DamageTypes: FireDeath, AirToGround
-	Warhead@2Dam: SpreadDamage
-		Spread: 128
-		ValidTargets: Infantry
-		Damage: 1000
 		DamageTypes: Prone50Percent, TriggerProne, FireDeath, AirToGround
 	Warhead@2Eff: CreateEffect
 		Explosions: idle
@@ -1016,7 +1039,6 @@ InvaderZapAA:
 		ValidTargets: Air
 		ValidRelationships: Enemy, Neutral
 		DamageTypes: Prone50Percent, TriggerProne, FireDeath
-	-Warhead@2Dam:
 	Warhead@smallDamage: SpreadDamage
 		Damage: 235
 		Spread: 341
@@ -1041,7 +1063,7 @@ PlasmaTurretGun:
 			Wood: 50
 			Concrete: 30
 			Light: 55
-			Heavy: 35
+			Heavy: 25
 			Brick: 20
 		DamageTypes: Prone50Percent, TriggerProne, DefaultDeath
 	Warhead@2Dam: HealthPercentageDamage
@@ -1102,6 +1124,7 @@ IonCloudZap:
 	Warhead@1Dam: SpreadDamage
 		Damage: 4000
 		Spread: 512
+		ValidRelationships: Enemy, Neutral
 
 IonCloudMinorZap:
 	Inherits: IonCloudZap
@@ -1217,7 +1240,7 @@ ShardLauncher:
 	BurstDelays: 4
 	Range: 8c0
 	ValidTargets: Air, AirSmall, ICBM
-	Projectile: Missile
+	Projectile: MissileCA
 		Speed: 448
 		CloseEnough: 448
 		Palette: scrin
@@ -1262,7 +1285,7 @@ RavagerShards:
 	ReloadDelay: 45
 	BurstDelays: 5
 	Range: 5c0
-	Projectile: Missile
+	Projectile: MissileCA
 		Speed: 265
 		CloseEnough: 265
 		ContrailLength: 9
@@ -1291,38 +1314,64 @@ RavagerShards:
 
 EvisceratorShards:
 	Inherits: RavagerShards
-	Range: 6c0
+	Range: 4c0
 	ReloadDelay: 30
 	BurstDelays: 4
-	Projectile: Missile
-		Speed: 350
-	Warhead@1Dam: SpreadDamage
-		Damage: 2100
-		Versus:
-			Wood: 20
-
-EvisceratorShardsCharged:
-	Inherits: EvisceratorShards
 	StartBurstReport: shard-fire1.aud
-	Projectile: Missile
+	Projectile: MissileCA
+		Speed: 350
 		ContrailStartColorAlpha: 128
 	Warhead@1Dam: SpreadDamage
-		Damage: 2600
-		Versus:
-			Wood: 30
+		Damage: 2200
+	Warhead@3Eff: CreateEffect
+		ImpactSounds: firebl3.aud
+		Explosions: idle
+		ExplosionPalette: caneon
+		Image: evischargedhit
+	Warhead@Arc: FireShrapnel
+		Weapon: EvisceratorArcShard
+		Amount: 1
+		AimChance: 100
+		ThrowWithoutTarget: true
+		AimTargetStances: Enemy, Neutral
+		MaxAngle: 60
+
+EvisceratorArcShard:
+	Inherits: EvisceratorShards
+	-Burst:
+	Range: 2c0
+	Projectile: MissileCA
+		MinimumLaunchAngle: 80
+		MaximumLaunchAngle: 80
+		Inaccuracy: 32
+		HorizontalRateOfTurn: 30
+		VerticalRateOfTurn: 40
+	Warhead@1Dam: SpreadDamage
+		Spread: 128
+		Damage: 2000
+		ValidRelationships: Enemy, Neutral
+	Warhead@3Eff: CreateEffect
+		ImpactSoundChance: 50
+	Warhead@Arc: FireShrapnel
+		Weapon: EvisceratorArcShard2
+		MaxAngle: 30
+
+EvisceratorArcShard2:
+	Inherits: EvisceratorArcShard
+	-Warhead@Arc:
 
 StalkerShards:
 	Inherits: RavagerShards
 	StartBurstReport: stlk-fire1.aud, stlk-fire2.aud
-	Range: 3c512
 	Burst: 2
 	BurstDelays: 4
 	ReloadDelay: 40
-	Projectile: Missile
+	Projectile: MissileCA
 		Speed: 350
 		Image: scrinzap
 		ContrailStartColor: 954fff
 	Warhead@1Dam: SpreadDamage
+		Spread: 192
 		Damage: 7500
 		Versus:
 			Wood: 15
@@ -1346,7 +1395,8 @@ ShardWalkerShards:
 	Inherits: RavagerShards
 	ReloadDelay: 35
 	StartBurstReport: shard-fire1.aud
-	Projectile: Missile
+	Projectile: MissileCA
+		Speed: 448
 		ContrailStartColor: 00FF0066
 		ContrailStartColorAlpha: 102
 		MinimumLaunchAngle: 80
@@ -1357,7 +1407,7 @@ ShardWalkerShards:
 		Spread: 128
 		Damage: 2650
 		Versus:
-			None: 115
+			None: 120
 			Wood: 10
 			Light: 32
 			Heavy: 10
@@ -1368,7 +1418,7 @@ ShardWalkerShardsAA:
 	ReloadDelay: 35
 	BurstDelays: 5
 	Range: 8c512
-	Projectile: Missile
+	Projectile: MissileCA
 		ContrailStartColor: 00FF0066
 		ContrailStartColorAlpha: 102
 	Warhead@1Dam: SpreadDamage
@@ -1387,7 +1437,8 @@ LaceratorShards:
 	StartBurstReport: lacerator-fire1.aud, lacerator-fire2.aud
 	ReloadDelay: 100
 	ValidTargets: Ground, Water, Underwater
-	Projectile: Missile
+	Projectile: MissileCA
+		Speed: 448
 		Image: bshard
 		ContrailLength: 9
 		ContrailStartWidth: 0c32
@@ -1413,9 +1464,9 @@ LaceratorShards.Hypercharged:
 	Burst: 1
 	ReloadDelay: 5
 	-StartBurstReport:
-	Range: 6c0
+	Range: 7c0
 	Report: lacerator-hyperfire1.aud, lacerator-hyperfire2.aud
-	Projectile: Missile
+	Projectile: MissileCA
 		ContrailStartWidth: 0c48
 		ContrailStartColor: 7e00ff
 	Warhead@1Dam: SpreadDamage
@@ -1430,18 +1481,8 @@ ImpalerSpike:
 	Burst: 2
 	BurstDelays: 25
 	Report: impl-fire1.aud
-	Projectile: Missile
-		Speed: 750
+	Projectile: InstantHit
 		Blockable: false
-		Image: DRAGON
-		Shadow: True
-		HorizontalRateOfTurn: 20
-		RangeLimit: 8c0
-		ContrailLength: 11
-		ContrailStartWidth: 0c48
-		ContrailStartColor: ffffff
-		ContrailStartColorAlpha: 64
-		AllowSnapping: true
 	Warhead@1Dam: SpreadDamage
 		Damage: 12500
 		Spread: 128
@@ -1464,12 +1505,44 @@ ImpalerSpike:
 		Condition: slowed
 		ValidTargets: Vehicle, Infantry
 
+ImpalerTracer:
+	Inherits: ImpalerSpike
+	-Report:
+	Projectile: Bullet
+		Speed: 1400
+		Blockable: false
+		Image: DRAGON
+		Shadow: True
+		ContrailLength: 11
+		ContrailStartWidth: 0c48
+		ContrailStartColor: ffffff
+		ContrailStartColorAlpha: 64
+	-Warhead@1Dam:
+	-Warhead@3Eff:
+	-Warhead@Slow:
+
+ImpalerSpikePassenger:
+	Inherits: ImpalerSpike
+	-Projectile:
+	Projectile: MissileCA
+		Speed: 800
+		Blockable: false
+		Image: DRAGON
+		Shadow: True
+		HorizontalRateOfTurn: 20
+		RangeLimit: 8c0
+		ContrailLength: 11
+		ContrailStartWidth: 0c48
+		ContrailStartColor: ffffff
+		ContrailStartColorAlpha: 64
+		AllowSnapping: true
+
 WatcherDart:
 	Range: 6c0
 	ReloadDelay: 100
 	Report: wchr-fire1.aud
 	ValidTargets: WatcherParasiteAttachable
-	Projectile: Missile
+	Projectile: MissileCA
 		Speed: 750
 		Blockable: false
 		Image: wchrdart
@@ -1482,21 +1555,53 @@ WatcherDart:
 		ContrailStartColorAlpha: 128
 		AllowSnapping: true
 	Warhead@Attach: AttachActor
-		Range: 341
+		Range: 0c42
 		Actor: watcher.parasite
 		AttachSounds: wchr-hit1.aud
 		MissSounds: dud1.aud
 		ValidTargets: WatcherParasiteAttachable
 		ValidRelationships: Enemy, Neutral
 	Warhead@Flash: FlashTarget
-		Spread: 341
+		Spread: 0c42
 		Color: ffffff
 		ValidTargets: WatcherParasiteAttachable
+
+WatcherDartCollector:
+	Inherits: WatcherDart
+	Warhead@Arc: FireShrapnel
+		Weapon: WatcherDartArc
+		AimChance: 100
+		Amount: 5
+		ThrowWithoutTarget: false
+		AimTargetStances: Enemy
+	Warhead@Suppression: GrantExternalConditionCA
+		Range: 0c42
+		Duration: 75
+		Condition: suppression
+		ValidRelationships: Enemy, Neutral
+
+WatcherDartArc:
+	Range: 3c0
+	Projectile: PlasmaBeam
+		Duration: 7
+		Colors: ad76c408
+		InnerLightness: 200
+		OuterLightness: 100
+		Radius: 2
+		Distortion: 150
+		DistortionAnimation: 150
+		SegmentLength: 350
+		ZOffset: 512
+	Warhead@Suppression: GrantExternalConditionCA
+		Range: 0c42
+		Duration: 25
+		Condition: suppression
+		ValidRelationships: Enemy, Neutral
 
 RiftInit:
 	ValidTargets: Ground, Water
 	Projectile: InstantExplode
-	ReloadDelay: 1
+	ReloadDelay: 999
 	Warhead@Spawn: SpawnActor
 		Actors: rift
 		Range: 1
@@ -1522,10 +1627,14 @@ Rift:
 			Concrete: 120
 			Brick: 75
 		DamageTypes: Prone50Percent, TriggerProne, BulletDeath
+	Warhead@Distort: HeatDistortion
+		Scale: 0.6
+		FadeFrames: 380
+		FadeInFrames: 15
 
 SuppressionField:
 	Projectile: InstantExplode
-	ReloadDelay: 1
+	ReloadDelay: 999
 	ValidTargets: Ground, Air, AirSmall, Ship
 	# extra suppression range vs aircraft
 	Warhead@Suppression: GrantExternalConditionCA
@@ -1533,9 +1642,18 @@ SuppressionField:
 		Duration: 600
 		Condition: suppression
 		ValidTargets: Air, AirSmall
+	Warhead@Distort: HeatDistortion
+		Scale: 0.5
+		FadeFrames: 280
+		FadeInFrames: 15
+	Warhead@GlowImpact: GlowImpact
+		Color: f454d0
+		Scale: 1.5
+		FadeFrames: 180
+		FadeInFrames: 5
 
 BuzzerSpawner:
-	ReloadDelay: 1
+	ReloadDelay: 999
 	Projectile: InstantExplode
 	Warhead@1Dam: HealthPercentageDamage
 		Spread: 341
@@ -1603,15 +1721,31 @@ BuzzerTargeting:
 		DamageTypes: Prone50Percent, TriggerProne, BulletDeath
 
 StormSpikeSpawner:
-	ReloadDelay: 1
+	ReloadDelay: 999
 	Projectile: InstantExplode
 	Warhead@spawn: SpawnBuilding
-		Buildings: scol.temp
+		Buildings: sspk
+		Range: 3
+		ValidTargets: Ground, Water, Trees
+
+IchorSpikeSpawner:
+	ReloadDelay: 999
+	Projectile: InstantExplode
+	Warhead@spawn: SpawnBuilding
+		Buildings: ispk
+		Range: 3
+		ValidTargets: Ground, Water, Trees
+
+ColonySpikeSpawner:
+	ReloadDelay: 999
+	Projectile: InstantExplode
+	Warhead@spawn: SpawnBuilding
+		Buildings: cspk
 		Range: 3
 		ValidTargets: Ground, Water, Trees
 
 VoidSpikeSpawner:
-	ReloadDelay: 1
+	ReloadDelay: 999
 	Projectile: InstantExplode
 	Warhead@spawn: SpawnBuilding
 		Buildings: vspk
@@ -1619,7 +1753,7 @@ VoidSpikeSpawner:
 		ValidTargets: Ground, Water, Trees
 
 IonSurgeSpawner:
-	ReloadDelay: 1
+	ReloadDelay: 999
 	Projectile: InstantExplode
 	Warhead@Spawn: SpawnActor
 		Actors: ionsurge
@@ -1640,21 +1774,18 @@ IonSurge:
 		ValidRelationships: Ally
 
 GatewaySpawner:
-	ReloadDelay: 1
+	ReloadDelay: 999
 	Projectile: InstantExplode
-	Warhead@Spawn: SpawnActor
-		Actors: rebelgateway
+	Warhead@spawn: SpawnBuilding
+		Buildings: rebelgateway
 		Range: 3
-		ForceGround: false
-		ValidTargets: Ground, Water
-		ImpactActors: false
-		AvoidActors: true
+		ValidTargets: Ground, Water, Trees
 
 MothershipChargeBeam:
 	ReloadDelay: 3
 	Range: 0c512
 	TargetActorCenter: true
-	ValidTargets: Structure
+	InvalidTargets: Vehicle, Infantry, Ship
 	Projectile: PlasmaBeam
 		ForceVertical: true
 		Duration: 2
@@ -1671,7 +1802,7 @@ MothershipBeam:
 	ReloadDelay: 150
 	Range: 0c512
 	TargetActorCenter: true
-	ValidTargets: Structure
+	InvalidTargets: Vehicle, Infantry, Ship
 	Projectile: PlasmaBeam
 		ForceVertical: true
 		Duration: 125
@@ -1714,10 +1845,10 @@ MothershipDiscs:
 	Report: mshp-zap1.aud, mshp-zap2.aud
 	Range: 7c0
 	MinRange: 1c0
-	ReloadDelay: 50
-	Burst: 3
-	BurstDelays: 7
-	InvalidTargets: Structure
+	ReloadDelay: 65
+	Burst: 6
+	BurstDelays: 4
+	ValidTargets: Infantry, Vehicle, Ship
 	Projectile: Bullet
 		Image: plasmatorp1
 		Palette: scrin
@@ -1727,13 +1858,41 @@ MothershipDiscs:
 		ShadowColor: 00000033
 		Speed: 280
 	Warhead@1Dam: SpreadDamage
-		Damage: 5000
+		Damage: 3750
 		Versus:
 			None: 100
 			Wood: 45
 			Concrete: 45
 			Light: 80
 			Heavy: 100
+	Warhead@3Eff: CreateEffect
+		Explosions: pbomb_explosion_sm, pbomb_explosion3_sm, pbomb_explosion3_sm
+		ImpactSounds: pbomb-hit1.aud, pbomb-hit2.aud
+		ExplosionPalette: caneon
+
+PlasmaBomb:
+	Inherits: MothershipDiscs
+	ReloadDelay: 60
+	Burst: 1
+	-ValidTargets:
+	Projectile: Bullet
+		Inaccuracy: 1c0
+	Warhead@1Dam: SpreadDamage
+		Spread: 512
+		Falloff: 1000, 448, 192, 64, 26, 10, 0
+		Damage: 400
+		Versus:
+			None: 20
+			Wood: 30
+			Concrete: 15
+			Light: 80
+			Heavy: 100
+			Brick: 20
+		DamageTypes: Prone50Percent, TriggerProne, FireDeath, AirToGround
+	Warhead@3Eff: CreateEffect
+		Explosions: pbomb_explosion, pbomb_explosion2, pbomb_explosion3
+	Warhead@2Smu: LeaveSmudge
+		SmudgeType: Crater
 
 LeecherBeam:
 	ValidTargets: Ground, Water
@@ -1752,6 +1911,8 @@ LeecherBeam:
 		DistortionAnimation: 150
 		SegmentLength: 350
 		Inaccuracy: 128
+		GlowColor: ff0000
+		GlowScale: 0.4
 	Warhead@1Dam: SpreadDamage
 		Spread: 288
 		Falloff: 100, 45, 20, 7, 0
@@ -1781,10 +1942,10 @@ LeecherOrbHeal:
 	ValidTargets: Ground, Water
 	Projectile: InstantHit
 	Warhead@1Dam: SpreadDamage
-		Spread: 1c128
+		Spread: 1c768
 		Damage: -1650
 		Falloff: 100, 100, 0
-		ValidTargets: Heal, Repair
+		ValidTargets: Healable, Repairable
 		Versus:
 			None: 50
 			Light: 75
@@ -1797,7 +1958,7 @@ LeecherOrbHealInit:
 		Damage: -5000
 
 GreaterCoalescenceSpawner:
-	ReloadDelay: 1
+	ReloadDelay: 999
 	Projectile: InstantExplode
 	Warhead@Spawn: SpawnActor
 		Actors: grcl
@@ -1811,8 +1972,8 @@ GreaterCoalescence:
 	Warhead@heal: SpreadDamage
 		Range: 0, 4c512
 		Falloff: 100, 100
-		Damage: -550
-		ValidTargets: Heal, Repair
+		Damage: -600
+		ValidTargets: Healable, Repairable
 		Versus:
 			None: 40
 			Light: 65
@@ -1865,16 +2026,21 @@ TiberiumCoalescence:
 TiberiumCoalescenceZap:
 	Inherits: GreaterCoalescenceZap
 	Range: 4c512
+	ValidTargets: Infantry, Vehicle, Structure, Ship, Air, AirSmall
 	Projectile: PlasmaBeam
 		Colors: 00660006
 		Duration: 9
 	Warhead@1Dam: SpreadDamage
 		Damage: 800
+		Versus:
+			Aircraft: 50
 		DamageTypes: TriggerProne, RadiationDeath
+		ValidTargets: Ground, Water, Air, AirSmall
 	Warhead@3Eff: CreateEffect
 		Image: ruin
 		Explosions: muzzle
 		ExplosionPalette: scrin
+		ValidTargets: Ground, Water, Air, AirSmall
 	-Warhead@DRAIN:
 	-Warhead@SLOW:
 
@@ -1893,8 +2059,8 @@ AtomizerBolts:
 	ReloadDelay: 150
 	Range: 9c0
 	MinRange: 1c512
-	Projectile: Missile
-		Speed: 200
+	Projectile: MissileCA
+		Speed: 250
 		Image: atmzbolt
 		Palette: scrin
 		Jammable: true
@@ -1902,8 +2068,12 @@ AtomizerBolts:
 		CruiseAltitude: 1c512
 		TrailImage: atmzbolttrail
 		TrailPalette: scrin
-		TrailInterval: 1
+		TrailSpacing: 200
 		Blockable: false
+		ContrailLength:8
+		ContrailStartWidth: 0c48
+		ContrailStartColor: ff0000
+		ContrailStartColorAlpha: 170
 	Warhead@1Dam: SpreadDamage
 		Spread: 341
 		Damage: 4000
@@ -1936,6 +2106,11 @@ AtomizerBolts:
 		ExplosionPalette: scrin
 		Image: atmzbolthit
 		ImpactSounds: atomizer-hit1.aud
+	Warhead@Glow: GlowImpact
+		Scale: 1.5
+		FadeFrames: 25
+		FadeInFrames: 5
+		Color: ff0000
 
 AtomizerArc:
 	Inherits: AtomizerBolts
@@ -2012,7 +2187,7 @@ AtomizerArcInfantry:
 	Projectile: InstantHit
 
 BursterTargeting:
-	ValidTargets: Vehicle, Infantry, Structure
+	ValidTargets: Ground
 	Range: 1c512
 	Projectile: InstantHit
 	Warhead@1Dam: TargetDamage
@@ -2026,11 +2201,11 @@ BursterExplode:
 		InvalidTargets: Structure, Burster
 		Versus:
 			None: 35
-		DamageTypes: Prone50Percent, TriggerProne, SmallExplosionDeath
+		DamageTypes: Prone50Percent, TriggerProne, RadiationDeath
 	Warhead@FF: HealthPercentageDamage
 		Spread: 2c0
 		Damage: 25
-		DamageTypes: Prone50Percent, TriggerProne, SmallExplosionDeath
+		DamageTypes: Prone50Percent, TriggerProne, RadiationDeath
 		ValidTargets: Burster
 	Warhead@SDam: SpreadDamage
 		Damage: 4500
@@ -2043,12 +2218,24 @@ BursterExplode:
 		Size: 3
 		Delay: 5
 	Warhead@3Eff: CreateEffect
-		Explosions: lchr_explode
-		ExplosionPalette: effect
+		Explosions: brst_explode
+		ExplosionPalette: scrineffect
 		ImpactSounds: vdemdiea.aud
 		Delay: 1
-	Warhead@4Eff: CreateEffect
-		Explosions: artillery_explosion
+	Warhead@3Eff_impact: CreateEffect
+		Explosions: med_chem
+		ExplosionPalette: tdeffect
+		ImpactSounds: vtoxcona.aud, vtoxconb.aud, vtoxconc.aud
+	Warhead@Shrap: FireShrapnel
+		Weapon: ChemDebris
+		Amount: 5
+		AimChance: 0
+		ValidTargets: Ground, Water, Infantry, Vehicle
+		ThrowWithoutTarget: true
+		Delay: 1
+	Warhead@3Res: CreateResource
+		AddsResourceType: Tiberium
+		Size: 1
 
 MindSparkEruption:
 	ReloadDelay: 1000
@@ -2113,49 +2300,55 @@ ObliteratorBolt:
 	MinRange: 1c0
 	ReloadDelay: 75
 	Report: oblt-fire1.aud
+	TargetActorCenter: true
 	Projectile: LinearPulse
 		Speed: 768
-		Image: obltbolt
-		Sequences: idle, idle2
-		Palette: scrin
-		ImpactInterval: 390
-		FinalHitAnimSequence: idle
-		FinalHitAnimPalette: scrin
-		FinalHitAnim: enrvbolthit
+		ImpactInterval: 384
+		ImpactType: Rectangle
+		RectangleLength: 768
+		RectangleWidth: 1c512
+		SingleHitPerActor: true
+		ForceGround: DamageOnly
+		DamageFalloff@1:
+			Spread: 0c384
+			Falloff: 100, 45, 0
+		ProjectileAnimation@1:
+			Image: obltbolt
+			Sequences: idle, idle2
+			Palette: scrin
+			HitAnim: enrvbolthit
+			HitAnimSequence: idle
+			HitAnimPalette: scrin
+			SmudgeType: Scorch-NoFlame
+		ImpactAnimation@1:
+			Image: obltbolt
+			Sequences: trail, trail2, trail3
+			Palette: scrin
+			Inaccuracy: 110
 	Warhead@1Dam: SpreadDamage
-		Spread: 390
-		Falloff: 100, 50, 0
-		Damage: 7500
+		Damage: 16000
 		Versus:
-			Wood: 40
-			Concrete: 40
-			Heavy: 65
-			Light: 65
+			None: 60
+			Wood: 115
+			Concrete: 100
+			Heavy: 90
+			Light: 100
 		DamageTypes: Prone50Percent, TriggerProne, FireDeath
 		ValidRelationships: Enemy, Neutral
 	Warhead@friendlyFire: SpreadDamage
-		Spread: 390
-		Falloff: 100, 50, 0
 		Damage: 1000
 		Versus:
-			Wood: 40
-			Concrete: 40
-			Heavy: 65
-			Light: 65
+			None: 60
+			Wood: 115
+			Concrete: 100
+			Heavy: 90
+			Light: 100
 		DamageTypes: Prone50Percent, TriggerProne, FireDeath
 		ValidRelationships: Ally
 		InvalidTargets: Obliterator
-	Warhead@2Eff: CreateFacingEffect
-		Explosions: trail, trail2, trail3
-		ExplosionPalette: scrin
-		Image: obltbolt
-		ValidTargets: Ground, Air, Ship, Trees
-		Inaccuracy: 110
-	Warhead@2Smu: LeaveSmudge
-		SmudgeType: Scorch
 	Warhead@Flash: FlashTarget
-		Spread: 1c0
 		Color: 9c3ee0
+		Alpha: 0.7
 		ValidTargets: Infantry, Structure, Vehicle
 
 NullifierBolt:
@@ -2194,6 +2387,7 @@ NullifierBolt:
 		Duration: 125
 		Condition: blinded
 		ValidTargets: Infantry, Vehicle, Ship, Defense
+		InvalidTargets: BlindImmune
 	Warhead@3Eff: CreateEffect
 		Explosions: idle
 		ExplosionPalette: caneon
@@ -2203,18 +2397,23 @@ NullifierBolt:
 		Spread: 0c128
 		Color: ffff00
 		ValidTargets: Infantry, Vehicle, Ship, Defense
+	Warhead@Glow: GlowImpact
+		Scale: 1.5
+		FadeFrames: 30
+		FadeInFrames: 10
+		Color: ffff00
 
 ScrinRepair:
 	Inherits: Heal
 	Range: 2c512
-	ValidTargets: Repair
+	ValidTargets: Repairable
 	Projectile: LaserZapCA
 		Width: 48
 		Duration: 4
 		Color: FFFFFF80
 	Warhead@1Dam: SpreadDamage
 		Damage: -3000
-		ValidTargets: Repair
+		ValidTargets: Repairable
 		DamageTypes: DirectRepair
 	-Warhead@2Dam:
 	-Warhead@3Dam:
@@ -2222,4 +2421,4 @@ ScrinRepair:
 	Warhead@Flash: FlashTarget
 		Spread: 0c511
 		Color: ff0000
-		ValidTargets: Repair
+		ValidTargets: Repairable

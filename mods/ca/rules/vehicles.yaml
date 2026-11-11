@@ -2,20 +2,25 @@ V2RL:
 	Inherits: ^Vehicle
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
-	Inherits@UpgradeOverlay: ^UpgradeOverlay
+	RenderSprites:
+		FactionImages:
+			soviet: v2rl
+			russia: v2rl
+			ukraine: v2rl
+			iraq: v2arl
+			yuri: v2rl
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 180
-		Prerequisites: anyradar, ~vehicles.soviet, ~!v3.upgrade, ~techlevel.medium
-		Description: actor-v2rl.description
+		Prerequisites: anyradar, ~vehicles.v2, ~techlevel.medium
+		Description: Long-range rocket artillery with low rate of fire.
 	TooltipExtras:
 		Strengths: • Strong vs Buildings, Defenses, Infantry, Light Armor
 		Weaknesses: • Cannot attack Aircraft\n• Has difficulty hitting moving targets
 	Valued:
 		Cost: 900
 	Tooltip:
-		Name: actor-v2rl.name
+		Name: V2 Rocket Launcher
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
@@ -33,8 +38,11 @@ V2RL:
 	Armament:
 		Weapon: SCUD
 		ReloadingCondition: reloading
-	AutoTarget:
-		ScanRadius: 10
+		RequiresCondition: !player-iraq
+	Armament@Iraq:
+		Weapon: SCUD.Iraq
+		ReloadingCondition: reloading
+		RequiresCondition: player-iraq
 	AttackFrontal:
 		TargetFrozenActors: True
 		ForceFireIgnoresActors: True
@@ -48,23 +56,17 @@ V2RL:
 		Sequence: empty-idle
 		Name: reloading
 	FireWarheadsOnDeath:
-		Weapon: BarrelExplode
+		Weapon: UnitExplodeFlame
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
 	WithProductionIconOverlay:
 		Types: Veterancy
 		Prerequisites: vehicles.upgraded
+	GrantConditionOnPrerequisite@Iraq:
+		Prerequisites: player.iraq
+		Condition: player-iraq
 	Selectable:
 		DecorationBounds: 1194, 1194
-	ReplacedInQueue:
-		Actors: v3rl
-	Upgradeable@V3:
-		Type: v3.upgrade
-		UpgradingCondition: upgrading
-		Actor: v3rl
-		UpgradeAtActors: fix, rep, srep
-		BuildDuration: 100
-		RequiresCondition: !mindcontrolled
 	Encyclopedia:
 		Category: Soviets/Vehicles
 
@@ -72,7 +74,6 @@ KATY:
 	Inherits: ^Vehicle
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -119,7 +120,7 @@ KATY:
 		FacingTolerance: 0
 		Voice: Attack
 	FireWarheadsOnDeath:
-		Weapon: BarrelExplode
+		Weapon: UnitExplodeFlame
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
 	WithProductionIconOverlay:
@@ -192,8 +193,8 @@ NUKC:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@ATOMICAMMO: ^AtomicAmmunition
+	Inherits@HeavyArmor: ^HeavyArmor
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 243
@@ -213,8 +214,6 @@ NUKC:
 		DecorationBounds: 1877, 1621, 0, -170
 	Health:
 		HP: 60000
-	Armor:
-		Type: Heavy
 	Mobile:
 		TurnSpeed: 6
 		Speed: 46
@@ -222,7 +221,7 @@ NUKC:
 		Voice: Move
 		ImmovableCondition: deployed
 		RequireForceMoveCondition: !undeployed
-		PauseOnCondition: being-captured || empdisable || being-warped || driver-dead || notmobile || deploying || undeploying
+		PauseOnCondition: being-captured || empdisable || being-warped || driver-dead || notmobile || deploying || undeploying || deployed
 	RevealsShroud:
 		MinRange: 4c0
 		Range: 5c0
@@ -259,6 +258,8 @@ NUKC:
 		ForceFireIgnoresActors: True
 		PersistentTargeting: false
 		RequiresCondition: !undeploying
+	IgnoreOutOfRangeAttackOrders:
+		RequiresCondition: !undeployed
 	GrantConditionOnDeployTurreted:
 		DeployedCondition: deployed
 		UndeployedCondition: undeployed
@@ -280,17 +281,17 @@ NUKC:
 	WithEnabledAnimation@Deploying:
 		RequiresCondition: deployed
 		Sequence: make
-		Body: deployed
+		Body: body
 	WithEnabledAnimation@Undeploying:
 		RequiresCondition: undeployed
 		Sequence: undeploy
 		Body: body
 	WithFacingSpriteBody:
-		RequiresCondition: undeployed
+		RequiresCondition: undeployed || deploying
 	WithFacingSpriteBody@DeployedChassis:
 		Name: deployed
 		Sequence: deployed
-		RequiresCondition: !undeployed
+		RequiresCondition: !undeployed && !deploying
 	WithFacingSpriteBody@Overlay:
 		Name: overlay
 		Sequence: overlay
@@ -378,6 +379,9 @@ NUKC:
 	RejectsOrders:
 		Reject: AttackMove
 		RequiresCondition: !undeployed
+	WithReloadBar:
+		ValidRelationships: Ally, Enemy, Neutral
+		Color: ff9000
 	Encyclopedia:
 		Category: Soviets/Vehicles
 	EncyclopediaExtras:
@@ -397,8 +401,8 @@ NUKC.Preview:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -418,8 +422,6 @@ NUKC.Preview:
 		AddToArmyValue: true
 	Health:
 		HP: 27000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Locomotor: Amphibious
 		Speed: 113
@@ -468,8 +470,8 @@ NUKC.Preview:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlightlySlowedByCrushing
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -488,8 +490,6 @@ NUKC.Preview:
 		AddToArmyValue: true
 	Health:
 		HP: 47000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 72
 	RevealsShroud:
@@ -588,7 +588,7 @@ GTNK.squad:
 		BuildAtProductionType: ParadropVehicle
 		BuildPaletteOrder: 400
 		Prerequisites: radaroraircraft, ~vehicles.usa, ~techlevel.medium
-		Description: Prepare a pair of  Grizzly Tanks for airdrop.
+		Description: Prepare a pair of Grizzly Tanks for airdrop.
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor
 		Weaknesses: • Weak vs Infantry, Defenses\n• Cannot attack Aircraft
@@ -817,8 +817,8 @@ GTNK.squad:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlightlySlowedByCrushing
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Inherits@ATOMICAMMO: ^AtomicAmmunition
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
@@ -839,8 +839,6 @@ GTNK.squad:
 		AddToArmyValue: true
 	Health:
 		HP: 62000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 60
 	RevealsShroud:
@@ -945,6 +943,8 @@ GTNK.squad:
 	Upgradeable@RHINO:
 		Actor: 3tnk.rhino.atomic
 	-Upgradeable@ATOMIC:
+	EncyclopediaExtras:
+		VariantOf: 3TNK
 
 3TNK.YURI:
 	Inherits: 3TNK
@@ -1077,13 +1077,14 @@ GTNK.squad:
 	-Upgradeable@LASHER:
 	EncyclopediaExtras:
 		Subfaction: yuri
+		VariantOf: 3TNK.YURI
 
 3TNK.RHINO:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlightlySlowedByCrushing
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Inherits@ATOMICAMMO: ^AtomicAmmunition
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
@@ -1106,8 +1107,6 @@ GTNK.squad:
 		AddToArmyValue: true
 	Health:
 		HP: 68000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 60
 		Voice: Move
@@ -1188,6 +1187,7 @@ GTNK.squad:
 	Encyclopedia:
 		Category: Soviets/Vehicles
 	EncyclopediaExtras:
+		Name: Rhino Tank
 		AdditionalInfo: Requires Armor Doctrine.
 
 3TNK.RHINO.ATOMIC:
@@ -1218,6 +1218,9 @@ GTNK.squad:
 	Upgradeable@LASHER:
 		Actor: 3tnk.rhino.atomicyuri
 	-Upgradeable@ATOMIC:
+	EncyclopediaExtras:
+		Name: Atomic Rhino Tank
+		VariantOf: 3TNK.RHINO
 
 3TNK.RHINO.YURI:
 	Inherits: 3TNK.RHINO
@@ -1256,6 +1259,7 @@ GTNK.squad:
 	-SpeedMultiplier@CRUSHSLOW:
 	-Upgradeable@LASHER:
 	EncyclopediaExtras:
+		Name: Thrasher Tank
 		Subfaction: yuri
 
 3TNK.RHINO.ATOMICYURI:
@@ -1293,13 +1297,15 @@ GTNK.squad:
 	-Upgradeable@LASHER:
 	-WithDecoration@UpgradeOverlay:
 	EncyclopediaExtras:
+		Name: Atomic Thrasher Tank
 		Subfaction: yuri
+		VariantOf: 3TNK.RHINO.YURI
 
 4TNK:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeGround
-	Inherits@BERSERK: ^Berserk
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Inherits@ATOMICAMMO: ^AtomicAmmunition
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
@@ -1319,9 +1325,7 @@ GTNK.squad:
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
-		HP: 90000
-	Armor:
-		Type: Heavy
+		HP: 95000
 	Mobile:
 		Speed: 44
 		Locomotor: heavytracked
@@ -1463,6 +1467,8 @@ GTNK.squad:
 	Upgradeable@APOC:
 		Actor: apoc.atomic
 	-Upgradeable@ATOMIC:
+	EncyclopediaExtras:
+		VariantOf: 4TNK
 
 4TNK.ERAD:
 	Inherits: 4TNK
@@ -1510,6 +1516,8 @@ GTNK.squad:
 	-AutoTargetPriority@DeprioritizedAir:
 	Voiced:
 		VoiceSet: EradVoice
+	EncyclopediaExtras:
+		Subfaction: iraq
 
 4TNK.ERAD.ATOMIC:
 	Inherits: 4TNK.ATOMIC
@@ -1551,12 +1559,15 @@ GTNK.squad:
 	Upgradeable@OVLD:
 		Actor: ovld.erad.atomic
 	-Upgradeable@ERAD:
+	EncyclopediaExtras:
+		VariantOf: 4TNK.ERAD
+		Subfaction: iraq
 
 ARTY:
 	Inherits: ^Vehicle
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
+	Inherits@SlowedByCrushing: ^SlowedByCrushing
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 122
@@ -1651,8 +1662,10 @@ HOWI:
 	Armament:
 		Weapon: 155mmTDM
 	Mobile:
-		Speed: 64
+		Speed: 72
 		TurnSpeed: 18
+	RevealsShroud:
+		Range: 6c0
 	WithSpriteTurret:
 	-ReplacedInQueue:
 	-Upgradeable@HOWI:
@@ -1749,7 +1762,7 @@ ISU:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@ATOMICAMMO: ^AtomicAmmunition
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -1768,8 +1781,6 @@ ISU:
 		AddToArmyValue: true
 	Health:
 		HP: 60000
-	Armor:
-		Type: Heavy
 	Mobile:
 		TurnSpeed: 8
 		Speed: 46
@@ -1835,7 +1846,7 @@ SPEC:
 	Inherits: ^VehicleTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
+	Inherits@SlowedByCrushing: ^SlowedByCrushing
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 271
@@ -1856,7 +1867,7 @@ SPEC:
 	Armor:
 		Type: Light
 	Mobile:
-		Speed: 92
+		Speed: 82
 		Locomotor: lighttracked
 		Voice: Move
 	AttackMove:
@@ -1872,16 +1883,11 @@ SPEC:
 	Armament:
 		Weapon: 155mmSpec
 		LocalOffset: 624,0,408
-	AttackFrontalCharged:
+	AttackFrontal:
 		TargetFrozenActors: True
 		ForceFireIgnoresActors: True
 		PauseOnCondition: empdisable || being-warped || blinded
 		FacingTolerance: 32
-		ChargeLevel: 25
-		DischargeRate: 5
-		ShotsPerCharge: 3
-		ShowSelectionBar: true
-		SelectionBarColor: 666666
 		Voice: Attack
 	WithMuzzleOverlay:
 	FireWarheadsOnDeath:
@@ -1906,17 +1912,23 @@ SPEC:
 		PauseOnCondition: invisibility
 	Cloak@CRATE-CLOAK:
 		RequiresCondition: crate-cloak && !(cloak-force-disabled || invisibility || hidden || driver-dead)
-	GrantConditionOnDamageState@UNCLOAK:
-		Condition: cloak-force-disabled
-		ValidDamageStates: Critical
+	GrantConditionOnPrerequisite@Shadow:
+		Condition: player-shadow
+		Prerequisites: player.shadow
+	SpeedMultiplier@ShadowCloak:
+		Modifier: 110
+		RequiresCondition: player-shadow && hidden
 	AutoTarget:
 		InitialStance: HoldFire
-		InitialStanceAI: ReturnFire
+		InitialStanceAI: AttackAnything
 	WithColoredSelectionBox@INVIS:
 		RequiresCondition: invisibility || hidden
 		ColorSource: Player
 	Voiced:
 		VoiceSet: SpectreVoice
+	GrantConditionToAttached@Cloak:
+		Condition: inherited-cloak
+		RequiresCondition: hidden || invisibility
 	Encyclopedia:
 		Category: Nod/Vehicles
 	EncyclopediaExtras:
@@ -1926,14 +1938,13 @@ SAPC:
 	Inherits: ^Vehicle
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@TRANSPORT: ^Transport
 	Inherits@NOUNLOADCHRONO: ^NoUnloadWhenChronoshifted
 	Inherits@COMMANDOSKULL: ^CommandoSkull
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 272
-		Prerequisites: tmpl, ~vehicles.nod, ~techlevel.high
+		Prerequisites: tmpl, ~vehicles.nod, ~!cust.upgrade, ~techlevel.high
 		Description: Stealth infantry transport.
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
@@ -1949,7 +1960,7 @@ SAPC:
 	Armor:
 		Type: Light
 	Mobile:
-		Speed: 100
+		Speed: 82
 	RevealsShroud:
 		MinRange: 4c0
 		Range: 6c0
@@ -2007,14 +2018,18 @@ SAPC:
 		UncloakOn: Attack, Unload, Infiltrate, Demolish, Dock, Damage, Heal
 		RequiresCondition: !cloak-force-disabled && !being-warped && !empdisable && !driver-dead
 		PauseOnCondition: invisibility
+		AudibleThroughFog: true
 	Cloak@CRATE-CLOAK:
 		RequiresCondition: crate-cloak && !(cloak-force-disabled || invisibility || hidden || driver-dead)
-	GrantConditionOnDamageState@UNCLOAK:
-		Condition: cloak-force-disabled
-		ValidDamageStates: Critical
+	GrantConditionOnPrerequisite@Shadow:
+		Condition: player-shadow
+		Prerequisites: player.shadow
+	SpeedMultiplier@ShadowCloak:
+		Modifier: 110
+		RequiresCondition: player-shadow && hidden
 	AutoTarget:
 		InitialStance: HoldFire
-		InitialStanceAI: ReturnFire
+		InitialStanceAI: AttackAnything
 	GrantTimedConditionOnCargoAction:
 		Condition: cloak-force-disabled
 		Actions: Load
@@ -2022,6 +2037,11 @@ SAPC:
 	WithColoredSelectionBox@INVIS:
 		RequiresCondition: invisibility || hidden
 		ColorSource: Player
+	GrantConditionToAttached@Cloak:
+		Condition: inherited-cloak
+		RequiresCondition: hidden || invisibility
+	ReplacedInQueue:
+		Actors: cust
 	Encyclopedia:
 		Category: Nod/Vehicles
 
@@ -2050,123 +2070,36 @@ SAPC.AI2:
 	-Encyclopedia:
 
 HARV:
-	Inherits: ^Vehicle-NOUPG
-	Inherits@HARVBALANCE: ^HarvesterBalancer
-	Inherits@HARVDMGNOTIFY: ^HarvesterDamageNotification
-	Inherits@SELECTION: ^SelectableEconomicUnit
-	Inherits@A2GPROTECTION: ^AirToGroundProtection
-	Inherits@EconomyPolicyDiscount: ^EconomyPolicyDiscount
+	Inherits@HarvesterBase: ^HarvesterBase
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 10
 		Prerequisites: anyrefinery, ~vehicles.ra, ~!charv.upgrade, ~techlevel.low
 		Description: Collects Ore, Gems and Tiberium for processing.
-	TooltipExtras:
-		Weaknesses: • Unarmed\n• Resistant to mind control
-	Valued:
-		Cost: 1400
 	Tooltip:
 		Name: Ore Truck
-		GenericName: Harvester
 	Selectable:
 		Priority: 7
 		DecorationBounds: 1792, 1792
-	Harvester:
-		Resources: Tiberium, BlueTiberium, BlackTiberium, Ore, Gems
-		BaleUnloadDelay: 1
-		BaleLoadDelay: 4
-		SearchFromProcRadius: 15
-		SearchFromHarvesterRadius: 8
-		HarvestFacings: 8
-		EmptyCondition: no-ore
-	DockClientManager:
-	WithStoresResourcesPipsDecoration:
-		Position: BottomLeft
-		Margin: 4, 3
-		RequiresSelection: true
-		PipCount: 5
-		ResourceSequences:
-			Ore: pip-yellow
-			Gems: pip-red
-			Tiberium: pip-green
-			BlueTiberium: pip-blue
-			BlackTiberium: pip-green
-	Health:
-		HP: 75000
-	Armor:
-		Type: Heavy
-	Mobile:
-		Speed: 72
-		TurnSpeed: 24
-		Locomotor: heavywheeled
-	RevealsShroud:
-		Range: 4c0
 	WithHarvestAnimationCA:
 	WithDockingAnimationCA:
 		RefineryTypes: proc
 	SpawnActorOnDeath:
 		Actor: HARV.Husk
 		RequiresCondition: !being-warped && !charv-upgrade
-	GrantConditionOnTerrain@Tiberium:
-		Condition: ontib
-		TerrainTypes: Tiberium
-	GrantConditionOnTerrain@Ore:
-		Condition: onore
-		TerrainTypes: Ore
-	FireWarheadsOnDeath@Ore:
-		RequiresCondition: !no-ore && onore && !being-warped
-		Weapon: OreExplosion
-	FireWarheadsOnDeath@Tib:
-		RequiresCondition: !no-ore && ontib && !being-warped
-		Weapon: TibExplosion
-	-Crushable:
-	Targetable@ChaosImmune:
-		TargetTypes: ChaosImmune
-	Targetable@MindControlResistant:
-		TargetTypes: MindControlResistant
 	GrantConditionOnPrerequisite@OREPUPGRADE:
 		Prerequisites: charv.upgrade
 		Condition: charv-upgrade
 	PeriodicExplosion@WARPOUT:
 		Weapon: HarvSwap
 		RequiresCondition: charv-upgrade
-	SpawnRandomActorOnDeath:
-		Actors: c1,c7,c10
-		Probability: 5
-		RequiresCondition: !being-warped
-	GrantConditionOnPrerequisite@GSHIELD:
-		Condition: pointdef-upgrade
-		Prerequisites: pointdef.upgrade
-	TimedDamageMultiplier@GSHIELD:
-		ActiveCondition: gshield
-		ChargingColor: 008888
-		DrainingColor: 00ffff
-		Modifier: 25
-		Duration: 75
-		ChargeTime: 375
-		ActivateSound: gshieldup.aud
-		DeactivateSound: gshielddown.aud
-		RequiresCondition: pointdef-upgrade
-	WithIdleOverlay@NSHIELD:
-		RequiresCondition: (nshield || gshield) && !(empdisable || invulnerability || invisibility)
-	ChangesHealth@MINIDRONE:
-		Step: 2250
-	DamageTypeDamageMultiplier@A2GPROTECTION:
-		Modifier: 60
 	TransformOnCondition:
 		RequiresCondition: charv-upgrade
 		IntoActor: harv.chrono
 	RejectsOrders@Transforming:
 		RequiresCondition: charv-upgrade
-	TransferResourcesOnTransform:
-	UpdatesCount@NodCovenant:
-		Type: NodCovenant
-		UpdateOn: Killed
 	ReplacedInQueue:
 		Actors: harv.chrono
-	StoresResources:
-		Capacity: 26
-		Resources: Tiberium, BlueTiberium, BlackTiberium, Ore, Gems
 	Encyclopedia:
 		Category: Allies/Vehicles; Soviets/Vehicles
 
@@ -2181,8 +2114,6 @@ HARV.Chrono:
 		Image: charv
 	Tooltip:
 		Name: Chrono Miner
-	Health:
-		HP: 80000
 	Mobile:
 		Voice: Move
 	Harvester:
@@ -2217,6 +2148,9 @@ MCV:
 	Inherits@SELECTION: ^SelectableSupportUnit
 	Inherits@A2GPROTECTION: ^AirToGroundProtection
 	Inherits@EconomyPolicyDiscount: ^EconomyPolicyDiscount
+	Inherits@EconomyPolicyMcvSpeedBonus: ^EconomyPolicyMcvSpeedBonus
+	Inherits@HeavyArmor: ^HeavyArmor
+	Inherits@NodCovenantTarget: ^NodCovenantTarget
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 600
@@ -2235,8 +2169,6 @@ MCV:
 		DecorationBounds: 1792, 1792
 	Health:
 		HP: 75000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 54
 		Locomotor: heavywheeled
@@ -2265,13 +2197,8 @@ MCV:
 	-Crushable:
 	Targetable@MindControlImmune:
 		TargetTypes: MindControlImmune
-	Targetable@ChaosImmune:
-		TargetTypes: ChaosImmune
 	DamageTypeDamageMultiplier@A2GPROTECTION:
 		Modifier: 60
-	UpdatesCount@NodCovenant:
-		Type: NodCovenant
-		UpdateOn: Killed
 	Encyclopedia:
 		Category: Allies/Vehicles; Soviets/Vehicles
 
@@ -2279,7 +2206,6 @@ JEEP:
 	Inherits: ^Vehicle
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 20
@@ -2288,7 +2214,7 @@ JEEP:
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
 		Weaknesses: • Weak vs Heavy Armor, Buildings, Defenses\n• Cannot attack Aircraft
-		Attributes: • Can detect spies and cloaked units.
+		Attributes: • Detects cloaked units and spies
 	Valued:
 		Cost: 400
 	Tooltip:
@@ -2317,6 +2243,7 @@ JEEP:
 		Weapon: M60mg
 		MuzzleSequence: muzzle
 		LocalOffset: 128,0,43
+	WithEjectedCasings:
 		CasingWeapon: BrassDebris
 		CasingSpawnLocalOffset: 0,-125,200
 		CasingTargetOffset: 0, -500, 0
@@ -2332,11 +2259,11 @@ JEEP:
 	IgnoresDisguise:
 	DetectCloaked:
 		Range: 6c0
-		DetectionTypes: Cloak, Thief, AirCloak
+		DetectionTypes: Cloak, AirCloak
 		RequiresCondition: !(empdisable || being-warped) && !optics-active
 	DetectCloaked@Optics:
 		Range: 13c0
-		DetectionTypes: Cloak, Thief, AirCloak
+		DetectionTypes: Cloak, AirCloak
 		RequiresCondition: !(empdisable || being-warped) && optics-active
 	RevealsShroud@Optics:
 		Range: 13c0
@@ -2396,16 +2323,16 @@ APC:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@TRANSPORT: ^Transport
 	Inherits@NOUNLOADCHRONO: ^NoUnloadWhenChronoshifted
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	Inherits@COMMANDOSKULL: ^CommandoSkull
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 121
-		Prerequisites: ~vehicles.allies, ~!rapc.upgrade, ~techlevel.low
+		Prerequisites: ~vehicles.allies, ~!delp.upgrade, ~techlevel.low
 		Description: Tough infantry transport.
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
@@ -2418,8 +2345,6 @@ APC:
 		AddToArmyValue: true
 	Health:
 		HP: 30000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 126
 	RevealsShroud:
@@ -2470,46 +2395,53 @@ APC:
 		TargetTypes: MindControlImmune
 		RequiresCondition: loaded-cmdo
 	ReplacedInQueue:
-		Actors: rapc
-	Upgradeable@RAIDER:
-		Type: rapc.upgrade
+		Actors: delp
+	Upgradeable@DELPHIS:
+		Type: delp.upgrade
 		UpgradingCondition: upgrading
-		Actor: rapc
+		Actor: delp
 		UpgradeAtActors: fix, rep, srep
 		RequiresCondition: !mindcontrolled
 	Encyclopedia:
 		Category: Allies/Vehicles
+	EncyclopediaExtras:
+		Name: APC
 
-RAPC:
+DELP:
 	Inherits: APC
 	Buildable:
-		Prerequisites: ~vehicles.allies, ~rapc.upgrade, ~techlevel.medium
-		Description: Tough infantry transport that fires high explosive shells.
+		Prerequisites: ~vehicles.allies, ~delp.upgrade, ~techlevel.medium
+		Description: Tough infantry transport armed with an anti structure sonic weapon.
 	Valued:
 		Cost: 800
 	Mobile:
-		Speed: 82
+		Speed: 100
 	RevealsShroud:
 		Range: 6c0
 	Tooltip:
-		Name: Armored Personnel Carrier (Raider)
+		Name: Armored Personnel Carrier (Delphis)
 	TooltipExtras:
-		Description: Tough infantry transport that fires high explosive shells.
-		Strengths: • Strong vs Light Armor, Buildings, Defenses, Infantry
-		Weaknesses: • Weak vs Heavy Armor\n• Cannot attack Aircraft
+		Description: Tough infantry transport with a sonic weapon.
+		Strengths: • Strong vs Buildings, Defenses, Infantry
+		Weaknesses: • Weak vs Heavy Armor
+		Attributes: • Causes structures to take increased damage
 	-AttackFrontal:
 	AttackTurreted:
 		PauseOnCondition: empdisable || being-warped || blinded
 	Turreted:
-		TurnSpeed: 28
+		TurnSpeed: 14
 	WithSpriteTurret:
+	WithFacingSpriteBody:
+		Sequence: idle-upg
 	Armament:
-		Weapon: 76mm
-		LocalOffset: 500,0,250
-		MuzzleSequence: muzzle2
+		Weapon: SonicPulseDelphis
+		LocalOffset: -50,0,250
+		-MuzzleSequence:
 	-ReplacedInQueue:
-	-Upgradeable@RAIDER:
+	-Upgradeable@DELPHIS:
 	-WithDecoration@UpgradeOverlay:
+	EncyclopediaExtras:
+		Name: Delphis APC
 
 APC.AI:
 	Inherits: APC
@@ -2517,23 +2449,23 @@ APC.AI:
 	RenderSprites:
 		Image: APC
 	Buildable:
-		Prerequisites: ~botplayer, ~vehicles.allies, ~!rapc.upgrade, ~techlevel.low
+		Prerequisites: ~botplayer, ~vehicles.allies, ~!delp.upgrade, ~techlevel.low
 	Cargo:
 		InitialUnits: E1,E1,E1,E3,E3
 	WithCargoSounds:
 		-EnterSounds:
 	-ReplacedInQueue:
-	-Upgradeable@RAIDER:
+	-Upgradeable@DELPHIS:
 	-WithDecoration@UpgradeOverlay:
 	-Encyclopedia:
 
-RAPC.AI:
-	Inherits: RAPC
+DELP.AI:
+	Inherits: DELP
 	Inherits@AIUNLOAD: ^AIUNLOAD
 	RenderSprites:
-		Image: RAPC
+		Image: delp
 	Buildable:
-		Prerequisites: ~botplayer, ~vehicles.allies, ~rapc.upgrade, ~techlevel.medium
+		Prerequisites: ~botplayer, ~vehicles.allies, ~delp.upgrade, ~techlevel.medium
 	Cargo:
 		InitialUnits: E1,E1,E1,E3,E3
 	WithCargoSounds:
@@ -2543,6 +2475,7 @@ RAPC.AI:
 MNLY:
 	Inherits: ^Tank
 	Inherits@SELECTION: ^SelectableSupportUnit
+	Inherits@HeavyArmor: ^HeavyArmor
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 340
@@ -2550,7 +2483,7 @@ MNLY:
 		Description: Lays mines to destroy unwary enemy units.
 	TooltipExtras:
 		Weaknesses: • Unarmed
-		Attributes: • Can detect and disarm mines.
+		Attributes: • Detects and disarms mines
 	Valued:
 		Cost: 800
 	Tooltip:
@@ -2561,8 +2494,6 @@ MNLY:
 		Priority: 5
 	Health:
 		HP: 30000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 126
 	RevealsShroud:
@@ -2584,7 +2515,7 @@ MNLY:
 		Margin: 4, 3
 		RequiresSelection: true
 	DetectCloaked:
-		Range: 5c0
+		Range: 7c0
 		DetectionTypes: Mine
 		RequiresCondition: !(empdisable || being-warped)
 	RenderDetectionCircle:
@@ -2592,8 +2523,6 @@ MNLY:
 		Weapon: ATMine
 	Rearmable:
 		RearmActors: fix, rep
-	Targetable@ChaosImmune:
-		TargetTypes: ChaosImmune
 	Armament@PRIMARY:
 		Weapon: MineDefuser
 		Cursor: goldwrench
@@ -2623,7 +2552,7 @@ TRUK:
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 350
-		Prerequisites: ~techlevel.low, ~vehicles.human
+		Prerequisites: ~disabled
 		Description: Transports cash to other players.
 		BuildDurationModifier: 30
 	TooltipExtras:
@@ -2647,15 +2576,11 @@ TRUK:
 	SpawnActorOnDeath:
 		Actor: moneycrate
 		RequiresCondition: !being-warped
-	Targetable@ChaosImmune:
-		TargetTypes: ChaosImmune
 	-ProductionCostMultiplier@IndustrialPlantBoost:
 	-ProductionCostMultiplier@OilRef:
 	-WithDecoration@BOMBARD:
 	-WithDecoration@BOMBARD2:
 	-WithDecoration@BOMBARD3:
-	Encyclopedia:
-		Category: Allies/Vehicles; Soviets/Vehicles; GDI/Vehicles; Nod/Vehicles
 
 TRUK.DROP:
 	Inherits: TRUK
@@ -2679,6 +2604,7 @@ TRUK.DROP:
 MGG:
 	Inherits: ^Vehicle
 	Inherits@AUTOTARGET: ^AutoTargetGround
+	Inherits@DefensePolicyGapBonus: ^DefensePolicyGapBonus
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 301
@@ -2704,6 +2630,8 @@ MGG:
 		Sequence: spinner
 		PauseOnCondition: empdisable || being-warped || mgg-disabled
 		RequiresCondition: !passenger
+	MindControllable@MINDCONTROL:
+		OriginalOwnerLostAction: Kill
 	RevealsShroud:
 		MinRange: 4c0
 		Range: 6c0
@@ -2719,8 +2647,6 @@ MGG:
 	SpawnActorOnDeath:
 		Actor: MGG.Husk
 		RequiresCondition: !being-warped
-	Targetable@ChaosImmune:
-		TargetTypes: ChaosImmune
 	GrantConditionOnDeploy:
 		DeployedCondition: mgg-disabled
 	Armament@PRIMARY:
@@ -2732,6 +2658,8 @@ MGG:
 		PauseOnCondition: empdisable || being-warped
 	Turreted:
 		Offset: -299,0,171
+	CreatesShroudMultiplier@DefencePolicyShroud:
+		Modifier: 133
 	Encyclopedia:
 		Category: Allies/Vehicles
 
@@ -2753,7 +2681,7 @@ MRJ:
 		Description: Support vehicle that can disrupt enemy targeting systems.
 	TooltipExtras:
 		Weaknesses: • Unarmed
-		Attributes: • Jamming fields reduce rate of fire and accuracy of enemy vehicles/defenses
+		Attributes: • Jamming fields reduce rate of fire and accuracy of enemy vehicles, aircraft & defenses
 	Health:
 		HP: 25000
 	Armor:
@@ -2761,13 +2689,15 @@ MRJ:
 	Mobile:
 		Speed: 72
 	RevealsShroud:
-		Range: 7c0
+		MinRange: 4c0
+		Range: 6c0
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 4c0
 	WithIdleOverlay@SPINNER:
 		Sequence: spinner
 		Offset: -256,0,256
 		PauseOnCondition: empdisable || being-warped
-	Targetable@ChaosImmune:
-		TargetTypes: ChaosImmune
 	Armament:
 		Weapon: RadarJammer
 		LocalOffset: 0,0,0
@@ -2804,7 +2734,7 @@ MSG:
 		Weaknesses: • Unarmed
 		Attributes: • Special Ability: Deploys to cloak nearby units and structures
 	Valued:
-		Cost: 1250
+		Cost: 1100
 	Tooltip:
 		Name: Mobile Stealth Generator
 		RequiresCondition: !deployed
@@ -2832,8 +2762,6 @@ MSG:
 	SpawnActorOnDeath:
 		Actor: MSG.Husk
 		RequiresCondition: !being-warped
-	Targetable@ChaosImmune:
-		TargetTypes: ChaosImmune
 	GrantCondition@PREVIEWWORKAROUND:
 		Condition: real-actor
 	WithMakeAnimation:
@@ -2856,20 +2784,22 @@ MSG:
 		UndeploySounds: clicky1.aud
 		UndeployOnMove: true
 		UndeployOnPickup: true
-	WithRangeCircle@MSG:
+	WithRangeCircleCA@MSG:
 		Type: StealthGenerator
 		RequiresCondition: deployed
-		Range: 5c512
-		Color: 00aa00
+		Range: 6c512
+		Color: 7681a0
 	ProximityExternalCondition@MSG:
-		Range: 5c512
+		Range: 6c512
 		Condition: sgencloak
 		RequiresCondition: deployed && !cloak-force-disabled
 		MaximumVerticalOffset: 512
 		AffectsParent: true
-	GrantConditionOnDamageState@UNCLOAK:
-		Condition: cloak-force-disabled
-		ValidDamageStates: Critical
+	ProximityExternalCondition@MSG2:
+		Range: 2c512
+		Condition: sgencloak
+		RequiresCondition: deployed && !cloak-force-disabled
+		MaximumVerticalOffset: 3072
 	Encyclopedia:
 		Category: Nod/Vehicles
 	EncyclopediaExtras:
@@ -2879,7 +2809,6 @@ TTRA:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -2889,7 +2818,6 @@ TTRA:
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor, Infantry
 		Weaknesses: • Cannot attack Aircraft
-		Attributes: • Jams nearby enemy radar
 	Valued:
 		Cost: 1350
 	Tooltip:
@@ -2926,10 +2854,6 @@ TTRA:
 	Turreted:
 	WithIdleOverlay@SPINNER:
 		Sequence: spinner
-	ProximityExternalCondition@JAMMER:
-		Range: 1c512
-		ValidRelationships: Enemy, Neutral
-		Condition: jammed
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
 	WithProductionIconOverlay:
@@ -2940,7 +2864,7 @@ TTRA:
 	Passenger:
 		Voice: Move
 	Voiced:
-		VoiceSet: TeslaTankVoice
+		VoiceSet: TeslaTrackVoice
 	SpawnActorOnDeath:
 		Actor: TTRA.Husk
 		RequiresCondition: !being-warped
@@ -2954,7 +2878,7 @@ TTNK:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
+	Inherits@HeavyArmor: ^HeavyArmor
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 182
@@ -2964,16 +2888,14 @@ TTNK:
 		Strengths: • Strong vs Infantry, Light Armor
 		Weaknesses: • Cannot attack Aircraft
 	Valued:
-		Cost: 1150
+		Cost: 1200
 	Tooltip:
 		Name: Tesla Tank
 		GenericName: Tank
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
-		HP: 40000
-	Armor:
-		Type: Heavy
+		HP: 38000
 	Mobile:
 		Speed: 60
 		Voice: Move
@@ -3024,7 +2946,6 @@ TTNK:
 
 DTRK:
 	Inherits: ^Vehicle
-	Inherits@BERSERK: ^Berserk
 	Inherits@SELECTION: ^SelectableSupportUnit
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -3077,9 +2998,6 @@ DTRK:
 		RequiresCondition: produced
 		Voice: Build
 		ValidRelationships: Neutral, Ally
-	ProductionCostMultiplier@IRAQBONUS:
-		Multiplier: 90
-		Prerequisites: player.iraq
 	Encyclopedia:
 		Category: Soviets/Vehicles
 
@@ -3087,7 +3005,6 @@ CTNK:
 	Inherits: ^Vehicle
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeGround
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -3143,15 +3060,18 @@ CTNK:
 		PreChargeCondition: chronoprep
 		MaxInstantCircleColor: EEEEEE44
 		MaxInstantCircleBorderColor: 00000044
-	WithColoredOverlay@PreCharge:
-		RequiresCondition: chronoprep
-		Color: 00eeff22
+		TeleportCondition: temporal-flux-init
+		ConditionDuration: 1
 	WithIdleOverlay@PreCharge:
 		Sequence: idle
 		Image: chronoprep-overlay
 		Palette: effect
 		RequiresCondition: chronoprep
 		IsDecoration: True
+	GrantTimedCondition@TemporalFlux:
+		RequiresCondition: (temporal-flux-init || chronoshifted) && tflx-upgrade
+	WithColoredOverlay@TemporalFlux:
+		RequiresCondition: temporal-flux || chronoprep
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
 	WithProductionIconOverlay:
@@ -3159,19 +3079,16 @@ CTNK:
 		Prerequisites: vehicles.upgraded
 	Selectable:
 		DecorationBounds: 1280, 1280
-	ProductionCostMultiplier@GermanyBonus:
-		Multiplier: 90
-		Prerequisites: player.germany
-	PortableChronoModifier@TEMPORALFLUX:
+	PortableChronoModifier@GermanyBonus:
 		ExtraCharges: 1
-		RequiresCondition: tflx-upgrade
-	GrantConditionOnPrerequisite@TEMPORALFLUX:
-		Condition: tflx-upgrade
-		Prerequisites: tflx.upgrade
+		RequiresCondition: player-germany
+	GrantConditionOnPrerequisite@Germany:
+		Condition: player-germany
+		Prerequisites: player.germany
 	WithChronoshiftChargePipsDecoration:
 		Position: BottomLeft
 		Margin: 4, 3
-		RequiresCondition: tflx-upgrade
+		RequiresCondition: player-germany
 	AmbientSoundCA@Prep:
 		SoundFiles: chronoprep.aud
 		RequiresCondition: chronoprep
@@ -3182,6 +3099,7 @@ CTNK:
 QTNK:
 	Inherits: ^Tank
 	Inherits@SELECTION: ^SelectableSupportUnit
+	Inherits@HeavyArmor: ^HeavyArmor
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 310
@@ -3200,8 +3118,6 @@ QTNK:
 		AddToArmyValue: true
 	Health:
 		HP: 120000
-	Armor:
-		Type: Heavy
 	Mobile:
 		PauseOnCondition: deployed || being-captured || empdisable || being-warped || driver-dead || notmobile
 		Speed: 46
@@ -3215,13 +3131,11 @@ QTNK:
 		Range: 4c0
 	MadTankCA:
 		DeployedCondition: deployed
-		KillsSelf: false
 		DriverActor: e1
-		ChargeDelay: 60
-		DetonationDelay: 40
-		DetonationSequence: piston
-		DetonationWeapon: MADTankDetonate
-		FirstDetonationImmediate: true
+		ChargeDelay: 40
+		ThumpInterval: 60
+		ThumpSequence: piston
+		ThumpDamageWeapon: MADTankDetonate
 		PauseOnCondition: empdisable || being-warped
 	FireWarheadsOnDeath:
 		Weapon: ArtilleryExplode
@@ -3232,8 +3146,6 @@ QTNK:
 		Color: FFFF0080
 		Range: 7c0
 	-Crushable:
-	Targetable@ChaosImmune:
-		TargetTypes: ChaosImmune
 	Targetable@MADTank:
 		RequiresCondition: !being-warped
 		TargetTypes: MADTank
@@ -3254,6 +3166,9 @@ AMCV:
 	Inherits@SELECTION: ^SelectableSupportUnit
 	Inherits@A2GPROTECTION: ^AirToGroundProtection
 	Inherits@EconomyPolicyDiscount: ^EconomyPolicyDiscount
+	Inherits@EconomyPolicyMcvSpeedBonus: ^EconomyPolicyMcvSpeedBonus
+	Inherits@HeavyArmor: ^HeavyArmor
+	Inherits@NodCovenantTarget: ^NodCovenantTarget
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 601
@@ -3273,8 +3188,6 @@ AMCV:
 		Bounds: 1792, 1792
 	Health:
 		HP: 75000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 54
 		Locomotor: heavywheeled
@@ -3303,13 +3216,8 @@ AMCV:
 	-Crushable:
 	Targetable@MindControlImmune:
 		TargetTypes: MindControlImmune
-	Targetable@ChaosImmune:
-		TargetTypes: ChaosImmune
 	DamageTypeDamageMultiplier@A2GPROTECTION:
 		Modifier: 60
-	UpdatesCount@NodCovenant:
-		Type: NodCovenant
-		UpdateOn: Killed
 	Encyclopedia:
 		Category: GDI/Vehicles; Nod/Vehicles
 
@@ -3317,7 +3225,6 @@ HMMV:
 	Inherits: ^VehicleTD
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	Inherits@BERSERK: ^Berserk
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	RenderSprites:
 	Buildable:
@@ -3329,7 +3236,7 @@ HMMV:
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
 		Weaknesses: • Weak vs Heavy Armor, Buildings, Defenses\n• Cannot attack Aircraft
-		Attributes: • Can detect spies and cloaked units.
+		Attributes: • Detects cloaked units and spies
 	Valued:
 		Cost: 400
 	Tooltip:
@@ -3356,6 +3263,7 @@ HMMV:
 		Weapon: M60mgTD
 		LocalOffset: 171,0,85
 		MuzzleSequence: muzzle
+	WithEjectedCasings:
 		CasingWeapon: BrassDebris
 		CasingSpawnLocalOffset: 0,-125,200
 		CasingTargetOffset: 0, -500, 0
@@ -3366,29 +3274,15 @@ HMMV:
 	IgnoresDisguise:
 	DetectCloaked:
 		Range: 6c0
-		DetectionTypes: Cloak, Thief, AirCloak
+		DetectionTypes: Cloak, AirCloak
 		RequiresCondition: !(empdisable || being-warped)
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
 	WithProductionIconOverlay:
 		Types: Veterancy
 		Prerequisites: vehicles.upgraded
-	GrantConditionOnPrerequisite@GSHIELD:
-		Condition: pointdef-upgrade
-		Prerequisites: pointdef.upgrade
-	TimedDamageMultiplier@GSHIELD:
-		ActiveCondition: gshield
-		ChargingColor: 008888
-		DrainingColor: 00ffff
-		Modifier: 33
-		Duration: 100
-		ChargeTime: 625
-		ActivateSound: gshieldup.aud
-		DeactivateSound: gshielddown.aud
-		RequiresCondition: pointdef-upgrade
 	WithIdleOverlay@NSHIELD:
 		Image: nshield-overlay-sm
-		RequiresCondition: (nshield || gshield) && !(empdisable || invulnerability || invisibility)
 	ReplacedInQueue:
 		Actors: hmmv.tow
 	Upgradeable@TOW:
@@ -3411,7 +3305,7 @@ HMMV.TOW:
 	Valued:
 		Cost: 575
 	Mobile:
-		Speed: 130
+		Speed: 126
 	Tooltip:
 		Name: TOW Hum-Vee
 	TooltipExtras:
@@ -3440,9 +3334,9 @@ HMMV.TOW:
 GDRN:
 	Inherits: ^Vehicle
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@HACKABLE: ^Hackable
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
+	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	RenderSprites:
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -3453,7 +3347,7 @@ GDRN:
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor, Buildings
 		Weaknesses: • Weak vs Infantry, Defenses\n• Cannot attack Aircraft
-		Attributes: • Can detect spies and cloaked units\n• Immune to mind control
+		Attributes: • Detects cloaked units and spies\n• Immune to mind control\n• XP of losses reclaimed by replacements
 	Valued:
 		Cost: 450
 	Tooltip:
@@ -3461,7 +3355,7 @@ GDRN:
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
-		HP: 17000
+		HP: 15000
 	Armor:
 		Type: Light
 	Mobile:
@@ -3469,11 +3363,11 @@ GDRN:
 		Speed: 126
 		Voice: Move
 	RevealsShroud:
-		MinRange: 5c0
-		Range: 7c0
+		MinRange: 6c0
+		Range: 8c0
 		RevealGeneratedShroud: False
 	RevealsShroud@GAPGEN:
-		Range: 5c0
+		Range: 6c0
 	Turreted:
 		TurnSpeed: 40
 		Offset: 0,0,0
@@ -3482,7 +3376,7 @@ GDRN:
 		LocalOffset: 500,0,200
 		MuzzleSequence: muzzle
 	AttackTurreted:
-		PauseOnCondition: gshield || empdisable || being-warped || blinded
+		PauseOnCondition: empdisable || being-warped || blinded
 		Voice: Attack
 	WithMuzzleOverlay:
 	WithSpriteTurret:
@@ -3497,24 +3391,10 @@ GDRN:
 	IgnoresDisguise:
 	DetectCloaked:
 		Range: 6c0
-		DetectionTypes: Cloak, Thief, AirCloak
+		DetectionTypes: Cloak, AirCloak
 		RequiresCondition: !(empdisable || being-warped)
-	GrantConditionOnPrerequisite@GSHIELD:
-		Condition: pointdef-upgrade
-		Prerequisites: pointdef.upgrade
-	TimedDamageMultiplier@GSHIELD:
-		ActiveCondition: gshield
-		ChargingColor: 008888
-		DrainingColor: 00FFFF61
-		Modifier: 33
-		Duration: 100
-		ChargeTime: 625
-		ActivateSound: gshieldup.aud
-		DeactivateSound: gshielddown.aud
-		RequiresCondition: pointdef-upgrade
 	WithIdleOverlay@NSHIELD:
 		Image: nshield-overlay-sm
-		RequiresCondition: (nshield || gshield) && !(empdisable || invulnerability || invisibility)
 	ReplacedInQueue:
 		Actors: gdrn.tow
 	Upgradeable@TOW:
@@ -3524,6 +3404,9 @@ GDRN:
 		UpgradeAtActors: fix, rep, srep
 		BuildDuration: 200
 		RequiresCondition: !mindcontrolled
+	ReclaimsExperience:
+		Type: Drone
+		MaximumReclaimableValuePercentage: 600
 	Sellable:
 		RequiresCondition: unit-sellable && !c4 && !being-warped
 	Encyclopedia:
@@ -3559,6 +3442,8 @@ GDRN.TOW:
 		Count: 1
 		ShowSelectionBar: true
 		SelectionBarColor: aaaaaa
+	Selectable:
+		Class: gdrn
 	-ReplacedInQueue:
 	-Upgradeable@TOW:
 	-WithDecoration@UpgradeOverlay:
@@ -3567,18 +3452,18 @@ BGGY:
 	Inherits: ^VehicleTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
+	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	RenderSprites:
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 50
 		IconPalette: chrometd
-		Prerequisites: ~vehicles.nod, ~techlevel.low
+		Prerequisites: ~vehicles.nod, ~!rbug.upgrade, ~techlevel.low
 		Description: Fast scout & anti-infantry vehicle.
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
 		Weaknesses: • Weak vs Heavy Armor, Buildings, Defenses\n• Cannot attack Aircraft
-		Attributes: • Can detect spies and cloaked units.
+		Attributes: • Detects cloaked units and spies
 	Valued:
 		Cost: 350
 	Tooltip:
@@ -3605,6 +3490,7 @@ BGGY:
 		Weapon: M60mgTD
 		LocalOffset: 171,0,43
 		MuzzleSequence: muzzle
+	WithEjectedCasings:
 		CasingWeapon: BrassDebris
 		CasingSpawnLocalOffset: 0,-125,200
 		CasingTargetOffset: 0, -500, 0
@@ -3615,7 +3501,7 @@ BGGY:
 	IgnoresDisguise:
 	DetectCloaked:
 		Range: 6c0
-		DetectionTypes: Cloak, Thief, AirCloak
+		DetectionTypes: Cloak, AirCloak
 		RequiresCondition: !(empdisable || being-warped)
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
@@ -3666,10 +3552,46 @@ BGGY:
 		RequiresCondition: player-blackh && decoy-upgrade && ammo && !(empdisable || being-warped)
 		AmmoPool: decoyspawner
 		FaceTarget: true
+	ReplacedInQueue:
+		Actors: rbug
+	Upgradeable@Raider:
+		Type: rbug.upgrade
+		UpgradingCondition: upgrading
+		Actor: rbug
+		UpgradeAtActors: fix, rep, srep
+		RequiresCondition: !mindcontrolled
 	Encyclopedia:
 		Category: Nod/Vehicles
 
+RBUG:
+	Inherits: BGGY
+	Inherits@HeavyArmor: ^HeavyArmor
+	Buildable:
+		Prerequisites: ~vehicles.nod, ~rbug.upgrade, ~techlevel.low
+	Tooltip:
+		Name: Raider Buggy
+	Valued:
+		Cost: 400
+	Armament:
+		Weapon: RaiderBuggyLaser
+		MuzzleSequence: muzzle
+		MuzzlePalette: caneon
+		LocalOffset: 250,0,300
+	Mobile:
+		Speed: 126
+		TurnSpeed: 36
+	Turreted:
+		TurnSpeed: 36
+		Offset: -100,0,0
+	-ReplacedInQueue:
+	-Upgradeable@Raider:
+	-WithDecoration@UpgradeOverlay:
+	-WithEjectedCasings:
+	EncyclopediaExtras:
+		AdditionalInfo: Requires Zeal Covenant.
+
 ^DecoyUnit:
+	Inherits@selection: ^SelectableSupportUnit
 	GrantTimedCondition@Decoy:
 		Condition: active
 		Duration: 750
@@ -3712,7 +3634,6 @@ FTNK.Decoy:
 		Locomotor: wheeled
 	Armament@PRIMARY:
 		Weapon: BigFlamerTD.Decoy
-	-Armament@FF:
 	FireWarheadsOnDeath:
 		Weapon: DecoyDespawn
 		EmptyWeapon: DecoyDespawn
@@ -3754,8 +3675,6 @@ HFTK.Decoy:
 		Weapon: HeavyFlameTankFlamer.Decoy
 	Armament@PRIMARYUPG:
 		Weapon: HeavyFlameTankFlamer.UPG.Decoy
-	-Armament@FF:
-	-Armament@FFUPG:
 	FireWarheadsOnDeath:
 		Weapon: DecoyDespawn
 		EmptyWeapon: DecoyDespawn
@@ -3786,12 +3705,12 @@ APC2:
 	Inherits: ^TankTD
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	Inherits@BERSERK: ^Berserk
 	Inherits@TRANSPORT: ^Transport
 	Inherits@NOUNLOADCHRONO: ^NoUnloadWhenChronoshifted
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	Inherits@COMMANDOSKULL: ^CommandoSkull
+	Inherits@HeavyArmor: ^HeavyArmor
 	RenderSprites:
 		FactionImages:
 			nod: apc2.nod
@@ -3816,8 +3735,6 @@ APC2:
 		AddToArmyValue: true
 	Health:
 		HP: 30000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 126
 	RevealsShroud:
@@ -3878,7 +3795,20 @@ APC2:
 		UpgradeAtActors: fix, rep, srep
 		RequiresCondition: !mindcontrolled
 	Encyclopedia:
-		Category: GDI/Vehicles; Nod/Vehicles
+		Category: GDI/Vehicles
+	EncyclopediaExtras:
+		Name: APC
+
+APC2.Nod.Preview:
+	Inherits: APC2
+	RenderSprites:
+		Image: apc2.nod
+	Buildable:
+		Queue: Encyclopedia
+	Encyclopedia:
+		Category: Nod/Vehicles
+	EncyclopediaExtras:
+		Subfaction: legion
 
 APC2.NODAI:
 	Inherits: APC2
@@ -3929,9 +3859,9 @@ VULC:
 	Inherits: ^TankTD
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeAir
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	Inherits@BERSERK: ^Berserk
 	Inherits@TRANSPORT: ^Transport
 	Inherits@NOUNLOADCHRONO: ^NoUnloadWhenChronoshifted
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Inherits@A2GPROTECTION: ^AirToGroundProtection
 	Inherits@COMMANDOSKULL: ^CommandoSkull
@@ -3952,8 +3882,6 @@ VULC:
 		AddToArmyValue: true
 	Health:
 		HP: 30000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 100
 	RevealsShroud:
@@ -3962,6 +3890,8 @@ VULC:
 		RevealGeneratedShroud: False
 	RevealsShroud@GAPGEN:
 		Range: 4c0
+	Voiced:
+		VoiceSet: VulcanVoice
 	Armament@GAT:
 		Weapon: MGatt
 		LocalOffset: 220,0,350
@@ -3969,9 +3899,6 @@ VULC:
 		PauseOnCondition: reload-ground
 		ReloadingCondition: reload-air
 		RequiresCondition: gattling < 12
-		CasingWeapon: BrassDebris
-		CasingSpawnLocalOffset: 0,-225,200
-		CasingTargetOffset: 0, -600, 0
 	Armament@GAT2:
 		Weapon: MGatt
 		LocalOffset: 220,0,350
@@ -3979,9 +3906,6 @@ VULC:
 		PauseOnCondition: reload-ground
 		ReloadingCondition: reload-air
 		RequiresCondition: gattling >= 12
-		CasingWeapon: BrassDebris
-		CasingSpawnLocalOffset: 0,-225,200
-		CasingTargetOffset: 0, -600, 0
 	Armament@GATG:
 		Name: secondary
 		Weapon: MGattG
@@ -3990,9 +3914,6 @@ VULC:
 		PauseOnCondition: reload-air
 		ReloadingCondition: reload-ground
 		RequiresCondition: gattling-ground < 14
-		CasingWeapon: BrassDebris
-		CasingSpawnLocalOffset: 0,-225,200
-		CasingTargetOffset: 0, -600, 0
 	Armament@GATG2:
 		Name: secondary
 		Weapon: MGattG
@@ -4001,6 +3922,7 @@ VULC:
 		PauseOnCondition: reload-air
 		ReloadingCondition: reload-ground
 		RequiresCondition: gattling-ground >= 14
+	WithEjectedCasings:
 		CasingWeapon: BrassDebris
 		CasingSpawnLocalOffset: 0,-225,200
 		CasingTargetOffset: 0, -600, 0
@@ -4056,6 +3978,7 @@ VULC:
 	AttackTurreted:
 		PauseOnCondition: empdisable || being-warped || blinded
 		Armaments: primary, secondary
+		Voice: Attack
 	Turreted:
 		TurnSpeed: 28
 		Offset: 0,0,150
@@ -4100,6 +4023,8 @@ VULC:
 		RequiresCondition: loaded-cmdo
 	Encyclopedia:
 		Category: GDI/Vehicles
+	EncyclopediaExtras:
+		Name: Vulcan
 
 VULC.AI:
 	Inherits: VULC
@@ -4135,9 +4060,9 @@ LTNK:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlightlySlowedByCrushing
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
+	Inherits@HeavyArmor: ^HeavyArmor
 	RenderSprites:
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -4167,8 +4092,6 @@ LTNK:
 		AddToArmyValue: true
 	Health:
 		HP: 37000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Locomotor: Amphibious
 		Speed: 76
@@ -4253,13 +4176,15 @@ LTNK.Laser:
 	Selectable:
 		Class: ltnk
 	-ReplacedInQueue:
+	EncyclopediaExtras:
+		VariantOf: LTNK
 
 MTNK:
 	Inherits: ^TankTD
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlightlySlowedByCrushing
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	RenderSprites:
@@ -4297,8 +4222,6 @@ MTNK:
 		AddToArmyValue: true
 	Health:
 		HP: 52000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 72
 	RevealsShroud:
@@ -4398,11 +4321,10 @@ MTNK:
 		UpgradingCondition: upgrading
 		Actor: mtnk.drone
 		UpgradeAtActors: fix, rep, srep
-		Cost: 0
 		BuildDuration: 100
 		RequiresCondition: !mindcontrolled
 	Encyclopedia:
-		Category: GDI/Vehicles; Nod/Vehicles
+		Category: GDI/Vehicles
 
 MTNK.Drone:
 	Inherits: MTNK
@@ -4420,12 +4342,14 @@ MTNK.Drone:
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor
 		Weaknesses: • Weak vs Infantry, Defenses\n• Cannot attack Aircraft
-		Attributes: • Self repairs to 50% out of combat\n• Immune to mind control\n• Requires active radar communication
+		Attributes: • Self repairs to 50% out of combat\n• Immune to mind control\n• Requires active radar communication\n• XP of losses reclaimed by replacements
 		-RequiresCondition:
 	-Tooltip@LaserTank:
 	-TooltipExtras@LaserTank:
 	Valued:
-		Cost: 800
+		Cost: 600
+	Health:
+		HP: 40000
 	Tooltip:
 		Name: Battle Drone
 		-RequiresCondition:
@@ -4465,6 +4389,7 @@ MTNK.Drone:
 	-WithSpriteTurret@LaserTank:
 	WithSpriteTurret@default:
 		RequiresCondition: !pointdef-upgrade
+	-Capturable:
 	-SpeedMultiplier@BERSERK:
 	-ReloadDelayMultiplier@BERSERK:
 	-ExternalCondition@BERSERK:
@@ -4478,12 +4403,30 @@ MTNK.Drone:
 	-WithDecoration@UpgradeOverlay:
 	-ProducibleWithLevel:
 	-WithProductionIconOverlay:
+	Selectable:
+		Class: mtnk
 	Sellable:
 		RequiresCondition: unit-sellable && !c4 && !being-warped
+	ReclaimsExperience:
+		Type: Drone
+		MaximumReclaimableValuePercentage: 600
 	Encyclopedia:
 		Category: GDI/Vehicles
 	EncyclopediaExtras:
 		Subfaction: arc
+
+MTNK.Nod.Preview:
+	Inherits: MTNK
+	RenderSprites:
+		Image: mtnk.nod
+	Buildable:
+		Queue: Encyclopedia
+		BuildPaletteOrder: 101
+	Encyclopedia:
+		Category: Nod/Vehicles
+	EncyclopediaExtras:
+		Subfaction: legion
+	-MapEditorData:
 
 MTNK.Laser:
 	Inherits: MTNK
@@ -4522,11 +4465,13 @@ MTNK.Laser:
 		Category: Nod/Vehicles
 	EncyclopediaExtras:
 		Subfaction: legion
+		VariantOf: MTNK.Nod.Preview
 
 MDRN:
 	Inherits: ^Vehicle
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
 	Inherits@HACKABLE: ^Hackable
+	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Tooltip:
 		Name: Mini Drone
 	Buildable:
@@ -4537,7 +4482,7 @@ MDRN:
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Light Armor
 		Weaknesses: • Weak vs Heavy Armor, Buildings, Defenses\n• Cannot attack Aircraft
-		Attributes: • Attaches to vehicles to provide support and repairs\n• Immune to mind control
+		Attributes: • Attaches to vehicles to provide support and repairs\n• Immune to mind control\n• XP of losses reclaimed by replacements
 	Valued:
 		Cost: 225
 	UpdatesPlayerStatistics:
@@ -4548,6 +4493,9 @@ MDRN:
 		HP: 13000
 	Armor:
 		Type: Light
+	HitShape:
+		Type: Circle
+			Radius: 128
 	DamageTypeDamageMultiplier@FLAKARMOR:
 		DamageTypes: FlakVestMitigated
 		Modifier: 60
@@ -4562,10 +4510,11 @@ MDRN:
 		Range: 4c0
 	Mobile:
 		Speed: 126
-		TurnSpeed: 255
+		TurnSpeed: 512
 		Locomotor: seal
 		Voice: Move
 		PauseOnCondition: being-captured || empdisable || being-warped || driver-dead
+		ResponsiveBetweenCells: true
 	Voiced:
 		VoiceSet: MiniDroneVoice
 	Armament@PRIMARY:
@@ -4594,6 +4543,7 @@ MDRN:
 		TargetTypes: ChaosImmune
 	Targetable@DriverKillImmune:
 		TargetTypes: DriverKillImmune
+	-Capturable:
 	-WithDamageOverlay:
 	-Targetable@MINIDRONE:
 	-ChangesHealth@MINIDRONE:
@@ -4604,6 +4554,7 @@ MDRN:
 		ValidRelationships: Ally
 		MinAttachDistance: 1c512
 		OnAttachTransformInto: mdrn.attached
+		OnAttachCopyExperience: true
 		AttachSound: mdrn-attach.aud
 	-Carryable:
 	-GrantCondition@CarriedImmobile:
@@ -4612,6 +4563,9 @@ MDRN:
 	FireWarheadsOnDeath:
 		Weapon: VisualExplodeSmall
 		EmptyWeapon: VisualExplodeSmall
+	ReclaimsExperience:
+		Type: Drone
+		MaximumReclaimableValuePercentage: 600
 	Sellable:
 		RequiresCondition: unit-sellable && !c4 && !being-warped
 	Encyclopedia:
@@ -4621,6 +4575,8 @@ MDRN:
 
 MDRN.Attached:
 	Inherits: MDRN
+	AutoTargetPriority@ATTACKANYTHING:
+		RequiresCondition: stance-attackanything
 	-Buildable:
 	-Selectable:
 	-Tooltip:
@@ -4629,13 +4585,11 @@ MDRN.Attached:
 	RenderSprites:
 		Image: mdrn
 	-Mobile:
-	AttachedAircraft:
+	-Repairable:
+	-AttackMove:
+	-Guard:
+	ImmobilePositionable:
 		TurnSpeed: 18
-		Speed: 0
-		CanHover: true
-		Repulsable: false
-		CruiseAltitude: 1
-		LandableTerrainTypes: Clear,Road,Rough,Ore,Gems,Tiberium,BlueTiberium,BlackTiberium,Water,Tree,River,Rock,Beach,Bridge,Tunnel,Wall,Ford
 	RevealsShroud:
 		Type: GroundPosition
 	RevealsShroud@GAPGEN:
@@ -4647,7 +4601,6 @@ MDRN.Attached:
 	TurnOnIdleCA:
 		MinDelay: 25
 		MaxDelay: 75
-		TurnWhileAircraftPaused: true
 	Armament@PRIMARY:
 		Weapon: M60mgMD.Attached
 		LocalOffset: -500,0,72
@@ -4663,6 +4616,18 @@ MDRN.Attached:
 		DamageCooldown: 50
 	CaptureManager:
 		-BeingCapturedCondition:
+	Cloak@NORMAL:
+		InitialDelay: 0
+		CloakDelay: 0
+		CloakStyle: Palette
+		CloakedPalette: cloak
+		IsPlayerPalette: false
+		UncloakOn: Attack, Unload, Infiltrate, Demolish, Dock, Damage, Heal
+		RequiresCondition: inherited-cloak
+	Cloak@CRATE-CLOAK:
+		RequiresCondition: crate-cloak && !(cloak-force-disabled || invisibility || inherited-cloak)
+	ExternalCondition@CLOAK:
+		Condition: inherited-cloak
 	-Targetable@HACKABLE:
 	-MindControllable@HACKABLE:
 	-MindControllableProgressBar@HACKABLE:
@@ -4671,13 +4636,35 @@ MDRN.Attached:
 	-PowerMultiplier@HACKED:
 	-ChronoshiftableCA:
 	-HealthCapDamageMultiplier@CHRONO:
+	-ExternalCondition@NSHIELD:
+	DummyConditionGranter@NSHIELD:
+		Condition: nshield
 	-Encyclopedia:
+	-GainsExperience:
+	-ReclaimsExperience:
+	GivesExperienceToMaster:
+	InheritsExperienceLevelOfMaster:
+		Conditions:
+			1: rank-veteran
+			2: rank-veteran
+			3: rank-veteran
+	-GrantConditionOnPrerequisite@NODRANK:
+	-GrantConditionOnPrerequisite@SCRINRANK:
+	-WithDecoration@RANK-1:
+	-WithDecoration@RANK-2:
+	-WithDecoration@RANK-ELITE:
+	-WithDecoration@NODRANK-1:
+	-WithDecoration@NODRANK-2:
+	-WithDecoration@NODRANK-ELITE:
+	-WithDecoration@SCRINRANK-1:
+	-WithDecoration@SCRINRANK-2:
+	-WithDecoration@SCRINRANK-ELITE:
 
 HTNK:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeGround
-	Inherits@BERSERK: ^Berserk
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	Buildable:
@@ -4697,9 +4684,7 @@ HTNK:
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
-		HP: 90000
-	Armor:
-		Type: Heavy
+		HP: 95000
 	Mobile:
 		Speed: 44
 		Locomotor: heavytracked
@@ -4815,9 +4800,9 @@ HTNK.Hover:
 		Prerequisites: gtek, ~vehicles.htnk, ~hovermam.upgrade, ~techlevel.high
 		Description: Big and fairly mobile tank with anti-air capability.
 	TooltipExtras:
-		Attributes: • Can traverse water\n• Self repairs to 50% out of combat
+		Attributes: • Can traverse water\n• Self repairs to 50% out of combat\n• Afterburner ability (with upgrade)
 	Mobile:
-		Speed: 68
+		Speed: 60
 		Locomotor: hover
 	Turreted:
 		TurnSpeed: 20
@@ -4844,6 +4829,38 @@ HTNK.Hover:
 	-Upgradeable@HOVER:
 	-Upgradeable@DRONE:
 	-WithDecoration@UpgradeOverlay:
+	GrantTimedConditionOnDeploy@Afterburner:
+		DeployedCondition: abur-active
+		RequiresCondition: abur-upgrade
+		ShowSelectionBar: true
+		StartsFullyCharged: true
+		DeployedTicks: 200
+		CooldownTicks: 1500
+		ShowSelectionBarWhenFull: false
+		ChargingColor: 808080
+		DischargingColor: ff6600
+		DeploySound: htnkabur.aud
+		Instant: true
+	GrantConditionOnPrerequisite@Afterburner:
+		Condition: abur-upgrade
+		Prerequisites: abur.upgrade
+	SpeedMultiplier@Afterburner:
+		RequiresCondition: abur-active
+		Modifier: 150
+	Contrail@AB1:
+		Offset: -600,-100,200
+		StartColorUsePlayerColor: false
+		StartColor: cc550080
+		StartColorAlpha: 128
+		TrailLength: 12
+		RequiresCondition: abur-upgrade && abur-active
+	Contrail@AB2:
+		Offset: -600,100,200
+		StartColorUsePlayerColor: false
+		StartColor: cc550080
+		StartColorAlpha: 128
+		TrailLength: 12
+		RequiresCondition: abur-upgrade && abur-active
 	EncyclopediaExtras:
 		Subfaction: eagle
 
@@ -4860,9 +4877,11 @@ HTNK.Drone:
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor, Infantry
 		Weaknesses: • Requires active radar communication
-		Attributes: • Can crush concrete walls\n• Self repairs out of combat\n• Immune to mind control
+		Attributes: • Can crush concrete walls\n• Self repairs out of combat\n• Immune to mind control\n• XP of losses reclaimed by replacements
 	Valued:
-		Cost: 1500
+		Cost: 1300
+	Health:
+		HP: 88000
 	Tooltip:
 		Name: Mammoth Drone
 	Mobile:
@@ -4872,6 +4891,8 @@ HTNK.Drone:
 		Voice: Move
 	Armament@PRIMARY:
 		Weapon: 130mmTD.Drone
+	Armament@SECONDARY:
+		Weapon: MammothTusk.Drone
 	AttackTurreted:
 		PauseOnCondition: !radarenabled || empdisable || being-warped || blinded
 		Voice: Attack
@@ -4894,6 +4915,7 @@ HTNK.Drone:
 	ChangesHealth:
 		StartIfBelow: 100
 		RequiresCondition: !mdrn-attached
+	-Capturable:
 	-SpeedMultiplier@BERSERK:
 	-ReloadDelayMultiplier@BERSERK:
 	-ExternalCondition@BERSERK:
@@ -4907,6 +4929,9 @@ HTNK.Drone:
 	-Upgradeable@HOVER:
 	-Upgradeable@DRONE:
 	-WithDecoration@UpgradeOverlay:
+	ReclaimsExperience:
+		Type: Drone
+		MaximumReclaimableValuePercentage: 600
 	Sellable:
 		RequiresCondition: unit-sellable && !c4 && !being-warped
 	EncyclopediaExtras:
@@ -4916,7 +4941,6 @@ MSAM:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeGround
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	RenderSprites:
 		FactionImages:
@@ -5043,6 +5067,7 @@ MSAM:
 		RequiresCondition: hailstorm-upgrade
 		PauseOnCondition: reloading-primary
 		ReloadingCondition: reloading-secondary
+	ArmamentBurstCounter:
 	Voiced:
 		VoiceSet: MsamVoice
 	Encyclopedia:
@@ -5052,13 +5077,22 @@ MLRS:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	RenderSprites:
+		FactionImages:
+			nod: mlrs
+			blackh: mlrs.bh
+			legion: mlrs
+			marked: mlrs
+			shadow: mlrs
 	Valued:
 		Cost: 1350
 	Tooltip:
 		Name: SSM Launcher
+		RequiresCondition: !player-blackh
+	Tooltip@BH:
+		Name: SSM Launcher (Triple)
+		RequiresCondition: player-blackh
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Buildable:
@@ -5084,10 +5118,19 @@ MLRS:
 		RevealGeneratedShroud: False
 	RevealsShroud@GAPGEN:
 		Range: 4c0
+	Voiced:
+		VoiceSet: SSMVoice
 	Turreted:
 		TurnSpeed: 8
-		Offset: -128,0,128
+		Offset: -168,0,128
 		RealignDelay: 0
+		RequiresCondition: !player-blackh
+	Turreted@BH:
+		Turret: primarybh
+		TurnSpeed: 7
+		Offset: -168,0,128
+		RealignDelay: 0
+		RequiresCondition: player-blackh
 	AttackMove:
 		AttackMoveCondition: attack-move
 	Armament@PRIMARY:
@@ -5095,13 +5138,27 @@ MLRS:
 		LocalOffset: 0,171,0, 0,-171,0
 		PauseOnCondition: moving
 		ReloadingCondition: reloading
-		RequiresCondition: !blacknapalm-upgrade
+		RequiresCondition: !blacknapalm-upgrade && !player-blackh
 	Armament@PRIMARYUPG:
 		Weapon: HonestJohn.UPG
 		LocalOffset: 0,171,0, 0,-171,0
 		PauseOnCondition: moving
 		ReloadingCondition: reloading
-		RequiresCondition: blacknapalm-upgrade
+		RequiresCondition: blacknapalm-upgrade && !player-blackh
+	Armament@PRIMARYBH:
+		Name: primarybh
+		Weapon: HonestJohnBH
+		LocalOffset: 0,0,0, 0,-171,0, 0,171,0
+		PauseOnCondition: moving
+		ReloadingCondition: reloading
+		RequiresCondition: !blacknapalm-upgrade && player-blackh
+	Armament@PRIMARYUPGBH:
+		Name: primarybh
+		Weapon: HonestJohnBH.UPG
+		LocalOffset: 0,0,0, 0,-171,0, 0,171,0
+		PauseOnCondition: moving
+		ReloadingCondition: reloading
+		RequiresCondition: blacknapalm-upgrade && player-blackh
 	Armament@TARGETTER:
 		Name: targetter
 		Weapon: HonestJohnTargeting
@@ -5110,21 +5167,43 @@ MLRS:
 	AmmoPool:
 		Ammo: 2
 		AmmoCondition: ammo
+	AmmoPool@BH:
+		Name: primarybh
+		Armaments: primarybh
+		Ammo: 3
+		AmmoCondition: ammobh
 	AttackTurreted:
-		Armaments: primary, targetter
+		Turrets: primary, primarybh
+		Armaments: primary, primarybh, targetter
 		TargetFrozenActors: True
+		Voice: Attack
 		ForceFireIgnoresActors: True
 		PauseOnCondition: empdisable || being-warped || blinded
 	WithSpriteTurret:
-		RequiresCondition: ammo > 1
+		RequiresCondition: !player-blackh && ammo > 1
 	WithSpriteTurret@OneMissile:
-		RequiresCondition: ammo == 1
+		RequiresCondition: !player-blackh && ammo == 1
 		Sequence: turret1
 	WithSpriteTurret@NoMissiles:
-		RequiresCondition: !ammo
+		RequiresCondition: !player-blackh && !ammo
 		Sequence: turret0
+	WithSpriteTurret@BH:
+		RequiresCondition: player-blackh && ammobh > 2
+		Turret: primarybh
+	WithSpriteTurret@BHTwoMissile:
+		RequiresCondition: player-blackh && ammobh == 2
+		Sequence: turret2
+		Turret: primarybh
+	WithSpriteTurret@BHOneMissile:
+		RequiresCondition: player-blackh && ammobh == 1
+		Sequence: turret1
+		Turret: primarybh
+	WithSpriteTurret@BHNoMissiles:
+		RequiresCondition: player-blackh && !ammobh
+		Sequence: turret0
+		Turret: primarybh
 	GrantConditionOnAttack@AIMING:
-		ArmamentNames: primary, targetter
+		ArmamentNames: primary, primarybh, targetter
 		Condition: aiming
 		RevokeDelay: 15
 		RevokeAll: false
@@ -5132,10 +5211,16 @@ MLRS:
 		ValidMovementTypes: Horizontal, Vertical, Turn
 		Condition: moving
 	FireWarheadsOnDeath:
-		Weapon: BarrelExplode
+		Weapon: UnitExplodeFlame
 	ReloadAmmoPool@1:
 		Delay: 120
 		Count: 2
+		RequiresCondition: !player-blackh
+	ReloadAmmoPool@BH:
+		AmmoPool: primarybh
+		Delay: 170
+		Count: 3
+		RequiresCondition: player-blackh
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
 	WithProductionIconOverlay:
@@ -5143,12 +5228,12 @@ MLRS:
 		Prerequisites: vehicles.upgraded
 	Selectable:
 		DecorationBounds: 1194, 1194
-	ProductionCostMultiplier@BlackhBonus:
-		Multiplier: 90
-		Prerequisites: player.blackh
 	GrantConditionOnPrerequisite@UPG:
 		Condition: blacknapalm-upgrade
 		Prerequisites: blacknapalm.upgrade
+	GrantConditionOnPrerequisite@BH:
+		Condition: player-blackh
+		Prerequisites: player.blackh
 	Encyclopedia:
 		Category: Nod/Vehicles
 	EncyclopediaExtras:
@@ -5169,7 +5254,6 @@ STNK.Nod:
 	Inherits: ^VehicleTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeAir
-	Inherits@BERSERK: ^Berserk
 	Inherits@A2GPROTECTION: ^AirToGroundProtection
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	RenderSprites:
@@ -5199,11 +5283,11 @@ STNK.Nod:
 	Armor:
 		Type: Light
 	RevealsShroud:
-		MinRange: 4c0
-		Range: 6c0
+		MinRange: 5c0
+		Range: 7c0
 		RevealGeneratedShroud: False
 	RevealsShroud@GAPGEN:
-		Range: 4c0
+		Range: 5c0
 	Cloak@NORMAL:
 		InitialDelay: 75
 		CloakDelay: 76
@@ -5218,9 +5302,12 @@ STNK.Nod:
 		PauseOnCondition: invisibility
 	Cloak@CRATE-CLOAK:
 		RequiresCondition: crate-cloak && !(cloak-force-disabled || invisibility || hidden || driver-dead)
-	GrantConditionOnDamageState@UNCLOAK:
-		Condition: cloak-force-disabled
-		ValidDamageStates: Critical
+	GrantConditionOnPrerequisite@Shadow:
+		Condition: player-shadow
+		Prerequisites: player.shadow
+	SpeedMultiplier@ShadowCloak:
+		Modifier: 110
+		RequiresCondition: player-shadow && hidden
 	Armament@PRIMARY:
 		Weapon: StnkMissile
 		LocalOffset: 213,43,128, 213,-43,128
@@ -5244,7 +5331,6 @@ STNK.Nod:
 		Offset: 0,0,10
 	AttackTurreted:
 		PauseOnCondition: empdisable || being-warped || blinded || parachute
-		PersistentTargeting: false
 		Voice: Attack
 	WithSpriteTurret:
 		RequiresCondition: !tibcore-upgrade
@@ -5253,7 +5339,7 @@ STNK.Nod:
 		Sequence: turret-upg
 	AutoTarget:
 		InitialStance: HoldFire
-		InitialStanceAI: ReturnFire
+		InitialStanceAI: AttackAnything
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
 	WithProductionIconOverlay:
@@ -5281,6 +5367,9 @@ STNK.Nod:
 		Voice: Move
 	AttackMove:
 		Voice: Attack
+	GrantConditionToAttached@Cloak:
+		Condition: inherited-cloak
+		RequiresCondition: hidden || invisibility
 	Encyclopedia:
 		Category: Nod/Vehicles
 
@@ -5288,7 +5377,7 @@ HSTK:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeAir
-	Inherits@BERSERK: ^Berserk
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@A2GPROTECTION: ^AirToGroundProtection
 	RenderSprites:
 		Image: hstk
@@ -5314,14 +5403,12 @@ HSTK:
 		Voice: Move
 	Health:
 		HP: 25000
-	Armor:
-		Type: Heavy
 	RevealsShroud:
-		MinRange: 4c0
-		Range: 6c0
+		MinRange: 5c0
+		Range: 7c0
 		RevealGeneratedShroud: False
 	RevealsShroud@GAPGEN:
-		Range: 4c0
+		Range: 5c0
 	Cloak@NORMAL:
 		InitialDelay: 89
 		CloakDelay: 90
@@ -5336,9 +5423,12 @@ HSTK:
 		PauseOnCondition: invisibility
 	Cloak@CRATE-CLOAK:
 		RequiresCondition: crate-cloak && !(cloak-force-disabled || invisibility || hidden || driver-dead)
-	GrantConditionOnDamageState@UNCLOAK:
-		Condition: cloak-force-disabled
-		ValidDamageStates: Critical
+	GrantConditionOnPrerequisite@Shadow:
+		Condition: player-shadow
+		Prerequisites: player.shadow
+	SpeedMultiplier@ShadowCloak:
+		Modifier: 110
+		RequiresCondition: player-shadow && hidden
 	Armament@PRIMARY:
 		Weapon: HstkMissile
 		LocalOffset: 213,160,128, 213,-160,128
@@ -5362,7 +5452,6 @@ HSTK:
 		Offset: 0,0,0
 	AttackTurreted:
 		PauseOnCondition: empdisable || being-warped || blinded || parachute
-		PersistentTargeting: false
 		Voice: Attack
 	WithSpriteTurret:
 		RequiresCondition: !tibcore-upgrade
@@ -5371,7 +5460,7 @@ HSTK:
 		Sequence: turret-upg
 	AutoTarget:
 		InitialStance: HoldFire
-		InitialStanceAI: ReturnFire
+		InitialStanceAI: AttackAnything
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
 	WithProductionIconOverlay:
@@ -5391,6 +5480,9 @@ HSTK:
 		Voice: Move
 	AttackMove:
 		Voice: Attack
+	GrantConditionToAttached@Cloak:
+		Condition: inherited-cloak
+		RequiresCondition: hidden || invisibility
 	Encyclopedia:
 		Category: Nod/Vehicles
 	EncyclopediaExtras:
@@ -5400,7 +5492,6 @@ BIKE:
 	Inherits: ^VehicleTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMove
-	Inherits@BERSERK: ^Berserk
 	RenderSprites:
 	Valued:
 		Cost: 500
@@ -5426,7 +5517,7 @@ BIKE:
 		Type: Light
 	RevealsShroud:
 		MinRange: 4c0
-		Range: 5c0
+		Range: 6c0
 		RevealGeneratedShroud: False
 	RevealsShroud@GAPGEN:
 		Range: 4c0
@@ -5482,7 +5573,6 @@ FTNK:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	RenderSprites:
 	Valued:
@@ -5518,16 +5608,13 @@ FTNK:
 		MuzzleSequence: muzzle
 		MuzzlePalette: tdeffect
 		LocalOffset: 682,128,42, 682,-128,42
-	Armament@FF:
-		Weapon: BigFlamerTDFF
-		LocalOffset: 682,128,42, 682,-128,42
 	WithMuzzleOverlay:
 	AttackFrontal:
 		PauseOnCondition: empdisable || being-warped || blinded || parachute
 		FacingTolerance: 0
 	FireWarheadsOnDeath:
-		Weapon: BarrelExplode
-		EmptyWeapon: BarrelExplode
+		Weapon: UnitExplodeFlame
+		EmptyWeapon: UnitExplodeFlame
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
 	WithProductionIconOverlay:
@@ -5540,7 +5627,7 @@ HFTK:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@SLOWCRUSH: ^SlightlySlowedByCrushing
 	RenderSprites:
 	Buildable:
@@ -5561,8 +5648,6 @@ HFTK:
 		AddToArmyValue: true
 	Health:
 		HP: 44000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 60
 		Voice: Move
@@ -5588,27 +5673,21 @@ HFTK:
 		MuzzlePalette: scrin-ignore-lighting-alpha85
 		LocalOffset: 750,200,150, 750,-200,150
 		RequiresCondition: blacknapalm-upgrade
-	Armament@FF:
-		Name: secondary
-		Weapon: HeavyFlameTankFlamerFF
-		LocalOffset: 750,200,150, 750,-200,150
-		RequiresCondition: !blacknapalm-upgrade
-	Armament@FFUPG:
-		Name: secondary
-		Weapon: HeavyFlameTankFlamerFF.UPG
-		LocalOffset: 750,200,150, 750,-200,150
-		RequiresCondition: blacknapalm-upgrade
 	AttackTurreted:
 		Voice: Attack
 		RangeMargin: 0
 		PauseOnCondition: empdisable || being-warped || blinded || parachute
 	WithSpriteTurret:
+		RequiresCondition: !blacknapalm-upgrade
+	WithSpriteTurret@BlackNapalm:
+		Sequence: turret-upg
+		RequiresCondition: blacknapalm-upgrade
 	WithMuzzleOverlay:
 	Voiced:
 		VoiceSet: FlameTankVoice
 	FireWarheadsOnDeath:
-		Weapon: BarrelExplode
-		EmptyWeapon: BarrelExplode
+		Weapon: UnitExplodeFlame
+		EmptyWeapon: UnitExplodeFlame
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
 	WithProductionIconOverlay:
@@ -5643,109 +5722,31 @@ HFTK:
 		Subfaction: blackh
 
 HARV.TD:
-	Inherits: ^VehicleTD-NOUPG
-	Inherits@HARVBALANCE: ^HarvesterBalancer
-	Inherits@HARVDMGNOTIFY: ^HarvesterDamageNotification
-	Inherits@SELECTION: ^SelectableEconomicUnit
-	Inherits@A2GPROTECTION: ^AirToGroundProtection
-	Inherits@EconomyPolicyDiscount: ^EconomyPolicyDiscount
+	Inherits@HarvesterBase: ^HarvesterBase
+	Inherits@TDPAL: ^TDPalette
+	WithDamageOverlay:
+		Image: smoke_mtd
+	Cloak@CRATE-CLOAK:
+		CloakedPalette: cloak
 	RenderSprites:
 		Image: harv2
-	Valued:
-		Cost: 1400
 	Tooltip:
 		Name: Harvester
-		GenericName: Harvester
 	Buildable:
 		BuildPaletteOrder: 12
 		Prerequisites: ~!sharv.upgrade, anyrefinery, ~vehicles.td, ~techlevel.low
 		Queue: VehicleSQ, VehicleMQ
 		IconPalette: chrometd
 		Description: Collects Ore, Gems and Tiberium for processing.
-	TooltipExtras:
-		Weaknesses: • Unarmed\n• Resistant to mind control
 	Selectable:
 		Priority: 7
 		DecorationBounds: 1536, 1536
-	Harvester:
-		Resources: Tiberium, BlueTiberium, BlackTiberium, Ore, Gems
-		BaleUnloadDelay: 1
-		BaleLoadDelay: 4
-		SearchFromProcRadius: 15
-		SearchFromHarvesterRadius: 8
-		HarvestFacings: 8
-		EmptyCondition: no-ore
-	DockClientManager:
-	WithStoresResourcesPipsDecoration:
-		Position: BottomLeft
-		Margin: 4, 3
-		RequiresSelection: true
-		PipCount: 6
-		ResourceSequences:
-			Ore: pip-yellow
-			Gems: pip-red
-			Tiberium: pip-green
-			BlueTiberium: pip-blue
-			BlackTiberium: pip-green
-	Mobile:
-		Speed: 72
-		TurnSpeed: 24
-		Locomotor: heavywheeled
-	Health:
-		HP: 75000
-	Armor:
-		Type: Heavy
-	RevealsShroud:
-		Range: 4c0
 	SpawnActorOnDeath:
 		Actor: HARV.TD.Husk
 		RequiresCondition: !being-warped
 	WithHarvestAnimation:
 	WithDockingAnimationCA:
 		RefineryTypes: proc.td
-	GrantConditionOnTerrain@Tiberium:
-		Condition: ontib
-		TerrainTypes: Tiberium
-	GrantConditionOnTerrain@Ore:
-		Condition: onore
-		TerrainTypes: Ore
-	FireWarheadsOnDeath@Ore:
-		RequiresCondition: !no-ore && onore && !being-warped
-		Weapon: OreExplosion
-	FireWarheadsOnDeath@Tib:
-		RequiresCondition: !no-ore && ontib && !being-warped
-		Weapon: TibExplosion
-	-Crushable:
-	Targetable@ChaosImmune:
-		TargetTypes: ChaosImmune
-	Targetable@MindControlResistant:
-		TargetTypes: MindControlResistant
-	SpawnRandomActorOnDeath:
-		Actors: c1,c7,c10
-		Probability: 5
-		RequiresCondition: !being-warped
-	GrantConditionOnPrerequisite@GSHIELD:
-		Condition: pointdef-upgrade
-		Prerequisites: pointdef.upgrade
-	TimedDamageMultiplier@GSHIELD:
-		ActiveCondition: gshield
-		ChargingColor: 008888
-		DrainingColor: 00ffff
-		Modifier: 25
-		Duration: 75
-		ChargeTime: 375
-		ActivateSound: gshieldup.aud
-		DeactivateSound: gshielddown.aud
-		RequiresCondition: pointdef-upgrade
-	WithIdleOverlay@NSHIELD:
-		RequiresCondition: (nshield || gshield) && !(empdisable || invulnerability || invisibility)
-	ChangesHealth@MINIDRONE:
-		Step: 2250
-	DamageTypeDamageMultiplier@A2GPROTECTION:
-		Modifier: 60
-	UpdatesCount@NodCovenant:
-		Type: NodCovenant
-		UpdateOn: Killed
 	GrantConditionOnPrerequisite@Stealth:
 		Condition: sharv-upgrade
 		Prerequisites: sharv.upgrade
@@ -5754,12 +5755,8 @@ HARV.TD:
 		IntoActor: harv.td.upg
 	RejectsOrders@Transforming:
 		RequiresCondition: sharv-upgrade
-	TransferResourcesOnTransform:
 	ReplacedInQueue:
 		Actors: harv.td.upg
-	StoresResources:
-		Capacity: 26
-		Resources: Tiberium, BlueTiberium, BlackTiberium, Ore, Gems
 	Encyclopedia:
 		Category: GDI/Vehicles; Nod/Vehicles
 
@@ -5769,8 +5766,6 @@ HARV.TD.UPG:
 		Prerequisites: ~sharv.upgrade, anyrefinery, ~vehicles.td, ~techlevel.low
 	RenderSprites:
 		Image: harv2.upg
-	Valued:
-		Cost: 1400
 	Health:
 		HP: 65000
 	Tooltip:
@@ -5789,6 +5784,9 @@ HARV.TD.UPG:
 		PauseOnCondition: invisibility
 	Cloak@CRATE-CLOAK:
 		RequiresCondition: crate-cloak && !(cloak-force-disabled || invisibility || hidden || driver-dead)
+	GrantConditionToAttached@Cloak:
+		Condition: inherited-cloak
+		RequiresCondition: hidden || invisibility
 	SpawnActorOnDeath:
 		Actor: HARV.TD.UPG.Husk
 	-GrantConditionOnPrerequisite@Stealth:
@@ -5803,10 +5801,10 @@ BTR:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeAir
-	Inherits@BERSERK: ^Berserk
 	Inherits@TRANSPORT: ^Transport
 	Inherits@NOUNLOADCHRONO: ^NoUnloadWhenChronoshifted
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@A2GPROTECTION: ^AirToGroundProtection
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	Inherits@COMMANDOSKULL: ^CommandoSkull
@@ -5826,8 +5824,6 @@ BTR:
 		AddToArmyValue: true
 	Health:
 		HP: 25000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 100
 		Voice: Move
@@ -5839,6 +5835,10 @@ BTR:
 		RevealGeneratedShroud: False
 	RevealsShroud@GAPGEN:
 		Range: 4c0
+	DetectCloaked:
+		Range: 6c0
+		DetectionTypes: Cloak, AirCloak
+		RequiresCondition: (loaded-cmdo || loaded-cmsr) && !(empdisable || being-warped)
 	Turreted:
 		TurnSpeed: 40
 	Armament@GROUND:
@@ -5846,13 +5846,11 @@ BTR:
 		Weapon: FLAK-23-AG
 		LocalOffset: 592,0,376
 		MuzzleSequence: muzzle
-		CasingWeapon: BrassDebris
-		CasingSpawnLocalOffset: 0,-225,200
-		CasingTargetOffset: 0, -600, 0
 	Armament@AIR:
 		Weapon: FLAK-23-AA
 		LocalOffset: 592,0,376
 		MuzzleSequence: muzzle
+	WithEjectedCasings:
 		CasingWeapon: BrassDebris
 		CasingSpawnLocalOffset: 0,-225,200
 		CasingTargetOffset: 0, -600, 0
@@ -5879,6 +5877,7 @@ BTR:
 			bori: loaded-cmdo
 			yuri: loaded-cmdo
 			mast: loaded-cmdo
+			cmsr: loaded-cmsr
 	WithCargoSounds:
 		EnterSounds: genter1a.aud
 		ExitSounds: gexit1a.aud
@@ -5920,6 +5919,8 @@ BTR:
 		VoiceSet: BtrVoice
 	Encyclopedia:
 		Category: Soviets/Vehicles
+	EncyclopediaExtras:
+		Name: BTR
 
 BTR.AI:
 	Inherits: BTR
@@ -5957,9 +5958,6 @@ BTR.YURI:
 		PauseOnCondition: reload-ground
 		ReloadingCondition: reload-air
 		RequiresCondition: gattling < 12
-		CasingWeapon: BrassDebris
-		CasingSpawnLocalOffset: 0,225,200, 0,-225,200
-		CasingTargetOffset: 0, 600, 0, 0, -600, 0
 	Armament@AIR2:
 		Weapon: MGatt
 		LocalOffset: 320,50,350, 320,-50,350
@@ -5967,9 +5965,6 @@ BTR.YURI:
 		PauseOnCondition: reload-ground
 		ReloadingCondition: reload-air
 		RequiresCondition: gattling >= 12
-		CasingWeapon: BrassDebris
-		CasingSpawnLocalOffset: 0,225,200, 0,-225,200
-		CasingTargetOffset: 0, 600, 0, 0, -600, 0
 	Armament@GROUND:
 		Name: secondary
 		Weapon: MGattG
@@ -5978,9 +5973,6 @@ BTR.YURI:
 		PauseOnCondition: reload-air
 		ReloadingCondition: reload-ground
 		RequiresCondition: gattling-ground < 14
-		CasingWeapon: BrassDebris
-		CasingSpawnLocalOffset: 0,225,200, 0,-225,200
-		CasingTargetOffset: 0, 600, 0, 0, -600, 0
 	Armament@GROUND2:
 		Name: secondary
 		Weapon: MGattG
@@ -5989,6 +5981,7 @@ BTR.YURI:
 		PauseOnCondition: reload-air
 		ReloadingCondition: reload-ground
 		RequiresCondition: gattling-ground >= 14
+	WithEjectedCasings:
 		CasingWeapon: BrassDebris
 		CasingSpawnLocalOffset: 0,225,200, 0,-225,200
 		CasingTargetOffset: 0, 600, 0, 0, -600, 0
@@ -6065,9 +6058,12 @@ BTR.YURI:
 		Voice: Move
 	Voiced:
 		VoiceSet: GattlingTankVoice
+	Selectable:
+		Class: btr
 	-Upgradeable@GATTLING:
 	-WithDecoration@UpgradeOverlay:
 	EncyclopediaExtras:
+		Name: Gattling BTR
 		Subfaction: yuri
 
 BTR.YURI.AI:
@@ -6092,6 +6088,7 @@ TRPC:
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Inherits@COMMANDOSKULL: ^CommandoSkull
 	Inherits@AIUNLOAD: ^AIUNLOAD
+	Inherits@HeavyArmor: ^HeavyArmor
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 132
@@ -6109,8 +6106,6 @@ TRPC:
 		AddToAssetsValue: false
 	Health:
 		HP: 36000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 64
 		Voice: Move
@@ -6163,21 +6158,14 @@ TRPC:
 		TargetTypes: MindControlImmune
 		RequiresCondition: loaded-cmdo
 	KeepsDistance:
+	AutoGuard:
+		ValidTargets: Infantry, Vehicle
+		RequiresCondition: !auto-guard-delay
+	GrantTimedCondition@AutoGuardDelay:
+		Condition: auto-guard-delay
+		Duration: 25
 	AttackFrontal:
 	AttackMove:
-	AutoTarget:
-		ScanRadius: 3
-		InitialStance: HoldFire
-		InitialStanceAI: HoldFire
-	AutoTargetPriority@DEFAULT:
-		ValidTargets: Infantry
-		ValidRelationships: Ally
-	Armament:
-		Weapon: TroopCrawlerDummyWeapon
-		TargetRelationships: Ally
-		ForceTargetRelationships: None
-		Cursor: guard
-		OutsideRangeCursor: guard
 	ProximityExternalCondition@InspirationTrpc:
 		Range: 4c0
 		Condition: trpc-inspiration
@@ -6201,10 +6189,10 @@ TRPC:
 		PlayerExperienceModifier: 0
 	DetectCloaked:
 		Range: 6c0
-		DetectionTypes: Cloak, Thief, AirCloak
+		DetectionTypes: Cloak, AirCloak
 		RequiresCondition: !(empdisable || being-warped)
 	DetectCloaked@Mines:
-		Range: 4c0
+		Range: 7c0
 		DetectionTypes: Mine
 		RequiresCondition: !(empdisable || being-warped)
 	GivesBountyCA:
@@ -6230,7 +6218,6 @@ TRPC:
 IFV:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	Inherits@BERSERK: ^Berserk
 	Inherits@TRANSPORT: ^Transport
 	Inherits@NOUNLOADCHRONO: ^NoUnloadWhenChronoshifted
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
@@ -6414,7 +6401,7 @@ IFV:
 		RequiresCondition: flamturr || chemturr || hoplturr
 	TooltipExtras@spyturr:
 		Weaknesses: • Cannot deal damage
-		Attributes: • Long vision range\n• Can detect cloaked units\n• Marks vehicle/structure targets, revealing them and increasing the damage they take
+		Attributes: • Targets are reaveled and take increased damage
 		IsStandard: false
 		RequiresCondition: spyturr
 	TooltipExtras@rmbcturr:
@@ -6455,12 +6442,12 @@ IFV:
 	TooltipExtras@psyturr:
 		Strengths: • Strong vs Infantry, Vehicles
 		Weaknesses: • Cannot deal damage\n• Cannot attack Aircraft
-		Attributes: • Can mind control enemy units\n• Control lost if passenger exits
+		Attributes: • Can mind control enemy units
 		IsStandard: false
 		RequiresCondition: psyturr
 	TooltipExtras@hackturr:
 		Strengths: • Strong vs Defenses, Buildings
-		Weaknesses: • Cannot deal damage\n• Control lost if passenger exits
+		Weaknesses: • Cannot deal damage
 		IsStandard: false
 		RequiresCondition: hackturr
 	TooltipExtras@cryoturr:
@@ -6485,9 +6472,9 @@ IFV:
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
-		HP: 27000
+		HP: 32000
 	Armor:
-		Type: Heavy
+		Type: Light
 	Mobile:
 		Speed: 100
 	RevealsShroud:
@@ -6504,7 +6491,7 @@ IFV:
 		RequiresCondition: spyturr
 	DetectCloaked@SPY:
 		Range: 6c0
-		DetectionTypes: Cloak, Thief, AirCloak
+		DetectionTypes: Cloak, AirCloak
 		RequiresCondition: spyturr && !(empdisable || being-warped)
 	Turreted:
 		TurnSpeed: 40
@@ -6523,9 +6510,6 @@ IFV:
 		MuzzleSequence: muzzle
 		LocalOffset: 250,0,150
 		RequiresCondition: gunturr || shadturr || cmsrturr
-		CasingWeapon: BrassDebris
-		CasingSpawnLocalOffset: 0,-125,200
-		CasingTargetOffset: 0, -500, 0
 	Armament@E2:
 		Weapon: 25mmFRAG
 		MuzzleSequence: muzzle
@@ -6577,17 +6561,11 @@ IFV:
 		MuzzleSequence: muzzle
 		LocalOffset: 560,0,200
 		RequiresCondition: commturr
-		CasingWeapon: BrassDebris
-		CasingSpawnLocalOffset: 0,-225,200
-		CasingTargetOffset: 0, -600, 0
 	Armament@SEAL:
 		Weapon: SealIFVGun
 		MuzzleSequence: muzzle
 		LocalOffset: 560,0,200
 		RequiresCondition: sealturr
-		CasingWeapon: BrassDebris
-		CasingSpawnLocalOffset: 0,-225,200
-		CasingTargetOffset: 0, -600, 0
 	Armament@Sniper:
 		Weapon: SniperIFVGun
 		MuzzleSequence: muzzle
@@ -6642,7 +6620,7 @@ IFV:
 		Cursor: goldwrench
 		OutsideRangeCursor: goldwrench
 		TargetRelationships: Ally
-		RequiresCondition: engturr
+		RequiresCondition: engturr || mechturr
 		ForceTargetRelationships: None
 		Name: secondary
 	Armament@Acol:
@@ -6681,10 +6659,6 @@ IFV:
 		LocalOffset: 385,0,300
 		RequiresCondition: enfoturr
 		MuzzleSequence: muzzle
-	Armament@EnforcerLine:
-		Weapon: EnforcerIFVShotgunLine
-		LocalOffset: 385,0,300
-		RequiresCondition: enfoturr
 	Armament@Disintegrator:
 		Weapon: DisintegratorIFVBeam
 		LocalOffset: 350,0,250
@@ -6718,7 +6692,7 @@ IFV:
 		LocalOffset: 192,100,256, 192,-100,256
 		RequiresCondition: tigrturr
 	Armament@Impaler:
-		Weapon: ImpalerSpike
+		Weapon: ImpalerSpikePassenger
 		LocalOffset: 450,0,250
 		RequiresCondition: implturr
 	Armament@Stalker:
@@ -6735,20 +6709,12 @@ IFV:
 		RequiresCondition: reapturr
 	Armament@Spy:
 		Weapon: TargetPainter
-		RequiresCondition: spyturr
-		LocalOffset: 0,0,100
-	AutoTargetPriority@Spy:
-		ValidTargets: Vehicle, Structure
+		LocalOffset: 0,0,250
 		RequiresCondition: spyturr
 	AttackSoundsCA@REPAIRSOUND:
 		Sounds: repair11.aud
 		RequiresCondition: mechturr
 		Armaments: primary
-	WithIdleOverlay@SPINNER:
-		Sequence: spinner
-		PauseOnCondition: empdisable || being-warped
-		RequiresCondition: spyturr
-		Offset: 0,0,200
 	WithIdleOverlay@TESLA:
 		Sequence: tesla
 		PauseOnCondition: empdisable || being-warped
@@ -6762,7 +6728,6 @@ IFV:
 		RequiresCondition: hackturr
 	AttackTurreted:
 		PauseOnCondition: empdisable || being-warped || blinded
-		TargetFrozenActors: True
 	WithMuzzleOverlay:
 	WithSpriteTurret@defaultturr:
 		RequiresCondition: !full || nochange
@@ -6858,6 +6823,9 @@ IFV:
 	WithSpriteTurret@reap:
 		Sequence: turret-reap
 		RequiresCondition: reapturr
+	WithSpriteTurret@ARCHER:
+		Sequence: turret-arch
+		RequiresCondition: spyturr
 	Cargo:
 		Types: Infantry, Hacker
 		MaxWeight: 1
@@ -6990,6 +6958,19 @@ IFV:
 		Color: 00FF0080
 		Range: 3c512
 		RequiresCondition: medturr
+	ProximityExternalCondition@Inspiration:
+		Range: 5c0
+		Condition: cmsr-inspiration
+		ValidRelationships: Ally
+		AffectsParent: true
+		RequiresCondition: cmsrturr && !passenger
+	WithRadiatingCircle:
+		EndRadius: 5c0
+		Interval: 75
+		Duration: 50
+		ValidRelationships: Ally
+		AlwaysShowMaxRange: true
+		RequiresCondition: cmsrturr
 	Capturable:
 		RequiresCondition: !being-warped && !full
 	Capturable@DRIVER_DEAD:
@@ -7034,14 +7015,19 @@ IFV:
 		RequiresCondition: (stance-attackanything || assault-move) && !is-aa
 		ValidTargets: Infantry, Vehicle, Water, Underwater, Structure, Defense, Mine
 		InvalidTargets: NoAutoTarget
+	AutoTargetPriority@HeavyPrio:
+		ValidTargets: Heavy
+		InvalidTargets: NoAutoTarget
+		Priority: 15
+		RequiresCondition: tigrturr
 	AttackMove:
 		AssaultMoveCondition: assault-move
 	AutoTargetPriority@REPAIR:
-		ValidTargets: Repair
+		ValidTargets: Repairable
 		RequiresCondition: mechturr
 		ValidRelationships: Ally
 	AutoTargetPriority@HEAL:
-		ValidTargets: Heal
+		ValidTargets: Healable
 		RequiresCondition: medturr
 		ValidRelationships: Ally
 	AutoTargetPriority@defuse:
@@ -7057,13 +7043,13 @@ IFV:
 	GrantConditionOnPrerequisite@TibCore:
 		Condition: tibcore-upgrade
 		Prerequisites: tibcore.upgrade
-	GuardsSelection@REPAIR:
+	AutoGuard@REPAIR:
 		ValidTargets: Vehicle
 		RequiresCondition: mechturr && !stance-attackanything
-	GuardsSelection@MEDIC:
+	AutoGuard@MEDIC:
 		ValidTargets: Infantry
 		RequiresCondition: medturr && !stance-attackanything
-	GuardsSelection@SPY:
+	AutoGuard@SPY:
 		RequiresCondition: spyturr && !stance-attackanything
 	WithDecoration@COMMANDOSKULL:
 		RequiresCondition: commturr || psyturr
@@ -7081,7 +7067,7 @@ IFV:
 		Position: TopLeft
 		ValidRelationships: Ally, Enemy, Neutral
 	KeepsDistance:
-		RequiresCondition: engturr || mechturr || medturr
+		RequiresCondition: engturr || mechturr || medturr || spyturr
 	DamageTypeDamageMultiplier@A2GPROTECTION:
 		RequiresCondition: is-aa
 	AmbientSoundCA@BlackHand:
@@ -7152,22 +7138,6 @@ IFV:
 		PauseOnCondition: invisibility
 	Cloak@CRATE-CLOAK:
 		RequiresCondition: crate-cloak && !(cloak-force-disabled || invisibility || hidden || driver-dead)
-	GrantConditionOnDamageState@UNCLOAK:
-		Condition: cloak-force-disabled
-		ValidDamageStates: Critical
-	ProximityExternalCondition@Inspiration:
-		Range: 5c0
-		Condition: cmsr-inspiration
-		ValidRelationships: Ally
-		AffectsParent: true
-		RequiresCondition: cmsrturr && !passenger
-	WithRadiatingCircle:
-		EndRadius: 5c0
-		Interval: 75
-		Duration: 50
-		ValidRelationships: Ally
-		AlwaysShowMaxRange: true
-		RequiresCondition: cmsrturr
 	Armament@Psi:
 		Weapon: EnslaveInfantry
 		LocalOffset: 200,0,300
@@ -7237,13 +7207,24 @@ IFV:
 	WithColoredSelectionBox@INVIS:
 		RequiresCondition: invisibility || hidden
 		ColorSource: Player
+	WithEjectedCasings@MGCasings:
+		RequiresCondition: gunturr
+		CasingWeapon: BrassDebris3
+		CasingSpawnLocalOffset: 0,-125,200
+		CasingTargetOffset: 0, -500, 0
+	WithEjectedCasings@CommandoCasings:
+		RequiresCondition: sealturr || commturr
+		CasingWeapon: BrassDebris
+		CasingSpawnLocalOffset: 0,-225,200
+		CasingTargetOffset: 0, -600, 0
 	Encyclopedia:
 		Category: Allies/Vehicles
+	EncyclopediaExtras:
+		Name: IFV
 
 IFV.AI:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -7274,9 +7255,9 @@ IFV.AI:
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
-		HP: 27000
+		HP: 32000
 	Armor:
-		Type: Heavy
+		Type: Light
 	Mobile:
 		Speed: 100
 	RevealsShroud:
@@ -7302,9 +7283,6 @@ IFV.AI:
 		MuzzleSequence: muzzle
 		LocalOffset: 250,0,150
 		RequiresCondition: gunturr
-		CasingWeapon: BrassDebris
-		CasingSpawnLocalOffset: 0,-125,200
-		CasingTargetOffset: 0, -500, 0
 	Armament@E3:
 		Weapon: IFVRocketsE
 		LocalOffset: 192,100,176, 192,-100,176
@@ -7323,6 +7301,11 @@ IFV.AI:
 		Weapon: IFVRocketsAAE.CRYO
 		LocalOffset: 192,100,176, 192,-100,176
 		RequiresCondition: samturr && cryw-upgrade
+	WithEjectedCasings:
+		RequiresCondition: gunturr
+		CasingWeapon: BrassDebris
+		CasingSpawnLocalOffset: 0,-125,200
+		CasingTargetOffset: 0, -500, 0
 	AttackTurreted:
 		PauseOnCondition: empdisable || being-warped || blinded
 	WithMuzzleOverlay:
@@ -7384,6 +7367,7 @@ IFV.AI:
 
 RECK:
 	Inherits: IFV
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@InfiltratorStolenTech: ^InfiltratorStolenTech
 	RenderSprites:
 		Image: reck
@@ -7485,16 +7469,17 @@ RECK:
 	SpeedMultiplier@TigerGuard:
 		Modifier: 90
 	Encyclopedia:
-		Category: Nod/Vehicles
+		Category: Nod/Stolen Technology
 	EncyclopediaExtras:
 		AdditionalInfo: Stolen from Allied War Factory.
+		-Name:
 
 TITN:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeGround
-	Inherits@BERSERK: ^Berserk
 	Inherits@SHRAPNEL: ^ThrowsShrapnel
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Inherits@GYRO: ^GyroStabilizers
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
@@ -7517,9 +7502,7 @@ TITN:
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
-		HP: 102000
-	Armor:
-		Type: Heavy
+		HP: 110000
 	Mobile:
 		Locomotor: sheavytracked
 		Speed: 43
@@ -7639,9 +7622,9 @@ JUGG:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SHRAPNEL: ^ThrowsShrapnel
 	Inherits@GYRO: ^GyroStabilizers
+	Inherits@HeavyArmor: ^HeavyArmor
 	Tooltip:
 		Name: Juggernaut
 	Buildable:
@@ -7718,8 +7701,6 @@ JUGG:
 		TurnSpeed: 12
 	Health:
 		HP: 62000
-	Armor:
-		Type: Heavy
 	Passenger:
 		Weight: 3
 		Voice: Move
@@ -7785,13 +7766,13 @@ TTRK:
 		Weapon: UnitExplodeToxinTruck
 		EmptyWeapon: UnitExplodeToxinTruck
 	Encyclopedia:
-		Category: Other/Units
+		Category: Other/Tech Units
 
 DISR:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
+	Inherits@HeavyArmor: ^HeavyArmor
 	Valued:
 		Cost: 1600
 	Tooltip:
@@ -7810,8 +7791,6 @@ DISR:
 		Attributes: • Slows enemy movement and rate of fire (with upgrade)
 	Health:
 		HP: 66000
-	Armor:
-		Type: Heavy
 	Mobile:
 		TurnSpeed: 16
 		Speed: 46
@@ -7883,7 +7862,6 @@ HSAM:
 	Inherits: ^VehicleTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeGround
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Inherits@HOVERTRAIL: ^HoverTrail
 	RenderSprites:
@@ -8015,6 +7993,7 @@ HSAM:
 		RequiresCondition: hailstorm-upgrade
 		PauseOnCondition: reloading-primary
 		ReloadingCondition: reloading-secondary
+	ArmamentBurstCounter:
 	GrantConditionOnTerrain@ONWATER:
 		TerrainTypes: Water
 		Condition: onwater
@@ -8034,8 +8013,8 @@ RTNK:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlightlySlowedByCrushing
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -8066,10 +8045,8 @@ RTNK:
 		AddToArmyValue: true
 	Health:
 		HP: 32000
-	Armor:
-		Type: Heavy
 	Mobile:
-		Speed: 100
+		Speed: 113
 		Voice: Move
 	Passenger:
 		Voice: Move
@@ -8114,8 +8091,6 @@ RTNK:
 		PauseOnCondition: invisibility
 	Cloak@CRATE-CLOAK:
 		RequiresCondition: crate-cloak && !(cloak-force-disabled || invisibility || hidden || driver-dead)
-	GrantConditionOnDamageState@UNCLOAK:
-		ValidDamageStates: Critical
 	Selectable:
 		DecorationBounds: 1194, 1194
 	ProducibleWithLevel:
@@ -8138,6 +8113,9 @@ RTNK:
 	FirepowerMultiplier@Ambush:
 		Modifier: 150
 		RequiresCondition: hidden
+	GrantConditionToAttached@Cloak:
+		Condition: inherited-cloak
+		RequiresCondition: hidden || invisibility
 	Encyclopedia:
 		Category: Allies/Vehicles
 	EncyclopediaExtras:
@@ -8147,17 +8125,16 @@ V3RL:
 	Inherits: ^Vehicle
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
-		BuildPaletteOrder: 181
-		Prerequisites: ~vehicles.soviet, ~v3.upgrade, ~techlevel.high
+		BuildPaletteOrder: 243
+		Prerequisites: stek, ~vehicles.ukraine, ~techlevel.high
 		Description: Extreme long-range rocket artillery.
 	TooltipExtras:
 		Strengths: • Strong vs Buildings, Defenses, Infantry, Light Armor
 		Weaknesses: • Cannot attack Aircraft\n• Has difficulty hitting moving targets\n• Rockets can be shot down by static anti-air defenses
 	Valued:
-		Cost: 1500
+		Cost: 1250
 	Tooltip:
 		Name: V3 Launcher
 	UpdatesPlayerStatistics:
@@ -8207,7 +8184,7 @@ V3RL:
 		Margin: 4, 3
 		RequiresSelection: true
 	FireWarheadsOnDeath:
-		Weapon: BarrelExplode
+		Weapon: UnitExplodeFlame
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
 	WithProductionIconOverlay:
@@ -8217,13 +8194,11 @@ V3RL:
 		DecorationBounds: 1194, 1194
 	Voiced:
 		VoiceSet: V3Voice
-	ProductionCostMultiplier@UkraineBonus:
-		Multiplier: 90
-		Prerequisites: player.ukraine
 	Encyclopedia:
 		Category: Soviets/Vehicles
 	EncyclopediaExtras:
 		RenderPreviewActor: v3rl.preview
+		Subfaction: ukraine
 
 V3RL.Preview:
 	Inherits: ^PreviewDummy
@@ -8267,8 +8242,8 @@ V3:
 TNKD:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMovePrioritizeVehicles
-	Inherits@BERSERK: ^Berserk
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@HeavyArmor: ^HeavyArmor
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 171
@@ -8286,8 +8261,6 @@ TNKD:
 		AddToArmyValue: true
 	Health:
 		HP: 38000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 60
 		TurnSpeed: 16
@@ -8370,7 +8343,7 @@ MSAR:
 		Description: When deployed, detects enemy vehicles, aircraft and structures within a large radius.
 	TooltipExtras:
 		Weaknesses: • Unarmed
-		Attributes: • Can detect cloaked units (when deployed)\n• Increases nearby ground unit vision range (when deployed)\n• Special Ability: Activate Sensor Array
+		Attributes: • Detects cloaked units (when deployed)\n• Increases nearby ground unit vision range (when deployed)\n• Special Ability: Activate Sensor Array
 	Health:
 		HP: 24000
 	Armor:
@@ -8411,7 +8384,7 @@ MSAR:
 		UndeployOnPickup: true
 	DetectCloaked@Deployed:
 		Range: 10c0
-		DetectionTypes: Cloak, Thief, AirCloak
+		DetectionTypes: Cloak, AirCloak
 		RequiresCondition: deployed && !(empdisable || being-warped)
 	ProvidesRadar:
 		RequiresCondition: deployed && !(empdisable || being-warped)
@@ -8421,12 +8394,10 @@ MSAR:
 		CargoCondition: passenger
 	ProximityExternalCondition@Bino:
 		Condition: bino
-		Range: 12c0
+		Range: 10c0
 		EnableSound: dsaping1.aud
 		AffectsParent: False
 		RequiresCondition: deployed && !(empdisable || being-warped) && !passenger
-	Targetable@ChaosImmune:
-		TargetTypes: ChaosImmune
 	RangedGpsRadarProvider:
 		Range: 24c0
 		TargetTypes: Vehicle, Air, Structure
@@ -8435,11 +8406,19 @@ MSAR:
 		Range: 24c0
 		RequiresCondition: deployed && !(empdisable || being-warped)
 		TrailCount: 3
+	WithRangeCircle:
+		Range: 10c0
+		Type: MobileSensorArray
+		Color: bbbbbb80
+		RequiresCondition: deployed && !(empdisable || being-warped)
 	ExternalCondition@JAMMED:
 		Condition: jammed
 	ProvidesPrerequisite@radar-active:
 		Prerequisite: radar-active
 		RequiresCondition: deployed && !(jammed || empdisable || being-warped)
+	ProductionCostMultiplier@ArcBonus:
+		Multiplier: 80
+		Prerequisites: player.arc
 	-WithDecoration@BOMBARD:
 	-WithDecoration@BOMBARD2:
 	-WithDecoration@BOMBARD3:
@@ -8450,7 +8429,6 @@ PTNK:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	Buildable:
@@ -8461,6 +8439,7 @@ PTNK:
 	TooltipExtras:
 		Strengths: • Strong vs Infantry, Buildings, Defenses, Light Armor
 		Weaknesses: • Weak vs Heavy Armor\n• Cannot attack Aircraft
+		Attributes: • Can deploy for +2 range, -25% damage received and self-repair (France only)
 	Valued:
 		Cost: 1350
 	Tooltip:
@@ -8475,6 +8454,8 @@ PTNK:
 	Mobile:
 		Speed: 72
 		Voice: Move
+		ImmovableCondition: deployed
+		RequireForceMoveCondition: !undeployed
 	Passenger:
 		Voice: Move
 	RevealsShroud:
@@ -8496,6 +8477,9 @@ PTNK:
 		TargetFrozenActors: True
 		PauseOnCondition: empdisable || being-warped || blinded
 		Voice: Attack
+		RangeMargin: 0
+	IgnoreOutOfRangeAttackOrders:
+		RequiresCondition: !undeployed
 	AttackMove:
 		Voice: Attack
 	WithSpriteTurret:
@@ -8522,6 +8506,44 @@ PTNK:
 		RequiresCondition: !mindcontrolled
 	Encyclopedia:
 		Category: Allies/Vehicles
+	EncyclopediaExtras:
+		RenderPreviewActor: ptnk.preview
+	GrantConditionOnDeployTurreted:
+		DeployedCondition: deployed
+		UndeployedCondition: undeployed
+		UndeployOnMove: True
+		DeploySounds: ptnk-deploy.aud
+		UndeploySounds: ptnk-undeploy.aud
+		PauseOnCondition: being-warped
+		SmartDeploy: True
+		ValidFacings: 0, 256, 512, 768
+		RequiresCondition: player-france
+	WithFacingSpriteBody@Deployed:
+		Sequence: fort
+		RequiresCondition: !undeployed
+		Name: fortbody
+	WithMakeAnimation@Deployed:
+		BodyNames: fortbody
+		Sequence: fortmake
+	DamageMultiplier@Deployed:
+		Modifier: 75
+		RequiresCondition: !undeployed
+	RangeMultiplier@Deployed:
+		Modifier: 125
+		RequiresCondition: !undeployed
+	ChangesHealth:
+		PercentageStep: 1
+		Delay: 25
+		StartIfBelow: 100
+		DamageCooldown: 150
+		RequiresCondition: !undeployed
+	GrantConditionOnPrerequisite@France:
+		Condition: player-france
+		Prerequisites: player.france
+	GrantCondition@France:
+		Condition: player-france
+		RequiresCondition: player-france
+		GrantPermanently: true
 
 PCAN:
 	Inherits: PTNK
@@ -8551,15 +8573,36 @@ PCAN:
 		ChargingSounds: pcancharge.aud
 	Voiced:
 		VoiceSet: PrismCannonVoice
+	RangeMultiplier@Deployed:
+		Modifier: 119
 	-ReplacedInQueue:
 	-Upgradeable@PCAN:
 	-WithDecoration@UpgradeOverlay:
+	EncyclopediaExtras:
+		RenderPreviewActor: pcan.preview
+
+PTNK.Preview:
+	Inherits: ^PreviewDummy
+	RenderSprites:
+		Image: ptnk
+	WithFacingSpriteBody:
+	WithSpriteTurret:
+		Sequence: turret
+	Turreted:
+
+PCAN.Preview:
+	Inherits: ^PreviewDummy
+	RenderSprites:
+		Image: pcan
+	WithFacingSpriteBody:
+	WithSpriteTurret:
+		Sequence: turret
+	Turreted:
 
 WTNK:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	RenderSprites:
 		Image: mwtnk
 	Buildable:
@@ -8643,11 +8686,11 @@ BATF:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@TRANSPORT: ^Transport
 	Inherits@NOUNLOADCHRONO: ^NoUnloadWhenChronoshifted
 	Inherits@SHRAPNEL: ^ThrowsShrapnel
 	Inherits@COMMANDOSKULL: ^CommandoSkull
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -8661,9 +8704,7 @@ BATF:
 	Tooltip:
 		Name: Battle Fortress
 	Health:
-		HP: 135000
-	Armor:
-		Type: Heavy
+		HP: 140000
 	Mobile:
 		Locomotor: sheavytracked
 		Speed: 43
@@ -8681,7 +8722,7 @@ BATF:
 		Range: 4c0
 	DetectCloaked@SPY:
 		Range: 6c0
-		DetectionTypes: Cloak, Thief, AirCloak
+		DetectionTypes: Cloak, AirCloak
 		RequiresCondition: loaded-spy && !(empdisable || being-warped)
 	AttackFrontal:
 		FacingTolerance: 24
@@ -8739,6 +8780,8 @@ BATF:
 			mort.cryo: loaded
 			mort.sonic: loaded
 			mort.chem: loaded
+			deso: loaded
+			ttrp: loaded
 			cmsr: loaded
 			spy: loaded-spy
 			snip: loaded
@@ -8756,6 +8799,7 @@ BATF:
 			s3: loaded
 			s4: loaded
 			s6: loaded-repair
+			mrdr: loaded
 			evis: loaded
 			impl: loaded
 			stlk: loaded
@@ -8775,18 +8819,6 @@ BATF:
 	Carryable:
 		LocalOffset: 0,0,500
 	-Crushable:
-	AutoTargetPriority@DEFAULT:
-		RequiresCondition: !stance-attackanything && !assault-move && !loaded-air
-	AutoTargetPriority@ATTACKANYTHING:
-		RequiresCondition: (stance-attackanything || assault-move) && !loaded-air
-	AutoTargetPriority@DEFAULT_AIR:
-		RequiresCondition: !stance-attackanything && !assault-move && loaded-air
-		ValidTargets: Infantry, Vehicle, Water, Underwater, Air, AirSmall, Defense
-		InvalidTargets: NoAutoTarget, WaterStructure, AntiAirDefense
-	AutoTargetPriority@ATTACKANYTHING_AIR:
-		RequiresCondition: (stance-attackanything || assault-move) && loaded-air
-		ValidTargets: Infantry, Vehicle, Water, Underwater, Air, AirSmall, Structure, Defense
-		InvalidTargets: NoAutoTarget
 	Voiced:
 		VoiceSet: BattleFortressVoice
 	UpdatesPlayerStatistics:
@@ -8882,6 +8914,7 @@ BATF.AI:
 		-EnterSounds:
 	-Encyclopedia:
 	-EncyclopediaExtras:
+	-AttackFrontal:
 
 MEMP:
 	Inherits: ^TankTD
@@ -8889,6 +8922,7 @@ MEMP:
 	Inherits@HACKABLE: ^Hackable
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Inherits@AUTOTARGET: ^AutoTargetGround
+	Inherits@HeavyArmor: ^HeavyArmor
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 410
@@ -8907,9 +8941,7 @@ MEMP:
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
-		HP: 55000
-	Armor:
-		Type: Heavy
+		HP: 52000
 	Selectable:
 		Voice: SelectEMP
 	Mobile:
@@ -8975,6 +9007,7 @@ MEMP:
 		Palette: tseffect-ignore-lighting-alpha75
 		Offset: 0, 0, 0
 		Sequence: emp-overlay
+	-Capturable:
 	Targetable@MindControlImmune:
 		TargetTypes: MindControlImmune
 	Targetable@ChaosImmune:
@@ -9081,6 +9114,9 @@ CDRN:
 		Weapon: ChaosGas
 		RequiresCondition: triggered && ammo
 		AmmoPoolName: explosion
+	KillsSelf:
+		RequiresCondition: invulnerability
+	-Capturable:
 	Targetable@MindControlImmune:
 		TargetTypes: MindControlImmune
 	Targetable@ChaosImmune:
@@ -9102,9 +9138,9 @@ CDRN:
 
 CHPR:
 	Inherits: ^Tank
-	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeAir
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	Inherits@BERSERK: ^Berserk
+	Inherits@HeavyArmor: ^HeavyArmor
 	RenderSprites:
 		Image: chpr
 	Buildable:
@@ -9114,11 +9150,11 @@ CHPR:
 		Prerequisites: atek, ~vehicles.germany, ~techlevel.high
 		Description: Advanced heavy tank that can erase targets from existence.
 	TooltipExtras:
-		Strengths: • Strong vs Heavy Armor, Defenses, Aircraft
-		Weaknesses: • Weak vs Buildings
-		Attributes: • Target is disabled while being erased\n• Can crush concrete walls\n• Special Ability: Teleport (with upgrade)
+		Strengths: • Strong vs Heavy Armor, Defenses
+		Weaknesses: • Weak vs Buildings\n• Cannot attack Aircraft
+		Attributes: • Target is disabled while being erased\n• Can crush concrete walls\n• Special Ability: Teleport
 	Valued:
-		Cost: 1700
+		Cost: 1550
 	Tooltip:
 		Name: Chrono Prison
 		GenericName: Tank
@@ -9126,8 +9162,6 @@ CHPR:
 		AddToArmyValue: true
 	Health:
 		HP: 75000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 44
 		Locomotor: heavytracked
@@ -9146,9 +9180,6 @@ CHPR:
 		Offset: -156,0,0
 	Armament@PRIMARY:
 		Weapon: NeutronCannon
-		LocalOffset: 600,0,480
-	Armament@SECONDARY:
-		Weapon: NeutronCannonAA
 		LocalOffset: 600,0,480
 	Armament@VISUAL:
 		Weapon: NeutronCannonBeam
@@ -9202,11 +9233,12 @@ CHPR:
 	PortableChronoCA:
 		ChargeDelay: 375
 		MaxDistance: 18
-		RequiresCondition: !(empdisable && being-warped) && !chronoshifted && tflx-upgrade
+		RequiresCondition: !(empdisable && being-warped) && !chronoshifted
 		ShowSelectionBarWhenFull: false
-	GrantConditionOnPrerequisite@TEMPORALFLUX:
-		Condition: tflx-upgrade
-		Prerequisites: tflx.upgrade
+		TeleportCondition: temporal-flux-init
+		ConditionDuration: 1
+	GrantTimedCondition@TemporalFlux:
+		RequiresCondition: (temporal-flux-init || chronoshifted) && tflx-upgrade
 	RejectsOrders@AICHPR:
 		RequiresCondition: botwarping
 	GrantConditionOnAttack@AICHPR:
@@ -9219,9 +9251,6 @@ CHPR:
 		Bots: brutal, vhard, hard, normal, easy, naval
 	WithIdleOverlay@MINDCONTROL:
 		Offset: -200,0,768
-	RangeMultiplier@TEMPORALFLUX:
-		RequiresCondition: tflx-upgrade
-		Modifier: 130
 	Encyclopedia:
 		Category: Allies/Vehicles
 	EncyclopediaExtras:
@@ -9231,7 +9260,6 @@ CRYO:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	RenderSprites:
 	Valued:
 		Cost: 1350
@@ -9296,18 +9324,17 @@ PBUL:
 	Inherits: ^VehicleTD
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeAir
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	Inherits@BERSERK: ^Berserk
 	RenderSprites:
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 252
 		IconPalette: chrometd
 		Prerequisites: gtek, ~vehicles.eagle, ~techlevel.high
-		Description: Fast scout vehicle with rockets that disrupts weapons and vision. Can designates targets, revealing them and increasing the damage they take.
+		Description: Fast scout vehicle with rockets that disrupts weapons and vision. Can designate targets, revealing them and increasing the damage they take.
 	TooltipExtras:
 		Strengths: • Strong vs Light Armor, Aircraft
 		Weaknesses: • Weak vs Infantry, Buildings, Defenses
-		Attributes: • Can detect spies and cloaked units.\n• Special Ability: Target Painter
+		Attributes: • Detects cloaked units and spies\n• Special Ability: Target Painter
 	Valued:
 		Cost: 850
 	Tooltip:
@@ -9362,7 +9389,7 @@ PBUL:
 	IgnoresDisguise:
 	DetectCloaked:
 		Range: 6c0
-		DetectionTypes: Cloak, Thief, AirCloak
+		DetectionTypes: Cloak, AirCloak
 		RequiresCondition: !(empdisable || being-warped)
 	ProducibleWithLevel:
 		Prerequisites: vehicles.upgraded
@@ -9387,7 +9414,6 @@ CYCP:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Inherits@InfiltratorStolenTech: ^InfiltratorStolenTech
 	Buildable:
@@ -9434,7 +9460,7 @@ CYCP:
 		Actor: CYCP.Husk
 		RequiresCondition: !being-warped
 	Encyclopedia:
-		Category: Nod/Vehicles
+		Category: Nod/Stolen Technology
 	EncyclopediaExtras:
 		AdditionalInfo: Stolen from Soviet War Factory.
 
@@ -9442,7 +9468,6 @@ BASI:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
 	Inherits@InfiltratorStolenTech: ^InfiltratorStolenTech
 	Buildable:
@@ -9452,7 +9477,7 @@ BASI:
 		Description: Stealth tank with an EMP wave weapon.
 	TooltipExtras:
 		Strengths: • Strong vs Heavy Armor, Light Armor, Defenses
-		Weaknesses: • Cannot attack Aircraft\n• No effect on infantry\n• Can be spotted by nearby infantry and defense structures
+		Weaknesses: • Weak vs Buildings, Infantry\n• Cannot attack Aircraft\n• Can be spotted by nearby infantry and defense structures
 	Valued:
 		Cost: 1350
 	Tooltip:
@@ -9490,6 +9515,9 @@ BASI:
 		RequiresCondition: !being-warped
 	Targetable@EmpImmune:
 		TargetTypes: EmpImmune
+	AutoTarget:
+		InitialStance: HoldFire
+		InitialStanceAI: AttackAnything
 	Cloak@NORMAL:
 		InitialDelay: 75
 		CloakDelay: 76
@@ -9504,14 +9532,20 @@ BASI:
 		PauseOnCondition: invisibility
 	Cloak@CRATE-CLOAK:
 		RequiresCondition: crate-cloak && !(cloak-force-disabled || invisibility || hidden || driver-dead)
-	GrantConditionOnDamageState@UNCLOAK:
-		Condition: cloak-force-disabled
-		ValidDamageStates: Critical
+	GrantConditionOnPrerequisite@Shadow:
+		Condition: player-shadow
+		Prerequisites: player.shadow
+	SpeedMultiplier@ShadowCloak:
+		Modifier: 110
+		RequiresCondition: player-shadow && hidden
 	WithColoredSelectionBox@INVIS:
 		RequiresCondition: invisibility || hidden
 		ColorSource: Player
+	GrantConditionToAttached@Cloak:
+		Condition: inherited-cloak
+		RequiresCondition: hidden || invisibility
 	Encyclopedia:
-		Category: Nod/Vehicles
+		Category: Nod/Stolen Technology
 	EncyclopediaExtras:
 		AdditionalInfo: Stolen from GDI Weapons Factory.
 
@@ -9519,9 +9553,9 @@ MANT:
 	Inherits: ^VehicleTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@InfiltratorStolenTech: ^InfiltratorStolenTech
 	Inherits@A2GPROTECTION: ^AirToGroundProtection
+	Inherits@HeavyArmor: ^HeavyArmor
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 503
@@ -9531,7 +9565,7 @@ MANT:
 	TooltipExtras:
 		Strengths: • Strong vs Aircraft
 		Weaknesses: • Cannot attack ground targets
-		Attributes: • Can detect cloaked aircraft
+		Attributes: • Detects cloaked aircraft
 	Valued:
 		Cost: 1000
 	Selectable:
@@ -9540,8 +9574,6 @@ MANT:
 		AddToArmyValue: true
 	Health:
 		HP: 28000
-	Armor:
-		Type: Heavy
 	Mobile:
 		Speed: 126
 		TurnSpeed: 30
@@ -9574,8 +9606,14 @@ MANT:
 		DetectionTypes: AirCloak
 		RequiresCondition: empdisable || being-warped
 	KeepsDistance:
+	AutoGuard:
+		ValidTargets: Infantry, Vehicle
+		RequiresCondition: !auto-guard-delay
+	GrantTimedCondition@AutoGuardDelay:
+		Condition: auto-guard-delay
+		Duration: 25
 	Encyclopedia:
-		Category: Nod/Vehicles
+		Category: Nod/Stolen Technology
 	EncyclopediaExtras:
 		AdditionalInfo: Stolen from Nod Airstrip.
 
@@ -9583,7 +9621,6 @@ VIPR:
 	Inherits: ^VehicleTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@HOVERTRAIL: ^HoverTrail
 	Inherits@InfiltratorStolenTech: ^InfiltratorStolenTech
 	Buildable:
@@ -9647,7 +9684,7 @@ VIPR:
 		TargetTypes: Water, Ship
 		RequiresCondition: onwater
 	Encyclopedia:
-		Category: Nod/Vehicles
+		Category: Nod/Stolen Technology
 	EncyclopediaExtras:
 		AdditionalInfo: Stolen from Scrin Warp Sphere.
 
@@ -9655,7 +9692,6 @@ WOLV:
 	Inherits: ^VehicleTD
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	Inherits@BERSERK: ^Berserk
 	Inherits@GYRO: ^GyroStabilizers
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
@@ -9735,7 +9771,6 @@ XO:
 	Inherits: ^VehicleTD
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
-	Inherits@BERSERK: ^Berserk
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 251
@@ -9860,9 +9895,9 @@ APOC:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMovePrioritizeGround
-	Inherits@BERSERK: ^Berserk
 	Inherits@SHRAPNEL: ^ThrowsShrapnel
 	Inherits@ATOMICAMMO: ^AtomicAmmunition
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	Buildable:
@@ -9881,9 +9916,7 @@ APOC:
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
-		HP: 125000
-	Armor:
-		Type: Heavy
+		HP: 130000
 	Mobile:
 		Speed: 43
 		TurnSpeed: 8
@@ -10010,6 +10043,8 @@ APOC.ATOMIC:
 	Upgradeable@ERAD:
 		Actor: apoc.erad.atomic
 	-Upgradeable@ATOMIC:
+	EncyclopediaExtras:
+		VariantOf: APOC
 
 APOC.ERAD:
 	Inherits: APOC
@@ -10093,14 +10128,15 @@ APOC.ERAD.ATOMIC:
 		VoiceSet: EradVoice
 	EncyclopediaExtras:
 		Subfaction: iraq
+		VariantOf: APOC.ERAD
 
 OVLD:
 	Inherits: ^Tank
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SHRAPNEL: ^ThrowsShrapnel
 	Inherits@ATOMICAMMO: ^AtomicAmmunition
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Inherits@UpgradeOverlay: ^UpgradeOverlay
 	Buildable:
@@ -10120,9 +10156,7 @@ OVLD:
 	UpdatesPlayerStatistics:
 		AddToArmyValue: true
 	Health:
-		HP: 125000
-	Armor:
-		Type: Heavy
+		HP: 130000
 	Mobile:
 		Speed: 43
 		TurnSpeed: 12
@@ -10251,6 +10285,8 @@ OVLD.ATOMIC:
 	SpeedMultiplier:
 		Modifier: 125
 	-SpawnActorOnDeath:
+	EncyclopediaExtras:
+		VariantOf: OVLD
 
 OVLD.ERAD:
 	Inherits: OVLD
@@ -10327,13 +10363,14 @@ OVLD.ERAD.ATOMIC:
 		VoiceSet: EradVoice
 	EncyclopediaExtras:
 		Subfaction: iraq
+		VariantOf: OVLD.ERAD
 
 THWK:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SLOWCRUSH: ^SlowedByCrushing
+	Inherits@HeavyArmor: ^HeavyArmor
 	RenderSprites:
 	Valued:
 		Cost: 1850
@@ -10358,8 +10395,6 @@ THWK:
 		Voice: Move
 	Health:
 		HP: 22000
-	Armor:
-		Type: Heavy
 	RevealsShroud:
 		MinRange: 4c0
 		Range: 5c0
@@ -10407,7 +10442,7 @@ THWK:
 		ValidMovementTypes: Horizontal, Vertical, Turn
 		Condition: moving
 	FireWarheadsOnDeath:
-		Weapon: BarrelExplode
+		Weapon: UnitExplodeFlame
 	Voiced:
 		VoiceSet: ThwkVoice
 	ProducibleWithLevel:
@@ -10494,7 +10529,6 @@ ZEUS:
 	Inherits: ^Vehicle
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Valued:
 		Cost: 2000
 	Tooltip:
@@ -10630,8 +10664,9 @@ MOLE:
 	Targetable@ChaosImmune:
 		TargetTypes: ChaosImmune
 	Cargo:
-		InitialUnits: acol, acol, acol, n3, n4
-		BeforeUnloadDelay: 100
+		MaxWeight: 6
+		InitialUnits: acol, acol, acol, n3, n3, n4
+		BeforeUnloadDelay: 75
 	WithCargoSounds:
 		ExitSounds: gexit1a.aud
 	UnloadOnCondition@Unload:
@@ -10663,19 +10698,19 @@ MOLE.UPG:
 	RenderSprites:
 		Image: mole
 	Cargo:
-		InitialUnits: tplr, tplr, tplr, n3c, n5
+		InitialUnits: tplr, tplr, tplr, n3c, n3c, n5
 
 AVTR:
 	Inherits: ^TankTD
 	Inherits@GAINSEXPERIENCE: ^GainsExperience
 	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
-	Inherits@BERSERK: ^Berserk
 	Inherits@SHRAPNEL: ^ThrowsShrapnel
+	Inherits@HeavyArmor: ^HeavyArmor
 	Inherits@TANKBUSTERVULN: ^TankBusterVulnerability
 	Buildable:
 		Queue: VehicleSQ, VehicleMQ
 		BuildPaletteOrder: 273
-		Prerequisites: ~vehicles.nod, tmpp, advcyber.upgrade, ~wrath.covenant, ~techlevel.high
+		Prerequisites: ~vehicles.nod, tmpp, covenant.level3, ~wrath.covenant, ~techlevel.high
 		Description: Heavy mech armed with a powerful laser and a flamethrower.
 		IconPalette: chrometd
 	TooltipExtras:
@@ -10692,8 +10727,6 @@ AVTR:
 		AddToArmyValue: true
 	Health:
 		HP: 78000
-	Armor:
-		Type: Heavy
 	Mobile:
 		TurnSpeed: 18
 		Speed: 56
@@ -10701,7 +10734,7 @@ AVTR:
 		Voice: Move
 	RevealsShroud:
 		MinRange: 4c0
-		Range: 5c0
+		Range: 6c0
 		RevealGeneratedShroud: False
 	RevealsShroud@GAPGEN:
 		Range: 4c0
@@ -10732,16 +10765,6 @@ AVTR:
 		MuzzlePalette: scrin-ignore-lighting-alpha85
 		LocalOffset: 550,200,700
 		RequiresCondition: blacknapalm-upgrade
-	Armament@FF:
-		Name: secondary
-		Weapon: AvatarFlamerFF
-		LocalOffset: 550,200,700
-		RequiresCondition: !blacknapalm-upgrade
-	Armament@FFUPG:
-		Name: secondary
-		Weapon: AvatarFlamerFF.UPG
-		LocalOffset: 550,200,700
-		RequiresCondition: blacknapalm-upgrade
 	AmbientSoundCA@3:
 		SoundFiles: bigflamer-loop1.aud
 		InitialSound: bigflamer-start1.aud
@@ -10765,6 +10788,11 @@ AVTR:
 	WithProductionIconOverlay:
 		Types: Veterancy
 		Prerequisites: vehicles.upgraded
+	ProducibleWithLevel@MarkedBonus:
+		Prerequisites: player.marked
+	WithProductionIconOverlay@MarkedBonus:
+		Types: MarkedVeterancy
+		Prerequisites: player.marked
 	Voiced:
 		VoiceSet: AvatarVoice
 	SpawnActorOnDeath:
@@ -10818,3 +10846,125 @@ AVTR:
 		Category: Nod/Vehicles
 	EncyclopediaExtras:
 		AdditionalInfo: Requires Wrath Covenant.
+
+CUST:
+	Inherits: ^Tank
+	Inherits@GAINSEXPERIENCE: ^GainsExperience
+	Inherits@TRANSPORT: ^Transport
+	Inherits@NOUNLOADCHRONO: ^NoUnloadWhenChronoshifted
+	Inherits@SLOWCRUSH: ^SlowedByCrushing
+	Inherits@COMMANDOSKULL: ^CommandoSkull
+	Inherits@AIUNLOAD: ^AIUNLOAD
+	Inherits@HeavyArmor: ^HeavyArmor
+	Buildable:
+		Queue: VehicleSQ, VehicleMQ
+		BuildPaletteOrder: 272
+		Prerequisites: tmpl, ~vehicles.nod, ~cust.upgrade, ~techlevel.high
+		Description: Heavy transport that repairs cyborgs and vehicles and empowers cyborg machine learning.
+	TooltipExtras:
+		Weaknesses: • Unarmed
+		Attributes: • Repairs cyborgs and vehicles\n• Nearby cyborgs gain experience faster
+	Selectable:
+		DecorationBounds: 1536, 1536, 0, -128
+	Valued:
+		Cost: 1500
+	Tooltip:
+		Name: Custodian
+	UpdatesPlayerStatistics:
+		AddToArmyValue: false
+		AddToAssetsValue: false
+	Health:
+		HP: 70000
+	Mobile:
+		Speed: 50
+		TurnSpeed: 16
+		Voice: Move
+	Voiced:
+		VoiceSet: CustodianVoice
+	Passenger:
+		Voice: Move
+		CargoCondition: passenger
+	RevealsShroud:
+		MinRange: 6c0
+		Range: 8c0
+		RevealGeneratedShroud: False
+	RevealsShroud@GAPGEN:
+		Range: 6c0
+	Cargo:
+		Types: Infantry, Hacker
+		MaxWeight: 5
+		LoadingCondition: notmobile
+		LoadedCondition: cargo
+		PassengerConditions:
+			e7: loaded-cmdo
+			rmbo: loaded-cmdo
+			bori: loaded-cmdo
+			yuri: loaded-cmdo
+			mast: loaded-cmdo
+	WithCargoSounds:
+		EnterSounds: genter1a.aud
+		ExitSounds: gexit1a.aud
+	CargoBlocked:
+		RequiresCondition: mindcontrolled
+	WithDecoration@COMMANDOSKULL:
+		RequiresCondition: loaded-cmdo
+	ProducibleWithLevel:
+		Prerequisites: vehicles.upgraded
+	WithProductionIconOverlay:
+		Types: Veterancy
+		Prerequisites: vehicles.upgraded
+	Capturable:
+		RequiresCondition: !being-warped && !cargo
+	Capturable@DRIVER_DEAD:
+		RequiresCondition: driver-dead && !cargo
+	Targetable@MindControlResistant:
+		TargetTypes: MindControlResistant
+		RequiresCondition: cargo
+	Targetable@MindControlImmune:
+		TargetTypes: MindControlImmune
+		RequiresCondition: loaded-cmdo
+	KeepsDistance:
+	AutoGuard:
+		ValidTargets: Cyborg, Vehicle
+		RequiresCondition: !auto-guard-delay
+	GrantTimedCondition@AutoGuardDelay:
+		Condition: auto-guard-delay
+		Duration: 25
+	AttackTurreted:
+		PauseOnCondition: empdisable || being-warped || blinded
+	AttackMove:
+	AutoTarget:
+	AutoTargetPriority@DEFAULT:
+		ValidTargets: HealableCyborg, Repairable
+		ValidRelationships: Ally
+	Armament:
+		Weapon: CustodianHeal
+		TargetRelationships: Ally
+		ForceTargetRelationships: None
+		Cursor: ability
+		OutsideRangeCursor: ability
+	Turreted:
+		Offset: -150,0,500
+	WithIdleOverlay@SPINNER:
+		Sequence: spinner
+		Offset: -150,0,0
+	ProximityExternalCondition@MachineLearning:
+		Range: 6c0
+		Condition: machine-learning
+		ValidRelationships: Ally
+		RequiresCondition: !empdisable && !being-warped
+	WithRadiatingCircle@MachineLearning:
+		EndRadius: 6c0
+		Interval: 75
+		Duration: 50
+		ValidRelationships: Ally
+		AlwaysShowMaxRange: true
+		Color: 0040FF60
+		MaxRadiusColor: 0040FF80
+		MaxRadiusFlashColor: 0040FF80
+	Sellable:
+		RefundPercent: 10
+	Encyclopedia:
+		Category: Nod/Vehicles
+	EncyclopediaExtras:
+		AdditionalInfo: Requires Unity Covenant.

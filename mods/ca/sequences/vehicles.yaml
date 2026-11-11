@@ -492,6 +492,29 @@ v2rl:
 	icon:
 		Filename: v2rlicon.shp
 
+v2arl:
+	Inherits: ^VehicleOverlays
+	idle:
+		Filename: v2arl.shp
+		Facings: 32
+		UseClassicFacings: True
+	empty-idle:
+		Filename: v2arl.shp
+		Start: 32
+		Facings: 32
+		UseClassicFacings: True
+	aim:
+		Filename: v2arl.shp
+		Facings: 32
+		UseClassicFacings: True
+	empty-aim:
+		Filename: v2arl.shp
+		Start: 32
+		Facings: 32
+		UseClassicFacings: True
+	icon:
+		Filename: v2rlicon.shp
+
 arty:
 	Inherits: ^VehicleOverlays
 	idle:
@@ -565,17 +588,14 @@ apc:
 		Filename: apc.shp
 		Facings: 32
 		UseClassicFacings: True
+	idle-upg:
+		Filename: delp.shp
+		Facings: 32
+		UseClassicFacings: True
 	muzzle:
 		Filename: minigun16.shp
 		Length: 6
 		Facings: 16
-	turret:
-		Filename: rapc.shp
-		Facings: 32
-		UseClassicFacings: True
-	muzzle2:
-		Filename: gunfire2.shp
-		Length: 5
 	open:
 		Filename: apc.shp
 		Start: 32
@@ -586,10 +606,18 @@ apc:
 	icon:
 		Filename: apcicon.shp
 
-rapc:
+delp:
 	Inherits: apc
+	idle:
+		Filename: delp.shp
+		Facings: 32
+		UseClassicFacings: True
+	turret:
+		Filename: delptur.shp
+		Facings: 32
+		UseClassicFacings: True
 	icon:
-		Filename: rapcicon.shp
+		Filename: delpicon.shp
 
 apc.destroyed:
 	Inherits: ^VehicleOverlays
@@ -1020,6 +1048,23 @@ bggy.destroyed:
 		UseClassicFacings: True
 		ZOffset: -512
 
+rbug:
+	Inherits: ^VehicleOverlays
+	idle:
+		Filename: rbug.shp
+		Facings: 32
+		UseClassicFacings: True
+	turret:
+		Filename: rbug.shp
+		Start: 32
+		Facings: 32
+		UseClassicFacings: True
+	muzzle:
+		Filename: lasermuzzle.shp
+		Length: *
+	icon:
+		Filename: rbugicnh.shp
+
 mtnk:
 	Inherits: ^VehicleOverlays
 	idle:
@@ -1330,6 +1375,11 @@ mlrs:
 		Start: 32
 		Facings: 32
 		UseClassicFacings: True
+	turret2:
+		Filename: mlrs.shp
+		Start: 32
+		Facings: 32
+		UseClassicFacings: True
 	turret1:
 		Filename: mlrs.shp
 		Start: 64
@@ -1353,6 +1403,49 @@ mlrs.destroyed:
 	turret:
 		Filename: mlrs.shp
 		Start: 96
+		Facings: 32
+		UseClassicFacings: True
+		ZOffset: -512
+
+mlrs.bh:
+	Inherits: ^VehicleOverlays
+	idle:
+		Filename: mlrsbh.shp
+		Facings: 32
+		UseClassicFacings: True
+	turret:
+		Filename: mlrsbh.shp
+		Start: 32
+		Facings: 32
+		UseClassicFacings: True
+	turret2:
+		Filename: mlrsbh.shp
+		Start: 64
+		Facings: 32
+		UseClassicFacings: True
+	turret1:
+		Filename: mlrsbh.shp
+		Start: 96
+		Facings: 32
+		UseClassicFacings: True
+	turret0:
+		Filename: mlrsbh.shp
+		Start: 128
+		Facings: 32
+		UseClassicFacings: True
+	icon:
+		Filename: mlrsbhicnh.shp
+
+mlrs.bh.destroyed:
+	Inherits: ^VehicleOverlays
+	idle:
+		Filename: mlrsbh.shp
+		Facings: 32
+		UseClassicFacings: True
+		ZOffset: -512
+	turret:
+		Filename: mlrsbh.shp
+		Start: 128
 		Facings: 32
 		UseClassicFacings: True
 		ZOffset: -512
@@ -1519,6 +1612,11 @@ hftk:
 	turret:
 		Filename: hftk.shp
 		Start: 32
+		Facings: 32
+		UseClassicFacings: True
+	turret-upg:
+		Filename: hftk.shp
+		Start: 64
 		Facings: 32
 		UseClassicFacings: True
 	muzzle:
@@ -1951,6 +2049,10 @@ ifv:
 		Facings: 32
 		UseClassicFacings: True
 		Offset: 0, 1
+	turret-arch:
+		Filename: arch.shp
+		Facings: 32
+		UseClassicFacings: True
 	open:
 		Filename: ifv.shp
 		Start: 32
@@ -2288,6 +2390,17 @@ ptnk:
 		Filename: ptnkt.shp
 		Facings: 32
 		UseClassicFacings: True
+	fort:
+		Filename: ptnkfort.shp
+		Facings: 4
+		Frames: 6,13,6,13
+		Length: 1
+	fortmake:
+		Filename: ptnkfort.shp
+		Facings: 4
+		Frames: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,0,1,2,3,4,5,6,7,8,9,10,11,12,13
+		Length: 7
+		Tick: 80
 	muzzle:
 		Filename: prismmuzzle.shp
 		Length: 4
@@ -2498,6 +2611,17 @@ pcan:
 	muzzle:
 		Filename: prismmuzzle.shp
 		Length: 4
+	fort:
+		Filename: ptnkfort.shp
+		Facings: 4
+		Frames: 6,13,6,13
+		Length: 1
+	fortmake:
+		Filename: ptnkfort.shp
+		Facings: 4
+		Frames: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,0,1,2,3,4,5,6,7,8,9,10,11,12,13
+		Length: 7
+		Tick: 80
 	icon:
 		Filename: pcanicon.shp
 
@@ -3175,3 +3299,42 @@ avtr.destroyed:
 		Facings: 32
 		ZOffset: -512
 		Offset: 0, -5
+
+cust:
+	Inherits: ^VehicleOverlays
+	idle:
+		Filename: cust.shp
+		Facings: 32
+		UseClassicFacings: True
+	spinner:
+		Filename: cust.shp
+		ZOffset: 512
+		Start: 32
+		Length: 8
+		Tick: 80
+	icon:
+		Filename: custicon.shp
+
+cust.destroyed:
+	Inherits: ^VehicleOverlays
+	idle:
+		Filename: cust.shp
+		Facings: 32
+		UseClassicFacings: True
+		ZOffset: -512
+
+domi:
+	Inherits: ^VehicleOverlays
+	idle:
+		Filename: domi.shp
+		Facings: 32
+		UseClassicFacings: True
+	icon:
+		Filename: yuriicon.shp
+
+domi.destroyed:
+	Inherits: ^VehicleOverlays
+	idle:
+		Filename: domi.shp
+		Facings: 32
+		UseClassicFacings: True

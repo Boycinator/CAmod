@@ -1350,6 +1350,38 @@ miss:
 		Start: 2
 		Tick: 800
 	make:
+		Filename: misstransform.shp
+		Frames: 15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
+		Length: 16
+		Tick: 100
+	bib:
+		Filename: bib2.tem
+		TilesetFilenames:
+			SNOW: bib2.sno
+			DESERT: bib2.des
+			JUNGLE: bib2.jun
+			WINTER: bib2.win
+			BARREN: bib2.bar
+		Length: *
+	icon:
+		Filename: missicon.shp
+
+miss.capture:
+	Inherits: ^StructureOverlays
+	idle:
+		Filename: missnew.shp
+		Length: 16
+		Tick: 100
+	damaged-idle:
+		Filename: missnew.shp
+		Start: 16
+		Length: 16
+		Tick: 100
+	dead:
+		Filename: missnew.shp
+		Start: 32
+		Tick: 800
+	make:
 		Filename: missmake.shp
 		Length: *
 	bib:
@@ -1363,6 +1395,34 @@ miss:
 		Length: *
 	icon:
 		Filename: missicon.shp
+
+miss.destroyed:
+	idle:
+		Filename: miss.shp
+		Start: 2
+	bib:
+		Filename: bib2.tem
+		TilesetFilenames:
+			SNOW: bib2.sno
+			DESERT: bib2.des
+			JUNGLE: bib2.jun
+			WINTER: bib2.win
+			BARREN: bib2.bar
+		Length: *
+
+miss.capture.destroyed:
+	idle:
+		Filename: missnew.shp
+		Start: 32
+	bib:
+		Filename: bib2.tem
+		TilesetFilenames:
+			SNOW: bib2.sno
+			DESERT: bib2.des
+			JUNGLE: bib2.jun
+			WINTER: bib2.win
+			BARREN: bib2.bar
+		Length: *
 
 alhq:
 	Inherits: ^StructureOverlays
@@ -1459,36 +1519,6 @@ upgc:
 	icon:
 		Filename: upgcicnh.shp
 
-upgc.bomb:
-	place:
-		Filename: upgc-fstorm.shp
-		Offset: 0, -8
-		Start: 12
-	icon:
-		Filename: upgc-fstormicnh.shp
-
-upgc.seek:
-	place:
-		Filename: upgc-aradar.shp
-		Offset: -10, -22
-		Start: 28
-	icon:
-		Filename: upgc-aradaricnh.shp
-
-upgc.hold:
-	place:
-		Filename: upgc-nshield.shp
-		Offset: -10, -22
-	icon:
-		Filename: upgc-nshieldicnh.shp
-
-upgc.drop:
-	place:
-		Filename: upgc-dzone.shp
-		Offset: -10, -22
-	icon:
-		Filename: upgc-dzoneicnh.shp
-
 gtek:
 	Inherits: ^StructureOverlays
 	idle:
@@ -1519,20 +1549,6 @@ gtek:
 		Length: *
 	icon:
 		Filename: gtekicnh.shp
-
-miss.destroyed:
-	idle:
-		Filename: miss.shp
-		Start: 2
-	bib:
-		Filename: bib2.tem
-		TilesetFilenames:
-			SNOW: bib2.sno
-			DESERT: bib2.des
-			JUNGLE: bib2.jun
-			WINTER: bib2.win
-			BARREN: bib2.bar
-		Length: *
 
 brik:
 	idle:
@@ -2507,7 +2523,7 @@ afldgdi:
 		Length: *
 		ZOffset: -1024
 	icon:
-		Filename: afldicon.shp
+		Filename: afldgdiicnh.shp
 
 nodhq:
 	Inherits: ^StructureOverlays
@@ -2974,7 +2990,7 @@ gsyrd:
 		Filename: gsyrdmake.shp
 		Length: *
 	icon:
-		Filename: syrdicon.shp
+		Filename: gsyrdicnh.shp
 	fake-icon:
 		Filename: syrficon.shp
 

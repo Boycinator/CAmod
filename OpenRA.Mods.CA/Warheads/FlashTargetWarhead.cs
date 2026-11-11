@@ -9,7 +9,7 @@
 #endregion
 
 using OpenRA.GameRules;
-using OpenRA.Mods.Common.Effects;
+using OpenRA.Mods.CA.Effects;
 using OpenRA.Mods.Common.Traits;
 using OpenRA.Mods.Common.Warheads;
 using OpenRA.Primitives;
@@ -20,12 +20,16 @@ namespace OpenRA.Mods.CA.Warheads
 	public class FlashTargetWarhead : TargetDamageWarhead
 	{
 		public readonly Color Color = Color.White;
+		public readonly float Alpha = 0.5f;
+
+		[Desc("Duration of each flash in ticks.")]
+		public readonly int Duration = 3;
 
 		protected override void InflictDamage(Actor victim, Actor firedBy, HitShape shape, WarheadArgs args)
 		{
 			victim.World.AddFrameEndTask(w =>
 			{
-				w.Add(new FlashTarget(victim, Color, 0.5f, 1, 2, 0));
+				w.Add(new FlashTargetCA(victim, Color, Alpha, Duration, 1, 2, 0));
 			});
 		}
 	}

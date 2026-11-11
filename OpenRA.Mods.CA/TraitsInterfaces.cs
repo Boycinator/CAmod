@@ -8,6 +8,7 @@
  */
 #endregion
 
+using System.Collections.Generic;
 using OpenRA.GameRules;
 using OpenRA.Graphics;
 using OpenRA.Primitives;
@@ -15,6 +16,18 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.CA.Traits
 {
+	// Allows modifying previews e.g. with WithColoredOverlayCA
+	public interface IActorPreviewRenderModifierInfo : ITraitInfoInterface
+	{
+		IActorPreviewRenderModifier GetPreviewRenderModifier(WorldRenderer wr, ActorInfo actorInfo, TypeDictionary inits, Color previewColor);
+	}
+
+	public interface IActorPreviewRenderModifier
+	{
+		IEnumerable<IRenderable> ModifyPreviewRender(WorldRenderer wr, IEnumerable<IRenderable> renderables, Rectangle bounds);
+		void Tick();
+	}
+
 	[RequireExplicitImplementation]
 	public interface ISmokeParticleInfo
 	{
@@ -42,6 +55,7 @@ namespace OpenRA.Mods.CA.Traits
 		CVec[] ImpactOffsets { get; }
 		WDist RandomOffset { get; }
 		bool RandomImpactSequence { get; }
+		bool ExcludeFirstImpactFromRandomSequence { get; }
 		int[] Interval { get; }
 	}
 
@@ -71,6 +85,16 @@ namespace OpenRA.Mods.CA.Traits
 
 	public interface INotifyPrismCharging { void Charging(Actor self, in Target target); }
 
+	public interface IActiveStateSupportPowerInstance
+	{
+		bool IsActive { get; }
+		bool IsActiveStatusBorderVisible { get; }
+		Color ActiveIconOverlayColor { get; }
+		Color InactiveIconOverlayColor { get; }
+		Color ActiveIconBorderColor { get; }
+		int ActiveIconBorderWidth { get; }
+	}
+
 	[RequireExplicitImplementation]
 	public interface INotifyEnterTeleporter { void Charging(Actor self, Actor teleporter); }
 	public interface INotifyExitTeleporter { void Arrived(Actor self); }
@@ -95,4 +119,7 @@ namespace OpenRA.Mods.CA.Traits
 
 	[RequireExplicitImplementation]
 	public interface ISeedsResourceIntervalModifier { int GetModifier(); }
+
+	[RequireExplicitImplementation]
+	public interface INotifyAttachedTo { void Attached(Actor self, Actor attachedActor, Attachable attachable); void Detached(Actor self, Actor detachedActor, Attachable attachable); }
 }

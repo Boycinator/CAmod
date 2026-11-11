@@ -75,6 +75,9 @@ namespace OpenRA.Mods.CA.Traits
 		[Desc("On detaching, transform into this actor.")]
 		public readonly string OnDetachTransformInto = null;
 
+		[Desc("If true, copies stored `GainsExperience` progress to the attachment target on a successful attach.")]
+		public readonly bool OnAttachCopyExperience = false;
+
 		[Desc("If true, detatch on host being killed/captured, otherwise dispose.")]
 		public readonly OnDetachBehavior OnDetachBehavior = OnDetachBehavior.Dispose;
 
@@ -96,6 +99,9 @@ namespace OpenRA.Mods.CA.Traits
 		Target lastTarget;
 		readonly IPositionable positionable;
 		readonly Actor self;
+		public int CopiedExperience { get; private set; }
+
+		public Actor AttachedToActor => attachedTo?.Actor;
 
 		public Attachable(ActorInitializer init, AttachableInfo info)
 		{
@@ -159,7 +165,7 @@ namespace OpenRA.Mods.CA.Traits
 		public void HostTransformed(Actor newActor)
 		{
 			var newAttachableTo = newActor.TraitsImplementing<AttachableTo>().FirstOrDefault(a => a.CanAttach(this));
-			if (newAttachableTo != null && newAttachableTo.Attach(this))
+			if (newAttachableTo != null && newAttachableTo.Attach(self, this))
 				return;
 
 			InitDetach();
@@ -235,7 +241,10 @@ namespace OpenRA.Mods.CA.Traits
 				OnComplete = a => CompleteDetach()
 			};
 
-			self.QueueActivity(false, transform);
+			self.World.AddFrameEndTask(w =>
+			{
+				self.QueueActivity(false, transform);
+			});
 		}
 
 		/** Updates AttachedTo and updates conditions. */
@@ -243,7 +252,7 @@ namespace OpenRA.Mods.CA.Traits
 		{
 			if (attachedTo != null)
 			{
-				attachedTo.Detach(this);
+				attachedTo.Detach(self, this);
 				attachedTo = null;
 			}
 
@@ -252,6 +261,16 @@ namespace OpenRA.Mods.CA.Traits
 
 			if (Info.DetachedCondition != null && detachedConditionToken == Actor.InvalidConditionToken)
 				detachedConditionToken = self.GrantCondition(Info.DetachedCondition);
+		}
+
+		public int GrantConditionFromAttachedTo(string condition)
+		{
+			return self.GrantCondition(condition);
+		}
+
+		public void RevokeConditionFromAttachedTo(int token)
+		{
+			self.RevokeCondition(token);
 		}
 
 		public void Stop()
@@ -320,6 +339,16 @@ namespace OpenRA.Mods.CA.Traits
 			if (order.OrderID != "Attach" && order.OrderID != "MassAttach")
 				return null;
 
+			if (order.OrderID == "MassAttach")
+			{
+				var targetActor = target.Type == TargetType.Actor ? target.Actor : null;
+				var selectedActors = targetActor == null
+					? new[] { self }
+					: OrderedAttachablesForTarget(self, targetActor, self.World.Selection.Actors).Select(a => a.Actor).ToArray();
+
+				return new Order(order.OrderID, self, target, queued, selectedActors);
+			}
+
 			return new Order(order.OrderID, self, target, queued);
 		}
 
@@ -357,6 +386,11 @@ namespace OpenRA.Mods.CA.Traits
 				&& target.FrozenActor.Actor.TraitsImplementing<AttachableTo>().Any(x => x.CanAttach(this));
 		}
 
+		public void AddCopiedExperience(int amount)
+		{
+			CopiedExperience += amount;
+		}
+
 		public void ResolveOrder(Actor self, Order order)
 		{
 			switch (order.OrderString)
@@ -376,6 +410,18 @@ namespace OpenRA.Mods.CA.Traits
 			self.ShowTargetLines();
 		}
 
+		IEnumerable<TraitPair<Attachable>> OrderedAttachablesForTarget(Actor self, Actor targetActor, IEnumerable<Actor> actors)
+		{
+			return actors
+				.Where(a => a != null
+					&& a.Owner == self.Owner
+					&& !a.IsDead)
+				.Select(a => new TraitPair<Attachable>(a, a.TraitsImplementing<Attachable>().FirstOrDefault(t => t.Info.Type == Info.Type)))
+				.Where(a => a.Trait != null && a.Trait.CanAttachToActor(a.Actor, Target.FromActor(targetActor)))
+				.OrderBy(a => (a.Actor.CenterPosition - targetActor.CenterPosition).LengthSquared)
+				.ThenBy(a => a.Actor.ActorID);
+		}
+
 		void ResolveMassAttachOrder(Actor self, Order order)
 		{
 			// Enter orders are only valid for own/allied actors,
@@ -384,19 +430,11 @@ namespace OpenRA.Mods.CA.Traits
 				return;
 
 			var targetActor = order.Target.Actor;
+			if (targetActor == null || targetActor.IsDead)
+				return;
 
-			var selectedWithTrait = self.World.Selection.Actors
-				.Where(a => a.Info.TraitInfos<AttachableInfo>().Any(ai => ai.Type == Info.Type)
-					&& a.Owner == self.Owner
-					&& !a.IsDead)
-				.OrderBy(a => (a.CenterPosition - targetActor.CenterPosition).LengthSquared)
-				.Select(a => new TraitPair<Attachable>(a, a.TraitsImplementing<Attachable>().FirstOrDefault(a => a.Info.Type == Info.Type)));
-
-			// Find the closest actor to the target transport
-			var closestActor = selectedWithTrait.FirstOrDefault();
-
-			// Only perform allocation if the current actor is the closest actor
-			if (closestActor.Actor != self)
+			var selectedWithTrait = OrderedAttachablesForTarget(self, targetActor, order.ExtraActors ?? Array.Empty<Actor>()).ToArray();
+			if (!selectedWithTrait.Any(a => a.Actor == self))
 				return;
 
 			// Create a list of available transports
@@ -407,8 +445,10 @@ namespace OpenRA.Mods.CA.Traits
 					&& !a.IsDead
 					&& (a.CenterPosition - targetActor.CenterPosition).HorizontalLengthSquared <= WDist.FromCells(10).LengthSquared)
 				.Select(a => new TraitPair<AttachableTo>(a, a.TraitsImplementing<AttachableTo>().FirstOrDefault(a => a.Info.Type == Info.Type)))
-				.Where(t => closestActor.Trait.CanAttachToActor(closestActor.Actor, Target.FromActor(t.Actor)))
+				.Where(t => t.Trait != null && CanAttachToActor(self, Target.FromActor(t.Actor)))
 				.ToList();
+
+			Actor assignedTarget = null;
 
 			// Allocate passengers to the closest available transport
 			foreach (var pair in selectedWithTrait)
@@ -420,14 +460,21 @@ namespace OpenRA.Mods.CA.Traits
 					.OrderBy(t => (t.Actor.CenterPosition - pair.Actor.CenterPosition).LengthSquared)
 					.FirstOrDefault();
 
-				// can't queue an activity here because the selected units aren't known by all clients so causes a de-sync
-				// pair.Actor.QueueActivity(false, new Attach(pair.Actor, Target.FromActor(closestTarget.Actor), pair.Trait, Info.TargetLineColor));
-				self.World.IssueOrder(new Order("Attach", pair.Actor, Target.FromActor(closestTarget.Actor), order.Queued));
-				pair.Actor.ShowTargetLines();
+				if (closestTarget.Actor == null)
+					continue;
+
+				if (pair.Actor == self)
+					assignedTarget = closestTarget.Actor;
+
 				// todo: take into account AttachableTo.Info.Limit in the same way MassEntersCargo takes MaxWeight into account
 
 				availableTargets.Remove(closestTarget);
 			}
+
+			if (assignedTarget == null)
+				return;
+
+			self.QueueActivity(order.Queued, new Attach(self, Target.FromActor(assignedTarget), this, Info.TargetLineColor));
 		}
 	}
 

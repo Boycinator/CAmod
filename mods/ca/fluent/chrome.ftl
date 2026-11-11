@@ -8,11 +8,16 @@ label-player-influence-level-time = Next level in { $time }
 label-player-influence-coalition = Coalition: { $coalition }
 label-player-influence-policy = Policy: { $policy }
 
+label-covenant-level = Covenant level: { $level }
+label-covenant-description = Gained by destroying enemy harvesters,
+    or by destroying/capturing/infiltrating enemy buildings.
+
 ## ObserverStatsLogic
 options-observer-stats =
     .none = Information: None
     .basic = Basic
     .economy = Economy
+    .economy-damage = Economy Damage
     .production = Production
     .support-powers = Support Powers
     .combat = Combat
@@ -171,3 +176,8 @@ menu-ingame =
     .save-map = Save Map
     .exit-map = Exit Map Editor
     .encyclopedia = Encyclopedia
+
+## GameInfoLogic
+menu-game-info-ca =
+    .next-mission = Next Mission
+    .start-next-mission = Start Next Mission

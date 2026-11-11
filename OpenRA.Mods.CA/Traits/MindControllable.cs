@@ -30,6 +30,11 @@ namespace OpenRA.Mods.CA.Traits
 		[Desc("Map player to transfer this actor to if the owner lost the game.")]
 		public readonly string FallbackOwner = "Creeps";
 
+		[Desc("What happens when mind control is revoked after the original owner has already lost.",
+			"Allowed values are 'ChangeOwner', 'Dispose', 'Kill'.",
+			"'ChangeOwner' transfers the actor to FallbackOwner.")]
+		public readonly OwnerLostActionType OriginalOwnerLostAction = OwnerLostActionType.ChangeOwner;
+
 		[Desc("What happens to cargo on being mind controlled, and when control is lost.")]
 		public readonly CargoBehaviour CargoBehaviour = CargoBehaviour.DoNothing;
 
@@ -52,6 +57,7 @@ namespace OpenRA.Mods.CA.Traits
 		Player creatorOwner;
 		bool controlChanging;
 		Actor oldSelf = null;
+		Cargo cargo;
 
 		int controlledToken = Actor.InvalidConditionToken;
 		int revokingToken = Actor.InvalidConditionToken;
@@ -72,6 +78,7 @@ namespace OpenRA.Mods.CA.Traits
 		{
 			base.Created(self);
 			notifyMindControlled = self.TraitsImplementing<INotifyMindControlled>().ToArray();
+			cargo = self.TraitOrDefault<Cargo>();
 		}
 
 		public void LinkMaster(Actor self, Actor masterActor)
@@ -155,11 +162,6 @@ namespace OpenRA.Mods.CA.Traits
 		{
 			self.CancelActivity();
 
-			if (creatorOwner.WinState == WinState.Lost)
-				self.ChangeOwner(self.World.Players.First(p => p.InternalName == info.FallbackOwner));
-			else
-				self.ChangeOwner(creatorOwner);
-
 			if (controlledToken != Actor.InvalidConditionToken)
 				controlledToken = self.RevokeCondition(controlledToken);
 
@@ -169,27 +171,44 @@ namespace OpenRA.Mods.CA.Traits
 			if (info.RevokeControlSounds.Length > 0)
 				Game.Sound.Play(SoundType.World, info.RevokeControlSounds.Random(self.World.SharedRandom), self.CenterPosition);
 
+			if (creatorOwner.WinState == WinState.Lost)
+			{
+				switch (info.OriginalOwnerLostAction)
+				{
+					case OwnerLostActionType.Kill:
+						self.Kill(self);
+						break;
+					case OwnerLostActionType.Dispose:
+						self.Dispose();
+						break;
+					default:
+						self.ChangeOwner(self.World.Players.First(p => p.InternalName == info.FallbackOwner));
+						break;
+				}
+			}
+			else
+				self.ChangeOwner(creatorOwner);
+
 			self.World.AddFrameEndTask(_ => controlChanging = false);
 		}
 
 		void HandleCargo(Actor self, Actor master)
 		{
-			var cargo = self.TraitOrDefault<Cargo>();
-			if (cargo != null && master != null)
+			if (cargo == null || cargo.IsEmpty() || master == null)
+				return;
+
+			if (info.CargoBehaviour == CargoBehaviour.Kill)
 			{
-				if (info.CargoBehaviour == CargoBehaviour.Kill)
+				while (!cargo.IsEmpty())
 				{
-					while (!cargo.IsEmpty())
-					{
-						var a = cargo.Unload(self);
-						a.Kill(master);
-					}
+					var a = cargo.Unload(self);
+					a.Kill(master);
 				}
-				else if (info.CargoBehaviour == CargoBehaviour.Eject && !cargo.IsEmpty())
-				{
-					self.CancelActivity();
-					self.QueueActivity(new UnloadCargo(self, WDist.FromCells(5)));
-				}
+			}
+			else if (info.CargoBehaviour == CargoBehaviour.Eject)
+			{
+				self.CancelActivity();
+				self.QueueActivity(new UnloadCargo(self, WDist.FromCells(5)));
 			}
 		}
 
@@ -267,10 +286,11 @@ namespace OpenRA.Mods.CA.Traits
 
 		void INotifyPassengerExited.OnPassengerExited(Actor self, Actor passenger)
 		{
-			if (Master == null && passenger.Owner != creatorOwner)
+			if (Master == null || creatorOwner == null)
 				return;
 
-			passenger.ChangeOwner(creatorOwner);
+			if (passenger.Owner != creatorOwner)
+				passenger.ChangeOwner(creatorOwner);
 		}
 	}
 }

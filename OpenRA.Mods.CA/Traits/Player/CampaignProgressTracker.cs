@@ -30,7 +30,8 @@ namespace OpenRA.Mods.CA.Traits
 	public class CampaignProgressTracker : INotifyWinStateChanged, IResolveOrder
 	{
 		private const string encryptionKey = "b14ca5898a4e4133bbce2ea2315a1916";
-		private static string campaignProgressFilePath = Path.Combine(Platform.SupportDir + "Logs", "ca-campaign.log");
+		private static string oldCampaignProgressFilePath = Path.Combine(Platform.SupportDir + "Logs", "ca-campaign.log");
+		private static string campaignProgressFilePath = Path.Combine(Platform.SupportDir + "Logs", "ca-progress.log");
 		private bool developerCommandUsed = false;
 
 		void INotifyWinStateChanged.OnPlayerWon(Player player)
@@ -41,10 +42,13 @@ namespace OpenRA.Mods.CA.Traits
 			if (player != player.World.LocalPlayer)
 				return;
 
+			if (player.World.Players.Count(p => p.Playable) > 1)
+				return;
+
 			if (!player.World.Map.Categories.Contains("Campaign"))
 				return;
 
-			var missionTitle = GetMapTileWithoutNumber(player.World.Map.Title);
+			var missionTitle = GetMapTitleWithoutNumber(player.World.Map.Title);
 			var worldActor = player.World.WorldActor;
 			var difficulty = worldActor.TraitsImplementing<ScriptLobbyDropdown>()
 				.FirstOrDefault(sld => sld.Info.ID == "difficulty");
@@ -65,20 +69,28 @@ namespace OpenRA.Mods.CA.Traits
 
 			if (existingMissionResult != null)
 			{
-				// If mission has difficulty settings, only store victory if mission is not already completed on same or higher difficulty.
 				if (difficulty != null)
 				{
-					var difficultyOptions = difficulty.Info.Values.Reverse();
-					foreach (var option in difficultyOptions)
-					{
-						// Mission beaten on a higher difficulty, store the new details.
-						if (option.Key == difficulty.Value && option.Key != existingMissionResult.Difficulty)
-							break;
+					var currentDifficultyIndex = -1;
+					var existingDifficultyIndex = -1;
 
-						// Mission beaten on same difficulty, only store the new details if the new time is better.
-						if (option.Key == existingMissionResult.Difficulty && existingMissionResult.Ticks <= player.World.WorldTick)
-							return;
+					var optionsList = difficulty.Info.Values.ToList();
+					for (int i = 0; i < optionsList.Count; i++)
+					{
+						if (optionsList[i].Key == difficulty.Value)
+							currentDifficultyIndex = i;
+
+						if (optionsList[i].Key == existingMissionResult.Difficulty)
+							existingDifficultyIndex = i;
 					}
+
+					// If existing result is on higher difficulty don't overwrite
+					if (existingDifficultyIndex >= 0 && existingDifficultyIndex > currentDifficultyIndex)
+						return;
+
+					// If same difficulty, only store if new time is better
+					if (currentDifficultyIndex == existingDifficultyIndex && existingMissionResult.Ticks <= player.World.WorldTick)
+						return;
 				}
 				else if (existingMissionResult.Ticks <= player.World.WorldTick)
 					return;
@@ -112,16 +124,67 @@ namespace OpenRA.Mods.CA.Traits
 				developerCommandUsed = true;
 		}
 
-		public static string GetMapTileWithoutNumber(string mapTitle)
+		public static string GetMapTitleWithoutNumber(string mapTitle)
 		{
 			var firstColonIndex = mapTitle.IndexOf(": ");
 			var firstPeriodIndex = mapTitle.IndexOf(". ");
 			var splitIndex = firstColonIndex >= 0 ? firstColonIndex : firstPeriodIndex;
 
+			string result;
 			if (splitIndex >= 0)
-				return mapTitle.Substring(splitIndex + 2);
+				result = mapTitle.Substring(splitIndex + 2);
+			else
+				result = mapTitle;
 
-			return mapTitle;
+			var bracketIndex = result.IndexOf('(');
+			if (bracketIndex >= 0)
+				result = result.Substring(0, bracketIndex);
+
+			return result.TrimEnd();
+		}
+
+		public static string GetNextCampaignMissionUid(ModData modData, string currentMapUid)
+		{
+			if (modData == null || string.IsNullOrEmpty(currentMapUid))
+				return null;
+
+			var updatedMapUid = modData.MapCache.GetUpdatedMap(currentMapUid) ?? currentMapUid;
+			var currentPreview = modData.MapCache.FirstOrDefault(p => p.Uid == updatedMapUid);
+			if (currentPreview == null)
+				return null;
+
+			var currentMissionId = Path.GetFileName(currentPreview.Package.Name);
+			if (string.IsNullOrEmpty(currentMissionId))
+				return null;
+
+			var orderedMissionIds = GetOrderedCampaignMissionIds(modData);
+			var currentMissionIndex = orderedMissionIds.FindIndex(missionId => missionId == currentMissionId);
+			if (currentMissionIndex < 0 || currentMissionIndex >= orderedMissionIds.Count - 1)
+				return null;
+
+			var nextMissionId = orderedMissionIds[currentMissionIndex + 1];
+			var nextMission = modData.MapCache
+				.FirstOrDefault(p => p.Status == MapStatus.Available
+					&& Path.GetFileName(p.Package.Name) == nextMissionId
+					&& p.Categories.Contains("Campaign"));
+
+			return nextMission?.Uid;
+		}
+
+		static List<string> GetOrderedCampaignMissionIds(ModData modData)
+		{
+			var orderedMissionIds = new List<string>();
+			if (modData.Manifest.Missions == null || modData.Manifest.Missions.Length == 0)
+				return orderedMissionIds;
+
+			var stringPool = new HashSet<string>();
+			var yaml = MiniYaml.Merge(modData.Manifest.Missions.Select(
+				m => MiniYaml.FromStream(modData.DefaultFileSystem.Open(m), m, stringPool: stringPool)));
+
+			foreach (var section in yaml)
+				orderedMissionIds.AddRange(section.Value.Nodes.Select(node => node.Key));
+
+			return orderedMissionIds;
 		}
 
 		public static Dictionary<string, MissionVictoryResult> GetCampaignProgress()
@@ -134,6 +197,21 @@ namespace OpenRA.Mods.CA.Traits
 				{
 					var campaignProgressFileContents = File.ReadAllText(campaignProgressFilePath);
 					var decryptedJson = DecryptString(campaignProgressFileContents, encryptionKey);
+					campaignProgress = JsonConvert.DeserializeObject<Dictionary<string, MissionVictoryResult>>(decryptedJson);
+				}
+				catch
+				{
+					// do nothing
+				}
+			}
+			// backwards compatibility
+			else if (File.Exists(oldCampaignProgressFilePath))
+			{
+				try
+				{
+					var oldFileContents = File.ReadAllText(oldCampaignProgressFilePath);
+					File.WriteAllText(campaignProgressFilePath, oldFileContents);
+					var decryptedJson = DecryptString(oldFileContents, encryptionKey);
 					campaignProgress = JsonConvert.DeserializeObject<Dictionary<string, MissionVictoryResult>>(decryptedJson);
 				}
 				catch

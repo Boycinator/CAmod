@@ -193,6 +193,9 @@ namespace OpenRA.Mods.CA.Traits
 
 		bool IsValidTarget(World world, CPos cell)
 		{
+			if (instance == null)
+				return false;
+
 			var pos = world.Map.CenterOfCell(cell);
 			var range = attack.GetMaximumRange().LengthSquared;
 			var minRange = attack.GetMinimumRange().LengthSquared;
@@ -224,7 +227,12 @@ namespace OpenRA.Mods.CA.Traits
 
 		protected override IEnumerable<IRenderable> RenderAnnotations(WorldRenderer wr, World world)
 		{
+			if (instance == null)
+				yield break;
+
 			var info = instance.Info as AttackOrderPowerCAInfo;
+			if (info == null)
+				yield break;
 
 			foreach (var a in instance.Instances.Where(i => !i.IsTraitPaused))
 			{

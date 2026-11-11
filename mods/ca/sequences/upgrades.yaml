@@ -6,6 +6,10 @@ bombard2.strat:
 	icon:
 		Filename: strat-bomb2icnh.shp
 
+bombard3.strat:
+	icon:
+		Filename: upgc-fstormicnh.shp
+
 seek.strat:
 	icon:
 		Filename: strat-seekicnh.shp
@@ -14,6 +18,10 @@ seek2.strat:
 	icon:
 		Filename: strat-seek2icnh.shp
 
+seek3.strat:
+	icon:
+		Filename: upgc-aradaricnh.shp
+
 hold.strat:
 	icon:
 		Filename: strat-holdicnh.shp
@@ -21,6 +29,14 @@ hold.strat:
 hold2.strat:
 	icon:
 		Filename: strat-hold2icnh.shp
+
+hold3.strat:
+	icon:
+		Filename: upgc-nshieldicnh.shp
+
+upgc.drop:
+	icon:
+		Filename: upgc-dzoneicnh.shp
 
 hypersonic.upgrade:
 	icon:
@@ -40,11 +56,11 @@ sonic.upgrade:
 
 bdrone.upgrade:
 	icon:
-		Filename: upg-bdroneicnh.shp
+		Filename: upg-bdroneicon.shp
 
 mdrone.upgrade:
 	icon:
-		Filename: upg-mdroneicnh.shp
+		Filename: upg-mdroneicon.shp
 
 ionmam.upgrade:
 	icon:
@@ -62,9 +78,9 @@ vulcan.upgrade:
 	icon:
 		Filename: upg-vulcicon.shp
 
-rapc.upgrade:
+delp.upgrade:
 	icon:
-		Filename: upg-rapcicon.shp
+		Filename: upg-delpicon.shp
 
 empgren.upgrade:
 	icon:
@@ -93,6 +109,10 @@ gyro.upgrade:
 pointdef.upgrade:
 	icon:
 		Filename: upg-pointdeficnh.shp
+
+ejjet.upgrade:
+	icon:
+		Filename: upg-ejjeticnh.shp
 
 hazmat.upgrade:
 	icon:
@@ -138,10 +158,6 @@ ceramic.upgrade:
 	icon:
 		Filename: upg-ceramicicnh.shp
 
-advcyber.upgrade:
-	icon:
-		Filename: upg-advcybericnh.shp
-
 cyborgarmor.upgrade:
 	icon:
 		Filename: upg-cyborgarmoricnh.shp
@@ -169,14 +185,6 @@ tarc.upgrade:
 seismic.upgrade:
 	icon:
 		Filename: upg-seisicon.shp
-
-v2.upgrade:
-	icon:
-		Filename: upg-v2rlicon.shp
-
-v3.upgrade:
-	icon:
-		Filename: upg-v3rlicon.shp
 
 hazmats.upgrade:
 	icon:
@@ -421,3 +429,11 @@ development.policy:
 timeskip:
 	icon:
 		Filename: timeskipicon.shp
+
+cust.upgrade:
+	icon:
+		Filename: upg-custicon.shp
+
+rbug.upgrade:
+	icon:
+		Filename: upg-rbugicon.shp

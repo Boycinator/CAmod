@@ -19,8 +19,8 @@ UnitCompositionsShellmap = {
 		{ Infantry = { "e3", "e1", "e1", "cryt", "cryt", "e1", "cryt", "e3", "snip" }, Vehicles = { "arty", "apc.ai", "pcan", "ptnk" } },
 		{ Infantry = { "e3", "e1", "e1", "cryt", "cryt", "e1", "e1", "e3", "snip" }, Vehicles = { "2tnk", "apc.ai", "batf.ai", "ptnk" } },
 		{ Infantry = { "e3", "e1", "e1", "cryt", "enfo", "e1", "e1", "e3", "snip" }, Vehicles = { "2tnk", "apc.ai", "chpr", "ptnk" } },
-		{ Infantry = { "e3", "e1", "e1", "cryt", "cryt", "e1", "e1", "e3", "snip" }, Vehicles = { "tnkd", "rapc.ai", "batf.ai", "ptnk" } },
-		{ Infantry = { "e3", "e1", "e1", "cryt", "cryt", "e1", "e1", "e3", "snip" }, Vehicles = { "2tnk", "rapc.ai", "cryo", "ptnk" } }
+		{ Infantry = { "e3", "e1", "e1", "cryt", "cryt", "e1", "e1", "e3", "snip" }, Vehicles = { "tnkd", "apc.ai", "batf.ai", "ptnk" } },
+		{ Infantry = { "e3", "e1", "e1", "cryt", "cryt", "e1", "e1", "e3", "snip" }, Vehicles = { "2tnk", "apc.ai", "cryo", "ptnk" } }
 	},
 	GDI = {
 		{ Infantry = { "n1", "n1", "n1", "n3", "n2", "n1", "n1" }, Vehicles = { "vulc.ai", "gdrn", "gdrn", "hmmv"  } },
@@ -378,13 +378,13 @@ WorldLoaded = function()
 			InitAttackSquad(Squads.NodVsScrin, Nod, Scrin)
 			InitAttackSquad(Squads.ScrinVsSoviets, Scrin, Nod)
 
-			InitAirAttackSquad(Squads.GDIAir, GDI, Scrin, { "stmr", "enrv", "tpod", "devo", "ruin", "pac", "deva" })
-			InitAirAttackSquad(Squads.SovietAir, USSR, GDI, { "orca", "a10", "msam", "htnk", "titn", "htnk.ion", "htnk.hover", "htnk.drone", "jugg" })
-			InitAirAttackSquad(Squads.ScrinAir, Scrin, GDI, { "orca", "a10", "msam", "htnk", "titn", "htnk.ion", "htnk.hover", "htnk.drone", "jugg" })
+			InitAirAttackSquad(Squads.GDIAir, GDI, Scrin)
+			InitAirAttackSquad(Squads.SovietAir, USSR, GDI)
+			InitAirAttackSquad(Squads.ScrinAir, Scrin, GDI)
 		end)
 
-		InitAirAttackSquad(Squads.GDIAir, GDI, Nod, { "arty.nod", "mlrs", "scrn", "apch", "venm", "rah", "rmbc", "ltnk" })
-		InitAirAttackSquad(Squads.NodAir, Nod, GDI, { "orca", "a10", "msam", "htnk", "titn", "htnk.ion", "htnk.hover", "htnk.drone", "jugg" })
+		InitAirAttackSquad(Squads.GDIAir, GDI, Nod)
+		InitAirAttackSquad(Squads.NodAir, Nod, GDI)
 	end)
 
 	DoXODrop()

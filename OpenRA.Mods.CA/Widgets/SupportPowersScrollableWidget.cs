@@ -1,18 +1,19 @@
 #region Copyright & License Information
 /*
- * Copyright (c) The OpenRA Developers and Contributors
- * This file is part of OpenRA, which is free software. It is made
- * available to you under the terms of the GNU General Public License
- * as published by the Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version. For more
- * information, see COPYING.
+ * Copyright (c) The OpenRA Combined Arms Developers (see CREDITS).
+ * This file is part of OpenRA Combined Arms, which is free software.
+ * It is made available to you under the terms of the GNU General Public License
+ * as published by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version. For more information, see COPYING.
  */
 #endregion
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using OpenRA.Graphics;
+using OpenRA.Mods.CA.Traits;
 using OpenRA.Mods.Common.Lint;
 using OpenRA.Mods.Common.Traits;
 using OpenRA.Mods.Common.Widgets;
@@ -74,6 +75,7 @@ namespace OpenRA.Mods.CA.Widgets
 		Rectangle eventBounds;
 		public override Rectangle EventBounds => eventBounds;
 		SpriteFont overlayFont;
+		readonly float2 stackCountMargin = new(2, 2);
 		float2 iconOffset, holdOffset, readyOffset, timeOffset;
 
 		[CustomLintableHotkeyNames]
@@ -95,7 +97,7 @@ namespace OpenRA.Mods.CA.Widgets
 			if (string.IsNullOrEmpty(prefix))
 				emitError($"{widgetNode.Location} must define HotkeyPrefix if HotkeyCount > 0.");
 
-			return Exts.MakeArray(count, i => prefix + (i + 1).ToString("D2"));
+			return Exts.MakeArray(count, i => prefix + (i + 1).ToString("D2", CultureInfo.InvariantCulture));
 		}
 
 		[ObjectCreator.UseCtor]
@@ -105,11 +107,10 @@ namespace OpenRA.Mods.CA.Widgets
 			this.worldRenderer = worldRenderer;
 			GetTooltipIcon = () => TooltipIcon;
 			spm = world.LocalPlayer.PlayerActor.Trait<SupportPowerManager>();
-			tooltipContainer = Exts.Lazy(() =>
-				Ui.Root.Get<TooltipContainerWidget>(TooltipContainer));
+			tooltipContainer = Exts.Lazy(() => Ui.Root.Get<TooltipContainerWidget>(TooltipContainer));
 
 			var scale = Game.Settings.Graphics.UIScale;
-			var usableScreenHeight = Game.Renderer.Resolution.Height - (150 / scale);
+			var usableScreenHeight = Game.Renderer.Resolution.Height - 150 / scale;
 			MaxPowersVisible = (int)Math.Floor((double)usableScreenHeight / (IconSize.Y + IconMargin - 2));
 		}
 
@@ -118,7 +119,7 @@ namespace OpenRA.Mods.CA.Widgets
 			base.Initialize(args);
 
 			hotkeys = Exts.MakeArray(HotkeyCount,
-				i => modData.Hotkeys[HotkeyPrefix + (i + 1).ToString("D2")]);
+				i => modData.Hotkeys[HotkeyPrefix + (i + 1).ToString("D2", CultureInfo.InvariantCulture)]);
 
 			overlayFont = Game.Renderer.Fonts[OverlayFont];
 
@@ -135,7 +136,7 @@ namespace OpenRA.Mods.CA.Widgets
 		public void RefreshIcons()
 		{
 			icons = new Dictionary<Rectangle, SupportPowerIcon>();
-			var powers = spm.Powers.Values.Where(p => !p.Disabled)
+			var powers = spm.Powers.Values.Where(p => !p.Disabled && p.Info != null)
 				.OrderBy(p => p.Info.SupportPowerPaletteOrder);
 
 			if (CurrentStartIndex > powers.Count() - 1)
@@ -163,7 +164,7 @@ namespace OpenRA.Mods.CA.Widgets
 				icon = new Animation(worldRenderer.World, p.Info.IconImage);
 				icon.Play(p.Info.Icon);
 
-				var power = new SupportPowerIcon()
+				var power = new SupportPowerIcon
 				{
 					Power = p,
 					Pos = new float2(rect.Location),
@@ -188,11 +189,14 @@ namespace OpenRA.Mods.CA.Widgets
 		{
 			if (!clicked.Power.Active)
 			{
-				Game.Sound.PlayToPlayer(SoundType.UI, spm.Self.Owner, clicked.Power.Info.InsufficientPowerSound);
-				Game.Sound.PlayNotification(spm.Self.World.Map.Rules, spm.Self.Owner, "Speech",
-					clicked.Power.Info.InsufficientPowerSpeechNotification, spm.Self.Owner.Faction.InternalName);
+				if (clicked.Power.Info != null)
+				{
+					Game.Sound.PlayToPlayer(SoundType.UI, spm.Self.Owner, clicked.Power.Info.InsufficientPowerSound);
+					Game.Sound.PlayNotification(spm.Self.World.Map.Rules, spm.Self.Owner, "Speech",
+						clicked.Power.Info.InsufficientPowerSpeechNotification, spm.Self.Owner.Faction.InternalName);
 
-				TextNotificationsManager.AddTransientLine(spm.Self.Owner, clicked.Power.Info.InsufficientPowerTextNotification);
+					TextNotificationsManager.AddTransientLine(spm.Self.Owner, clicked.Power.Info.InsufficientPowerTextNotification);
+				}
 			}
 			else
 				clicked.Power.Target();
@@ -224,14 +228,34 @@ namespace OpenRA.Mods.CA.Widgets
 			{
 				WidgetUtils.DrawSpriteCentered(p.Sprite, p.Palette, p.Pos + iconOffset);
 
-				// Charge progress
 				var sp = p.Power;
+				var clockTotalTicks = sp.TotalTicks;
+				var clockRemainingTicks = sp.RemainingTicks;
+
+				if (sp is IStackableSupportPowerInstance stackablePower
+					&& stackablePower.StackActivationIntervalTicks > 0
+					&& stackablePower.StackActivationRemainingTicks >= clockRemainingTicks)
+				{
+					clockTotalTicks = stackablePower.StackActivationIntervalTicks;
+					clockRemainingTicks = stackablePower.StackActivationRemainingTicks;
+				}
+
 				clock.PlayFetchIndex(ClockSequence,
-					() => sp.TotalTicks == 0 ? clock.CurrentSequence.Length - 1 : (sp.TotalTicks - sp.RemainingTicks)
-					* (clock.CurrentSequence.Length - 1) / sp.TotalTicks);
+					() => clockTotalTicks == 0 ? clock.CurrentSequence.Length - 1 : (clockTotalTicks - clockRemainingTicks)
+						* (clock.CurrentSequence.Length - 1) / clockTotalTicks);
 
 				clock.Tick();
 				WidgetUtils.DrawSpriteCentered(clock.Image, p.IconClockPalette, p.Pos + iconOffset);
+
+				if (sp is IActiveStateSupportPowerInstance activeStatePower && activeStatePower.IsActive && activeStatePower.ActiveIconBorderWidth > 0)
+				{
+					var borderTopLeft = p.Pos + IconSpriteOffset;
+					var borderBottomRight = borderTopLeft + IconSize.ToFloat2() - new float2(activeStatePower.ActiveIconBorderWidth, activeStatePower.ActiveIconBorderWidth);
+					var borderColor = activeStatePower.IsActiveStatusBorderVisible
+						? activeStatePower.ActiveIconBorderColor : Color.Transparent;
+					Game.Renderer.RgbaColorRenderer.DrawRect(borderTopLeft, borderBottomRight,
+						activeStatePower.ActiveIconBorderWidth, borderColor);
+				}
 			}
 
 			Game.Renderer.DisableAntialiasingFilter();
@@ -239,26 +263,53 @@ namespace OpenRA.Mods.CA.Widgets
 			// Overlay
 			foreach (var p in icons.Values)
 			{
+				if (p.Power is IStackableSupportPowerInstance stackablePower && stackablePower.StackCount > 0)
+				{
+					var stackText = stackablePower.StackCount.ToStringInvariant();
+					var stackSize = overlayFont.Measure(stackText);
+					var stackPos = p.Pos + new float2(IconSize.X - stackSize.X, 0) - stackCountMargin;
+					overlayFont.DrawTextWithContrast(stackText, stackPos, Color.White, Color.Black, 1);
+				}
+
 				var customText = p.Power.IconOverlayTextOverride();
 				if (customText != null)
 				{
 					var customOffset = iconOffset - overlayFont.Measure(customText) / 2;
+					var customColor = p.Power is IActiveStateSupportPowerInstance activeStatePower
+						? activeStatePower.IsActive ? activeStatePower.ActiveIconOverlayColor : activeStatePower.InactiveIconOverlayColor
+						: Color.White;
 					overlayFont.DrawTextWithContrast(customText,
 						p.Pos + customOffset,
-						Color.White, Color.Black, 1);
+						customColor, Color.Black, 1);
 				}
 				else if (p.Power.Ready)
-					overlayFont.DrawTextWithContrast(ReadyText,
-						p.Pos + readyOffset,
-						Color.White, Color.Black, 1);
+				{
+					if (p.Power is IStackableSupportPowerInstance sp && sp.StackCount > 0)
+					{
+						var readyText = $"{sp.ReadyStackCount}/{sp.StackCount} {ReadyText}";
+						var readySize = overlayFont.Measure(readyText);
+						var readyPos = p.Pos + new float2(IconSize.X / 2 - readySize.X / 2, IconSize.Y / 2 - readySize.Y / 2);
+						overlayFont.DrawTextWithContrast(readyText, readyPos, Color.White, Color.Black, 1);
+					}
+					else
+					{
+						overlayFont.DrawTextWithContrast(ReadyText,
+							p.Pos + readyOffset,
+							Color.White, Color.Black, 1);
+					}
+				}
 				else if (!p.Power.Active)
+				{
 					overlayFont.DrawTextWithContrast(HoldText,
 						p.Pos + holdOffset,
 						Color.White, Color.Black, 1);
+				}
 				else
+				{
 					overlayFont.DrawTextWithContrast(WidgetUtils.FormatTime(p.Power.RemainingTicks, worldRenderer.World.Timestep),
 						p.Pos + timeOffset,
 						Color.White, Color.Black, 1);
+				}
 			}
 		}
 
@@ -274,7 +325,7 @@ namespace OpenRA.Mods.CA.Widgets
 				return;
 
 			tooltipContainer.Value.SetTooltip(TooltipTemplate,
-				new WidgetArgs()
+				new WidgetArgs
 				{
 					{ "world", worldRenderer.World }, { "player", spm.Self.Owner }, { "getTooltipIcon", GetTooltipIcon },
 					{ "playerResources", worldRenderer.World.LocalPlayer.PlayerActor.Trait<PlayerResources>() }
@@ -293,7 +344,7 @@ namespace OpenRA.Mods.CA.Widgets
 		{
 			if (mi.Event == MouseInputEvent.Scroll)
 			{
-				if (mi.Delta.Y > 0 && CurrentStartIndex > 0 )
+				if (mi.Delta.Y > 0 && CurrentStartIndex > 0)
 					Scroll(-1);
 				else if (mi.Delta.Y < 0 && CurrentStartIndex + MaxPowersVisible < IconCount)
 					Scroll(1);

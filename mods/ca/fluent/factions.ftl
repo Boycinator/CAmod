@@ -15,6 +15,7 @@ faction-england =
 
     Bonuses:
       • Fake Buildings
+      • Spy (+2 Vision)
 
 faction-france =
     .name = France
@@ -30,7 +31,9 @@ faction-france =
       • Entrenchment
 
     Bonuses:
-      • Walls & Defenses (10% Discount)
+      • Prism Tank/Cannon (deploy to fortify)
+      • Defenses (10% discount)
+      • Walls (30% discount)
 
 faction-germany =
     .name = Germany
@@ -47,8 +50,8 @@ faction-germany =
       • Temporal Flux
 
     Bonuses:
-      • Chrono Tanks (10% Discount)
-      • Chronosphere (20% Discount)
+      • Chrono Tank (+1 teleport charge)
+      • Chronosphere (20% discount)
 
 faction-usa =
     .name = USA
@@ -83,16 +86,16 @@ faction-russia =
       • Tesla Arcing
 
     Bonuses:
-      • Tesla Coil (10% Discount)
-      • Shock Trooper (10% Discount)
-      • Tesla Trooper (10% Discount)
+      • Tesla Reactors boost nearby Tesla Coils
+      • Free Tesla Trooper Upgrade
       • Kirov Tesla Bombs
 
 faction-ukraine =
     .name = Ukraine
     .description = Ukraine: Demolition
     Units:
-      • Siege Tank
+      • V3 Launcher
+      • Siege Tank (replaces V2)
       • Crazy Ivan (replaces Grenadier)
 
     Powers:
@@ -103,8 +106,8 @@ faction-ukraine =
       • Seismic Missiles
 
     Bonuses:
-      • V3 Launcher (10% Discount)
-      • Terror Dog (20% Discount)
+      • Hind rockets reduce enemy movement speed & rate of fire
+      • Terror Dog (20% discount)
       • Kirov Cluster Bombs
 
 faction-iraq =
@@ -112,7 +115,7 @@ faction-iraq =
     .description = Iraq: Nuclear Warfare
     Units:
       • Rad Trooper (replaces Shock Trooper)
-      • Toxin Tower (replaces Flame Tower)
+      • Chem Tower (replaces Flame Tower)
 
     Powers:
       • A-Bomb
@@ -123,8 +126,8 @@ faction-iraq =
       • Eradicator (replaces Mammoth Tank)
 
     Bonuses:
-      • Demolition Truck (10% Discount)
-      • Missile Silo (40% Discount)
+      • Heavy Hazmat Suits equipped as standard
+      • V2 (fires radioactive warheads)
       • Kirov Atom Bombs
 
 faction-yuri =
@@ -144,6 +147,9 @@ faction-yuri =
       • Lasher Tank
       • Gattling BTR
 
+    Bonuses:
+      • Spy Plane (psychic detection after vision fades)
+
 faction-talon =
     .name = Talon
     .description = Steel Talon: Mech Warfare
@@ -160,8 +166,8 @@ faction-talon =
       • Gyro Stabilizers
 
     Bonuses:
-      • Tech Center (10% Discount)
-      • Upgrade Center (20% Discount)
+      • Tech Center (10% discount)
+      • Upgrade Center (20% discount)
 
 faction-zocom =
     .name = ZOCOM
@@ -180,8 +186,8 @@ faction-zocom =
       • Sonic Amplifiers
 
     Bonuses:
-      • Adv. Communication Center (40% Discount)
-      • Hazmat Suits Equipped as Standard
+      • Adv. Communication Center (40% discount)
+      • Hazmat Suits equipped as standard
 
 faction-eagle =
     .name = Eagle
@@ -196,10 +202,11 @@ faction-eagle =
 
     Upgrades:
       • Hover Mammoth (replaces Mammoth Tank)
-      • Orca Afterburner
+      • Afterburners
 
     Bonuses:
-      • Aircraft (10% Discount)
+      • Aircraft (10% discount)
+      • Airfields repair aircraft without requiring Service Depot nearby
 
 faction-arc =
     .name = ARC
@@ -217,11 +224,12 @@ faction-arc =
       • Battle Drone (replaces Battle Tank)
 
     Bonuses:
-      • Recon Drone (-20% Cooldown)
-      • Mobile Sensor Array (20% Discount)
-      • Drone Carrier (10% Discount)
-      • Additional Comms. Centers (-50% Discount)
+      • Recon Drone (-20% cooldown)
+      • Mobile Sensor Array (20% discount)
+      • Drone Carrier (10% discount)
+      • Additional Comms. Centers (50% discount)
       • Comms. Center emergency backup power
+      • Newly produced drones reclaim XP of those destroyed
 
 faction-blackh =
     .name = Black Hand
@@ -238,7 +246,8 @@ faction-blackh =
       • Black Napalm
 
     Bonuses:
-      • SSM (10% Discount)
+      • SSM (extra missile)
+      • Flamethrower/Chem Warrior (+20% speed)
       • Free Howitzer Upgrade
 
 faction-marked =
@@ -256,8 +265,8 @@ faction-marked =
       • Quantum Capacitors
 
     Bonuses:
-      • Banshee (10% Discount)
-      • Temple Prime (10% Discount)
+      • Avatar, Cyborg Elite, Enlightened & Cyborg Reaper (+1 veterancy)
+      • Temple Prime (10% discount)
 
 faction-legion =
     .name = Legion
@@ -275,8 +284,8 @@ faction-legion =
       • Intensified Microwaves
 
     Bonuses:
-      • Stolen Technology Units (10% Discount)
-      • Hack Satellite (-33% Cooldown)
+      • Stolen Technology Units (10% discount)
+      • Hack Satellite (-33% cooldown)
 
 faction-shadow =
     .name = Shadow
@@ -293,8 +302,8 @@ faction-shadow =
       • Heavy Stealth Tank
 
     Bonuses:
-      • Comanche (10% Discount)
-      • Stealth Generator (+4 Passive Range, remains cloaked during Tiberium Stealth)
+      • Stealth units move 10% faster while cloaked
+      • Stealth Generator (+4 passive range)
 
 faction-reaper =
     .name = Reaper-17
@@ -307,11 +316,11 @@ faction-reaper =
       • Storm Spike
 
     Upgrades:
-      • Shard Walker
+      • Ion Conduits
 
     Bonuses:
-      • Devourer (10% Discount)
-      • Ichor Seed (-20% Cooldown)
+      • Resource Conversion also applies to Corrupters
+      • Ichor Seed (-20% cooldown)
 
 faction-traveler =
     .name = Traveler-59
@@ -327,7 +336,8 @@ faction-traveler =
       • Advanced Articulators
 
     Bonuses:
-      • Fast Walkers (+15% Speed)
+      • Fast Walkers (+15% speed)
+      • Colony Ship (+15% speed)
 
 faction-harbinger =
     .name = Harbinger-31
@@ -343,8 +353,8 @@ faction-harbinger =
       • Stellar Fusion Cannon
 
     Bonuses:
-      • Devastator Warship (10% Discount)
-      • Mothership (10% Discount)
+      • Interloper (deals splash damage)
+      • Devastator Warship (+3 range)
 
 faction-collector =
     .name = Collector-73
@@ -360,8 +370,9 @@ faction-collector =
       • Coalescence
 
     Bonuses:
-      • Field Manipulator (20% Discount)
-      • Suppression Field (-15% Cooldown, +10% Duration)
+      • Watcher (attack applies suppression)
+      • Field Manipulator (20% discount)
+      • Suppression Field (-15% cooldown, +10% duration)
 
 faction-randomallies =
     .name = Allies
@@ -395,15 +406,20 @@ faction-random =
 
 faction-allies =
     .name = Allies
+    .description = Allies
 
 faction-soviet =
     .name = Soviet
+    .description = Soviet
 
 faction-gdi =
     .name = GDI
+    .description = GDI
 
 faction-nod =
     .name = Nod
+    .description = Nod
 
 faction-scrin =
     .name = Scrin
+    .description = Scrin

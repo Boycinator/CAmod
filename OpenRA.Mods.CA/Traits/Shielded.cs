@@ -47,11 +47,14 @@ namespace OpenRA.Mods.CA.Traits
 	{
 		int conditionToken = Actor.InvalidConditionToken;
 		Actor self;
+		IHealth health;
 
 		[Sync]
 		int strength;
 		int intervalTicks;
 		int delayTicks;
+
+		public int StrengthPercent { get { return strength * 100 / Info.MaxStrength; } }
 
 		public Shielded(ActorInitializer init, ShieldedInfo info)
 			: base(info)
@@ -62,6 +65,7 @@ namespace OpenRA.Mods.CA.Traits
 		protected override void Created(Actor self)
 		{
 			base.Created(self);
+			health = self.TraitOrDefault<IHealth>();
 			strength = Info.MaxStrength;
 			ResetRegen();
 		}
@@ -96,6 +100,12 @@ namespace OpenRA.Mods.CA.Traits
 			intervalTicks = Info.RegenInterval;
 		}
 
+		public void RechargeToMaximum()
+		{
+			strength = Info.MaxStrength;
+			ResetRegen();
+		}
+
 		void INotifyDamage.Damaged(Actor self, AttackInfo e)
 		{
 			if (IsTraitDisabled)
@@ -113,8 +123,6 @@ namespace OpenRA.Mods.CA.Traits
 			var damageTypes = e.Damage.DamageTypes;
 			var excessDamage = damageAmt - strength;
 			strength = Math.Max(strength - damageAmt, 0);
-
-			var health = self.TraitOrDefault<IHealth>();
 
 			if (health != null)
 			{

@@ -30,20 +30,34 @@
 		TargetCircleColor: 0066ff
 		Range: 3c0
 
+^SendCashPower:
+	SendCashPower@SendCash:
+		OrderName: sendcash
+		Icon: sendcash
+		ChargeInterval: 1
+		Name: Send Cash
+		Description: Sends up to $1000 to the owner of the target allied unit or structure.\n\n20% is deducted from the amount received.
+		SelectTargetSpeechNotification: SelectTarget
+		SelectTargetTextNotification: Select target.
+		Cursor: ability
+		SupportPowerPaletteOrder: 0
+		Prerequisites: sendcash.enabled
+		TaxPercentage: 20
+
 ^TimeSkipPower:
 	ProduceActorPowerCA@TimeSkip:
 		OrderName: timeskip
 		Prerequisites: ~player.allies, ~!influence.level3
 		Icon: timeskip
 		Type: TimeSkip
-		ChargeInterval: 50
+		ChargeInterval: 125
 		StartFullyCharged: true
 		Name: Time Skip
 		Description: Allocate funding for precise temporal manipulation to progress Allied technological and organizational advancement.\n\nAdvances influence progress by 1:00.
 		Actors: timeskip
 		SupportPowerPaletteOrder: 0
 		SelectProducer: false
-		Cost: 1000
+		Cost: 800
 		LaunchSound: timeskip.aud
 
 ^VeilOfWarPower:
@@ -70,7 +84,7 @@
 		EffectImage: empty
 		EffectSequence: idle
 		EffectPalette: tseffect-ignore-lighting-alpha75
-		TargetCircleRange: 7c512
+		TargetCircleRange: 6c0
 		TargetCircleColor: 999999AA
 		SupportPowerPaletteOrder: 50
 
@@ -169,6 +183,8 @@
 		Strikes: 3
 		CircleDelay: 40
 		SupportPowerPaletteOrder: 45
+		TargetCircleRange: 3c512
+		TargetCircleColor: 999999AA
 
 ^GpsPower:
 	DummyGpsPower@NOFOG:
@@ -470,7 +486,7 @@
 		CircleSequence: circles
 		BeaconPoster: stormicon
 		TargetCircleRange: 6c512
-		TargetCircleColor: 0000FF90
+		TargetCircleColor: a2a2ea90
 		ActiveCondition: active
 		PaletteEffectType: LightningStorm
 		SupportPowerPaletteOrder: 10
@@ -503,6 +519,8 @@
 		SupportPowerPaletteOrder: 50
 		TargetCircleRange: 9c0
 		TargetCircleColor: 999999AA
+		PrerequisiteUnitTypes:
+			player.yuri: u2.yuri
 
 ^ParatroopersPower:
 	ParatroopersPowerCA@paratroopers:
@@ -842,6 +860,7 @@
 		Name: Tank Drop
 		Description: Dispatches cargo planes to air drop tanks at the target location.
 		DropItems: 3tnk, 3tnk, 3tnk
+		SquadOffset: -2048, 2048, 0
 		SelectTargetSpeechNotification: SelectTarget
 		SelectTargetTextNotification: Select target.
 		AllowImpassableCells: false
@@ -920,7 +939,7 @@
 		ShowTargetCount: true
 		ValidTargets: Vehicle, Ship, Structure
 		InvalidTargets: IronCurtainImmune
-		Duration: 600
+		Duration: 550
 		AllowMultiple: false
 		Description: supportpower-ironcurtain.desc
 		OnFireSound: ironcur9.aud
@@ -1125,8 +1144,7 @@
 		SelectTargetTextNotification: Select target.
 		EndChargeSpeechNotification: InterceptorsReady
 		EndChargeTextNotification: Interceptors ready.
-		CameraActor: camera
-		CameraRemoveDelay: 450
+		CameraActor: camera.interceptors
 		UnitType: yf23.bomber
 		QuantizedFacings: 8
 		DisplayBeacon: true
@@ -1138,10 +1156,12 @@
 		UseDirectionalTarget: True
 		DirectionArrowAnimation: paradirection
 		GuardDuration: 500
-		Cordon: 5c0
+		GuardRadius: 12c0
+		TargetCircleColor: 999999AA
 		SupportPowerPaletteOrder: 45
 		LaunchSound: interceptors.aud
 		IncomingSound: interceptors.aud
+		IncomingSpeechNotification: InterceptorsApproaching
 
 ^NaniteRepairPower:
 	GrantExternalConditionPowerCA@NREPAIR:
@@ -1191,11 +1211,12 @@
 		SelectTargetSpeechNotification: SelectTarget
 		SelectTargetTextNotification: Select target.
 		InsufficientPowerSpeechNotification: InsufficientPower
-		RequiresCondition: tower.rocket
+		RequiresCondition: tower-rocket
 		Prerequisites: ~techlevel.high
 		SupportPowerPaletteOrder: 30
 		TargetCircleRadius: 4c512
 		TargetCircleColor: ff660088
+		DisplayTimerRelationships: Ally, Neutral, Enemy
 		DisplayBeacon: True
 		BeaconAssumedLaunchDelay: 45
 		BeaconRemoveAdvance: 25
@@ -1218,8 +1239,8 @@
 		Icon: arscan
 		IconPalette: chrometd
 		Name: Advanced Radar Scan
-		Description: Reveals the location of enemy structures & units through the fog of war.
-		RequiresCondition: tower.radar
+		Description: Reveals the location of enemy structures & units through the fog of war.\n\nCan be toggled on/off, but each deactivation will reduce the remaining duration.
+		RequiresCondition: tower-radar
 		PauseOnCondition: !radar-active || disabled || being-warped
 		LaunchSound: gradarup.aud
 		BeginChargeSound: gradardn.aud
@@ -1255,7 +1276,7 @@
 		EffectImage: empty
 		EffectSequence: idle
 		EffectPalette: tseffect-ignore-lighting-alpha75
-		RequiresCondition: tower.shield
+		RequiresCondition: tower-shield
 		TargetCircleRange: 6c0
 		TargetCircleColor: 64a5dcbb
 		SupportPowerPaletteOrder: 30
@@ -1301,7 +1322,7 @@
 		WeaponDelay: 3
 		Name: Surgical Strike
 		EffectPalette: tdeffect-ignore-lighting-alpha85
-		Description: Initiate an precision Ion Cannon strike which deals instant damage to a small area.
+		Description: Initiate a precision Ion Cannon strike which deals instant damage to a small area.
 		EndChargeSpeechNotification: SurgicalStrikeReady
 		EndChargeTextNotification: Surgical Strike ready.
 		IncomingSound: ion2.aud
@@ -1367,6 +1388,7 @@
 		Name: Air Drop
 		Description: Dispatches cargo planes to air drop tanks at the target location.
 		DropItems: ltnk, ftnk, ltnk
+		SquadOffset: -2048, 2048, 0
 		SelectTargetSpeechNotification: SelectTarget
 		SelectTargetTextNotification: Select target.
 		AllowImpassableCells: false
@@ -1395,6 +1417,7 @@
 		Name: Air Drop
 		Description: Dispatches cargo planes to air drop flame tanks at the target location.
 		DropItems: hftk, hftk
+		SquadOffset: -1024, 1024, 0
 		SelectTargetSpeechNotification: SelectTarget
 		SelectTargetTextNotification: Select target.
 		AllowImpassableCells: false
@@ -1419,7 +1442,7 @@
 		Icon: substrike
 		Prerequisites: vehicles.marked
 		Cursor: ability
-		ChargeInterval: 13500
+		ChargeInterval: 12000
 		Name: Subterranean Strike
 		ActivationDelay: 250
 		Description: Deploys a squad of Acolytes/Templar via Subterranean APC.
@@ -1452,6 +1475,7 @@
 		Name: Air Drop
 		Description: Dispatches cargo planes to air drop stealth tanks at the target location.
 		DropItems: stnk.nod, stnk.nod
+		SquadOffset: -1024, 1024, 0
 		SelectTargetSpeechNotification: SelectTarget
 		SelectTargetTextNotification: Select target.
 		AllowImpassableCells: false
@@ -1786,6 +1810,7 @@
 		ValidRelationships: Ally, Neutral, Enemy
 		Range: 3c512
 		Duration: 600
+		MaxAltitude: 1
 		AllowMultiple: false
 		Description: Makes selected vehicles and structures temporarily invisible.\n\nWarning: Harmful to non-cyborg infantry.\n\nHazmat Suits upgrade makes allies immune to damage and enemies take 50% damage.
 		OnFireSound: cloak6.aud
@@ -1799,7 +1824,6 @@
 		Cursor: chemmissile
 		PauseOnCondition: disabled || empdisable || being-warped
 		DisplayTimerRelationships: Ally, Neutral, Enemy
-		ActiveCondition: active
 		SupportPowerPaletteOrder: 20
 		ShowTargetCircle: true
 		TargetCircleColor: 00ff11
@@ -1847,6 +1871,58 @@
 		CircleBorderColor: 007700AA
 		SupportPowerPaletteOrder: 10
 
+^IchorSpikePower:
+	DetonateWeaponPower@IchorSpike:
+		OrderName: ichorspike
+		Icon: ichorspike
+		IconPalette: chromes
+		Prerequisites: loyalist.allegiance
+		Cursor: ability
+		ChargeInterval: 6000
+		Name: Ichor Spike
+		ActivationDelay: 1
+		Description: Creates an Ichor Spike at the target location. Resources within its area of influence grow and spread faster.\n\nAlso empowers units with Resource Conversion upgrade.\n\nUp to 3 resource nodes are affected.
+		LaunchSound: scrinbuild.aud
+		Weapon: IchorSpikeSpawner
+		AirburstAltitude: 0c0
+		SelectTargetSpeechNotification: SelectTarget
+		SelectTargetTextNotification: Select target.
+		EndChargeSpeechNotification: IchorSpikeReady
+		EndChargeTextNotification: Ichor Spike ready.
+		CameraActor: camera.dummy
+		CameraRemoveDelay: 1
+		DisplayRadarPing: True
+		SupportPowerPaletteOrder: 50
+		TargetCircleRange: 8c0
+		TargetCircleColor: 00ff00aa
+
+^ColonySpikePower:
+	DetonateWeaponPower@ColonySpike:
+		OrderName: colonyspike
+		Icon: colonyspike
+		IconPalette: chromes
+		Prerequisites: rebel.allegiance
+		Cursor: ability
+		ChargeInterval: 7500
+		Name: Colony Spike
+		ActivationDelay: 1
+		Description: Creates a Colony Spike at the target location. Enables production of non-defensive structures.\n\nWhen fully charged allows non-defensive structures to be built nearby.\n\nMust be built within range of a Colony Platform.
+		LaunchSound: cspk.aud
+		IncomingSound: cspk.aud
+		Weapon: ColonySpikeSpawner
+		AirburstAltitude: 0c0
+		SelectTargetSpeechNotification: SelectTarget
+		SelectTargetTextNotification: Select target.
+		EndChargeSpeechNotification: ColonySpikeReady
+		EndChargeTextNotification: Colony Spike ready.
+		CameraActor: camera.dummy
+		CameraRemoveDelay: 1
+		DisplayRadarPing: True
+		SupportPowerPaletteOrder: 50
+		TargetMustBeInBuildRadius: true
+		TargetCircleRange: 6c0
+		TargetCircleColor: ffffffa0
+
 ^VoidSpikePower:
 	DetonateWeaponPower@VoidSpike:
 		OrderName: voidspike
@@ -1857,20 +1933,21 @@
 		ChargeInterval: 6000
 		Name: Voidspike
 		ActivationDelay: 1
-		Description: Creates an void spike at the target location. Gradually transforms nearby resources into Black Tiberium which is devoid of most of its useful properties.\n\nDamages nearby enemy units.
+		Description: Creates a Voidspike at the target location. Gradually transforms nearby resources into Black Tiberium which is devoid of most of its useful properties.\n\nDamages nearby enemy units.
 		LaunchSound: scrinbuild.aud
 		Weapon: VoidSpikeSpawner
 		AirburstAltitude: 0c0
 		SelectTargetSpeechNotification: SelectTarget
 		SelectTargetTextNotification: Select target.
 		EndChargeSpeechNotification: VoidSpikeReady
-		EndChargeTextNotification: Void Spike ready.
+		EndChargeTextNotification: Voidspike ready.
 		CameraActor: camera.dummy
 		CameraRemoveDelay: 1
 		DisplayRadarPing: True
 		SupportPowerPaletteOrder: 50
 		TargetCircleRange: 7c511
 		TargetCircleColor: 471f8c90
+		IncomingSound: malefic.aud
 
 ^ResourceScanPower:
 	RevealActorsPower@RESOURCESCAN:
@@ -1915,7 +1992,7 @@
 		DisplayRadarPing: True
 		SupportPowerPaletteOrder: 50
 		TargetCircleRange: 7c511
-		TargetCircleColor: b070ff90
+		TargetCircleColor: b070ffaa
 
 ^BuzzerSwarmPower:
 	DetonateWeaponPower@BUZZERSWARM:
@@ -2107,7 +2184,7 @@
 		IconPalette: chromes
 		Prerequisites: ~rebel.allegiance, ~techlevel.high
 		Cursor: ability
-		ChargeInterval: 4500
+		ChargeInterval: 6000
 		Name: Gateway
 		ActivationDelay: 1
 		Description: Creates a Gateway at the target location. Acts as the exit for any\n   targeted infantry or vehicle production structure.\n\nRequires target location to be within vision.
@@ -2131,7 +2208,7 @@
 		OrderName: anathema
 		Icon: anathema
 		IconPalette: chromes
-		ChargeInterval: 2250
+		ChargeInterval: 3000
 		Name: Anathema
 		Condition: anathema
 		Range: 2c0
@@ -2291,21 +2368,13 @@
 
 # Providers
 
-voidspike.provider:
-	Inherits@DUMMY: ^InvisibleDummy
-	Inherits@VoidSpike: ^VoidSpikePower
-	UpdatesSupportPowerTimer:
-		OrderName: voidspike
-		InitialOnly: true
-		Ticks: 75
-
 assassinsquad.provider:
 	Inherits@DUMMY: ^InvisibleDummy
 	Inherits@AssassinSquad: ^AssassinSquadPower
 	UpdatesSupportPowerTimer:
 		OrderName: assassinsquad
 		InitialOnly: true
-		Ticks: 1500
+		Ticks: 3750
 
 hackercell.provider:
 	Inherits@DUMMY: ^InvisibleDummy
@@ -2313,7 +2382,7 @@ hackercell.provider:
 	UpdatesSupportPowerTimer:
 		OrderName: hackercell
 		InitialOnly: true
-		Ticks: 1500
+		Ticks: 3750
 
 confessorcabal.provider:
 	Inherits@DUMMY: ^InvisibleDummy
@@ -2321,4 +2390,28 @@ confessorcabal.provider:
 	UpdatesSupportPowerTimer:
 		OrderName: confessorcabal
 		InitialOnly: true
-		Ticks: 1500
+		Ticks: 3750
+
+ichorspike.provider:
+	Inherits@DUMMY: ^InvisibleDummy
+	Inherits@IchorSpike: ^IchorSpikePower
+	UpdatesSupportPowerTimer:
+		OrderName: ichorspike
+		InitialOnly: true
+		Ticks: 75
+
+colonyspike.provider:
+	Inherits@DUMMY: ^InvisibleDummy
+	Inherits@ColonySpike: ^ColonySpikePower
+	UpdatesSupportPowerTimer:
+		OrderName: colonyspike
+		InitialOnly: true
+		Ticks: 750
+
+voidspike.provider:
+	Inherits@DUMMY: ^InvisibleDummy
+	Inherits@VoidSpike: ^VoidSpikePower
+	UpdatesSupportPowerTimer:
+		OrderName: voidspike
+		InitialOnly: true
+		Ticks: 750

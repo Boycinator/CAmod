@@ -559,8 +559,6 @@ SAB:
 		HP: 15000
 	Selectable:
 		Priority: 10
-	-GrantChargingCondition@CLOAK:
-	-GrantConditionOnMovement:
 	Cloak:
 		RequiresCondition: !cloak-force-disabled && !being-warped
 		CloakDelay: 66
@@ -802,7 +800,7 @@ GUN:
 	WithColoredSelectionBox@REL:
 		ColorSource: Team
 		ValidRelationships: Ally, Enemy, Neutral
-	-ChangesHealth@DefensePolicy2:
+	-ChangesHealth@DefensePolicyRepairs:
 
 SPAWNGUN:
 	Inherits: GUN

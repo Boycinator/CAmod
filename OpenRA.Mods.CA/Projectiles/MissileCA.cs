@@ -90,6 +90,9 @@ namespace OpenRA.Mods.CA.Projectiles
 		[Desc("Probability of locking onto and following target.")]
 		public readonly int LockOnProbability = 100;
 
+		[Desc("1-based burst shot indexes that always lock on. When set, overrides `LockOnProbability`.")]
+		public readonly HashSet<int> LockOnBurstCounts = new HashSet<int>();
+
 		[Desc("Horizontal rate of turn.")]
 		public readonly WAngle HorizontalRateOfTurn = new WAngle(20);
 
@@ -282,8 +285,7 @@ namespace OpenRA.Mods.CA.Projectiles
 
 			var world = args.SourceActor.World;
 
-			if (world.SharedRandom.Next(100) <= info.LockOnProbability)
-				lockOn = true;
+			lockOn = ShouldLockOn(world);
 
 			var inaccuracy = lockOn && info.LockOnInaccuracy.Length > -1 ? info.LockOnInaccuracy.Length : info.Inaccuracy.Length;
 			if (inaccuracy > 0)
@@ -322,6 +324,18 @@ namespace OpenRA.Mods.CA.Projectiles
 
 			shadowColor = new float3(info.ShadowColor.R, info.ShadowColor.G, info.ShadowColor.B) / 255f;
 			shadowAlpha = info.ShadowColor.A / 255f;
+		}
+
+		bool ShouldLockOn(World world)
+		{
+			if (info.LockOnBurstCounts.Count == 0 || (info.LockOnBurstCounts.Count == 1 && info.LockOnBurstCounts.Contains(0)))
+				return world.SharedRandom.Next(100) <= info.LockOnProbability;
+
+			var counter = args.SourceActor.TraitsImplementing<ArmamentBurstCounter>()
+				.FirstOrDefault(c => c.MatchesWeapon(args.Weapon));
+
+			var burstCount = counter?.ConsumeBurstCount(args.Weapon);
+			return burstCount.HasValue && info.LockOnBurstCounts.Contains(burstCount.Value);
 		}
 
 		static int LoopRadius(int speed, int rot)
@@ -834,7 +848,7 @@ namespace OpenRA.Mods.CA.Projectiles
 				desiredVFacing = vFacing + world.SharedRandom.Next(-info.JammedDiversionRange, info.JammedDiversionRange + 1);
 			}
 			else if (!args.GuidedTarget.IsValidFor(args.SourceActor))
-				desiredHFacing = hFacing;
+				desiredHFacing = tarDistVec.HorizontalLengthSquared != 0 ? tarDistVec.Yaw.Facing : hFacing;
 
 			// Compute new direction the projectile will be facing
 			hFacing = Util.TickFacing(hFacing, desiredHFacing, info.HorizontalRateOfTurn.Facing);
@@ -873,7 +887,8 @@ namespace OpenRA.Mods.CA.Projectiles
 
 			// Check if target position should be updated (actor visible & locked on)
 			var newTarPos = targetPosition;
-			if (args.GuidedTarget.IsValidFor(args.SourceActor) && lockOn)
+			var targetWasValid = args.GuidedTarget.IsValidFor(args.SourceActor);
+			if (targetWasValid && lockOn)
 				newTarPos = (args.Weapon.TargetActorCenter ? args.GuidedTarget.CenterPosition : args.GuidedTarget.Positions.ClosestToIgnoringPath(args.Source))
 					+ new WVec(WDist.Zero, WDist.Zero, info.AirburstAltitude);
 
@@ -881,7 +896,13 @@ namespace OpenRA.Mods.CA.Projectiles
 			var yaw1 = tarVel.HorizontalLengthSquared != 0 ? tarVel.Yaw : WAngle.FromFacing(hFacing);
 			tarVel = newTarPos - targetPosition;
 			var yaw2 = tarVel.HorizontalLengthSquared != 0 ? tarVel.Yaw : WAngle.FromFacing(hFacing);
-			predVel = tarVel.Rotate(WRot.FromYaw(yaw2 - yaw1));
+
+			// Clear predicted velocity when target is invalid to prevent erratic behavior
+			if (!targetWasValid)
+				predVel = WVec.Zero;
+			else
+				predVel = tarVel.Rotate(WRot.FromYaw(yaw2 - yaw1));
+
 			targetPosition = newTarPos;
 
 			// Compute current distance from target position

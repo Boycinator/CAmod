@@ -187,6 +187,18 @@
 		BasePalette: playertd
 		RemapIndex: 176, 178, 180, 182, 184, 186, 189, 191, 177, 179, 181, 183, 185, 187, 188, 190
 		AllowModifiers: false
+	EncyclopediaColorPalette@encyclopediara:
+		Name: encyclopedia
+		BasePalette: player
+		RemapIndex: 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95
+	EncyclopediaColorPalette@encyclopediatd:
+		Name: encyclopediatd
+		BasePalette: playertd
+		RemapIndex: 176, 178, 180, 182, 184, 186, 189, 191, 177, 179, 181, 183, 185, 187, 188, 190
+	EncyclopediaColorPalette@encyclopediascrin:
+		Name: encyclopediascrin
+		BasePalette: playerscrin
+		RemapIndex: 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95
 	PaletteFromFile@tseffect:
 		Name: tseffect
 		Filename: animts.pal
@@ -348,6 +360,16 @@
 		G: 0
 		B: 0
 		A: 96
+	GlowRenderer:
+		GlowRadius: 30
+		GlowIntensity: 0.1
+	HeatDistortionRenderer:
+		DistortionRadius: 100
+		DistortionStrength: 3
+	ShockwaveDistortionRenderer:
+		MaxRadius: 100
+		RingThickness: 10
+		Strength: 5
 	CloakPaletteEffectCA@CLOAK:
 		Palette: cloak
 	CloakPaletteEffectCA@CLOAKGREEN:
@@ -494,6 +516,14 @@
 		StartColor: 00000088
 		EndColor: 00005566
 		PulseDuration: 3
+	PaletteFromRGBA@Voidspike:
+		Name: voidspike
+		A: 0
+	PulsingPaletteEffect@Voidspike:
+		PaletteName: voidspike
+		StartColor: 00000040
+		EndColor: 10001e90
+		PulseDuration: 30
 	WeatherPaletteEffect@LIGHTNINGSTORM:
 		Type: LightningStorm
 		Color: 08112E03

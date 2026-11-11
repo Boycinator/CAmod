@@ -38,6 +38,7 @@ namespace OpenRA.Mods.CA.Traits
 
 		IEnumerable<MindControllable> mindControllables;
 		IEnumerable<SpawnerSlaveBase> spawnerSlaveBases;
+		Attachable attachable;
 
 		public GivesExperienceToMaster(Actor self, GivesExperienceToMasterInfo info)
 		{
@@ -48,6 +49,7 @@ namespace OpenRA.Mods.CA.Traits
 		{
 			mindControllables = self.TraitsImplementing<MindControllable>();
 			spawnerSlaveBases = self.TraitsImplementing<SpawnerSlaveBase>();
+			attachable = self.TraitOrDefault<Attachable>();
 		}
 
 		void INotifyAppliedDamage.AppliedDamage(Actor self, Actor damaged, AttackInfo e)
@@ -63,8 +65,9 @@ namespace OpenRA.Mods.CA.Traits
 			if (health == null)
 				return;
 
-			var appliedDamage = Math.Min(e.Damage.Value, health.HP);
-			if (appliedDamage == 0)
+			var hpBefore = Math.Min(health.HP + e.Damage.Value, health.MaxHP);
+			var appliedDamage = Math.Min(e.Damage.Value, hpBefore);
+			if (appliedDamage <= 0)
 				return;
 
 			var valued = damaged.Info.TraitInfoOrDefault<ValuedInfo>();
@@ -72,7 +75,7 @@ namespace OpenRA.Mods.CA.Traits
 				: valued != null ? valued.Cost : 0;
 
 			var experienceModifiers = damaged.TraitsImplementing<IGivesExperienceModifier>().ToArray().Select(m => m.GetGivesExperienceModifier()).Append(info.ActorExperienceModifier);
-			experienceModifiers = experienceModifiers.Append((int)(((float)e.Damage.Value / (float)health.MaxHP) * 100));
+			experienceModifiers = experienceModifiers.Append((int)(((float)appliedDamage / (float)health.MaxHP) * 100));
 
 			foreach (var mindControllable in mindControllables)
 				if (mindControllable.Master.HasValue)
@@ -81,6 +84,9 @@ namespace OpenRA.Mods.CA.Traits
 			foreach (var SpawnerSlaveBase in spawnerSlaveBases)
 				if (SpawnerSlaveBase.Master != null)
 					GiveExperience(SpawnerSlaveBase.Master, exp, experienceModifiers);
+
+			if (attachable != null && attachable.AttachedToActor != null)
+				GiveExperience(attachable.AttachedToActor, exp, experienceModifiers);
 		}
 
 		void GiveExperience(Actor master, int exp, IEnumerable<int> experienceModifiers)

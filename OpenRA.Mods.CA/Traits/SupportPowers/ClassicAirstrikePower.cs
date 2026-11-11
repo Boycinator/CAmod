@@ -34,7 +34,7 @@ namespace OpenRA.Mods.CA.Traits
 		}
 	}
 
-	public class ClassicAirstrikePowerInfo : DirectionalSupportPowerInfo
+	public class ClassicAirstrikePowerInfo : StackableDirectionalSupportPowerInfo
 	{
 		[FieldLoader.LoadUsing("LoadSquad")]
 		[Desc("A list of aircraft in the squad. Each has configurable UnitType, SpawnOffset and TargetOffset.")]
@@ -52,6 +52,10 @@ namespace OpenRA.Mods.CA.Traits
 
 		[Desc("Weapon range offset to apply during the beacon clock calculation")]
 		public readonly WDist BeaconDistanceOffset = WDist.FromCells(6);
+
+		public readonly WDist TargetCircleRange = WDist.Zero;
+		public readonly Color TargetCircleColor = Color.White;
+		public readonly bool TargetCircleUsePlayerColor = false;
 
 		[Desc("How many attack runs to perform.")]
 		public readonly int Strikes = 1;
@@ -75,7 +79,7 @@ namespace OpenRA.Mods.CA.Traits
 		public override object Create(ActorInitializer init) { return new ClassicAirstrikePower(init.Self, this); }
 	}
 
-	public class ClassicAirstrikePower : DirectionalSupportPower
+	public class ClassicAirstrikePower : StackableDirectionalSupportPower
 	{
 		readonly ClassicAirstrikePowerInfo info;
 
@@ -83,6 +87,15 @@ namespace OpenRA.Mods.CA.Traits
 			: base(self, info)
 		{
 			this.info = info;
+		}
+
+		public override void SelectTarget(Actor self, string order, SupportPowerManager manager)
+		{
+			if (info.UseDirectionalTarget)
+				self.World.OrderGenerator = new SelectDirectionalTargetWithCircle(self.World, order, manager, info,
+					info.TargetCircleRange, info.TargetCircleColor, info.TargetCircleUsePlayerColor);
+			else
+				base.SelectTarget(self, order, manager);
 		}
 
 		public override void Activate(Actor self, Order order, SupportPowerManager manager)
